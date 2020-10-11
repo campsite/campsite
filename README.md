@@ -1,0 +1,1 @@
+<p align="center"><a href="https://campsite.rocks" target="_blank"><img src="https://raw.githubusercontent.com/campsite/campsite/master/logo.png" width="100" alt="campsite" title="campsite"></a><br>a place for communities</p>
