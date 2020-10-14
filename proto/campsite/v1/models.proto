@@ -51,4 +51,5 @@ message Post {
     string parent_id = 10;
     repeated Post ancestors = 11;
     repeated Post children = 12;
+    bool has_children = 13;
 }
