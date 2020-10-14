@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package campsite.v1;
+
+option go_package = "campsite.rocks/campsite/proto/campsite/v1;campsitev1";
+
+import "google/api/annotations.proto";
+
+import "campsite/v1/models.proto";
+
+message CreatePostRequest {
+    string content = 1;
+    repeated string media_item_ids = 3;
+
+    string parent_id = 10;
+}
+
+message CreatePostResponse {
+    Post post = 1;
+}
+
+message GetPostRequest {
+    string id = 1;
+}
+
+message GetPostResponse {
+    Post post = 1;
+}
+
+message GetPostRevisionsRequest {
+    string post_id = 1;
+    string page_token = 2;
+    int32 limit = 3;
+}
+
+message GetPostRevisionsResponse {
+    repeated PostRevision post_revisions = 1;
+    string next_page_token = 2;
+}
+
+message UpdatePostRequest {
+    string id = 1;
+    string content = 2;
+    repeated string media_item_ids = 3;
+}
+
+message UpdatePostResponse {
+    Post post = 1;
+}
+
+message DeletePostRequest {
+    string id = 1;
+}
+
+message DeletePostResponse {
+}
+
+message ListPostsRequest {
+    string user_id = 1;
+    string page_token = 2;
+    int32 limit = 3;
+}
+
+message ListPostsResponse {
+    repeated Post posts = 1;
+    string next_page_token = 2;
+}
+
+service Posts {
+    rpc CreatePost(CreatePostRequest) returns (CreatePostResponse) {
+        option (google.api.http) = {
+            post: "/v1/posts"
+            body: "*"
+            response_body: "post"
+        };
+    }
+
+    rpc GetPost(GetPostRequest) returns (GetPostResponse) {
+        option (google.api.http) = {
+            get: "/v1/posts/{id}"
+            response_body: "post"
+        };
+    }
+
+    rpc GetPostRevisions(GetPostRevisionsRequest) returns (GetPostRevisionsResponse) {
+        option (google.api.http) = {
+            get: "/v1/posts/{post_id}/revisions"
+        };
+    }
+
+    rpc UpdatePost(UpdatePostRequest) returns (UpdatePostResponse) {
+        option (google.api.http) = {
+            put: "/v1/posts/{id}"
+            response_body: "post"
+        };
+    }
+
+    rpc DeletePost(DeletePostRequest) returns (DeletePostResponse) {
+        option (google.api.http) = {
+            delete: "/v1/posts/{id}"
+        };
+    }
+
+    rpc ListPosts(ListPostsRequest) returns (ListPostsResponse) {
+        option (google.api.http) = {
+            get: "/v1/posts"
+            body: "*"
+        };
+    }
+}
