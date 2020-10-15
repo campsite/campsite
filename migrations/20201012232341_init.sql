@@ -1,7 +1,7 @@
 -- +goose Up
 -- SQL in this section is executed when the migration is applied.
--- create extension "uuid-ossp";
--- create extension "pgcrypto";
+create extension if not exists "uuid-ossp";
+create extension if not exists "pgcrypto";
 
 create table users (
     id uuid primary key default uuid_generate_v1mc(),
@@ -12,33 +12,19 @@ create table posts (
     id uuid primary key default uuid_generate_v1mc(),
 
     created_at timestamptz not null default now(),
-
-    -- If a post is deleted, all its revisions must also be dropped.
+    edited_at timestamptz,
     deleted_at timestamptz,
 
-    author_user_id uuid references users(id) on delete restrict,
-
-    parent_id uuid references posts(id) on delete restrict,
-    parent_revision_id uuid,
-
-    latest_revision_id uuid
-);
-
-create index on posts(created_at);
-
-create table post_revisions (
-    id uuid primary key default uuid_generate_v1mc(),
-    created_at timestamptz not null default now(),
-    post_id uuid not null references posts(id) on delete cascade,
+    -- If content is null, the post has been deleted.
+    content text,
     warning text,
-    content text not null,
-    tags text[] not null default '{}'
+    tags text[] not null default '{}',
+
+    author_user_id uuid references users(id) on delete set null,
+    parent_post_id uuid references posts(id) on delete set null
 );
 
-alter table posts add foreign key (latest_revision_id) references post_revisions(id) on delete set null;
-alter table posts add foreign key (parent_revision_id) references post_revisions(id) on delete set null;
-
-create index on post_revisions(created_at);
+create index on posts(created_at desc, id);
 
 create type media_type as enum (
     'raw',
@@ -54,18 +40,28 @@ create table media_items (
     resource_url text not null
 );
 
-create table post_revision_media_items (
-    post_revision_id uuid not null references post_revisions(id) on delete cascade,
+create table post_media_items (
+    post_id uuid not null references posts(id) on delete cascade,
     media_item_id uuid not null references media_items(id) on delete cascade,
     position integer not null,
-    primary key (post_revision_id, media_item_id)
+    primary key (post_id, media_item_id)
+);
+
+create table sessions (
+    id uuid primary key default gen_random_uuid(),
+    created_at timestamptz not null default now(),
+    last_active_at timestamptz not null default now(),
+    user_id uuid not null references users(id) on delete cascade,
+    identifier text not null default '',
+    scopes text[] not null default '{}'
 );
 
 -- +goose Down
 -- SQL in this section is executed when the migration is rolled back.
-drop table post_revision_media_items;
+drop table sessions;
+drop table post_media_items;
 drop table media_items;
 drop type media_type;
-drop table post_revisions cascade;
+drop table posts;
 drop table posts;
 drop table users;

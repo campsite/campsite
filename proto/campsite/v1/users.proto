@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package campsite.v1;
+
+option go_package = "campsite.rocks/campsite/proto/campsite/v1;campsitev1";
+
+import "google/api/annotations.proto";
+
+import "campsite/v1/models.proto";
+
+message GetMeRequest {}
+
+message GetMeResponse {
+    User user = 1;
+}
+
+service Users {
+    rpc GetMe(GetMeRequest) returns (GetMeResponse) {
+        option (google.api.http) = {
+            get: "/v1/users/me"
+            body: "*"
+            response_body: "user"
+        };
+    }
+}

@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package campsite.v1;
+
+option go_package = "campsite.rocks/campsite/types/proto";
+
+message PageToken {
+    int64 created_at = 1;
+    bytes id = 2;
+}

@@ -29,27 +29,25 @@ message User {
     MediaItem banner = 5;
 }
 
-message PostRevision {
-    string id = 1;
-    google.protobuf.Timestamp created_at = 2;
-    google.protobuf.StringValue warning = 3;
-    string content = 4;
-
-    repeated MediaItem media_items = 10;
-    repeated string tags = 20;
-}
-
 message Post {
     string id = 1;
     google.protobuf.Timestamp created_at = 2;
-    google.protobuf.Timestamp deleted_at = 3;
-    User author = 4;
+    google.protobuf.Timestamp edited_at = 3;
+    google.protobuf.Timestamp deleted_at = 4;
+    User author = 5;
 
-    PostRevision revision = 5;
-    bool has_other_revisions = 6;
+    google.protobuf.StringValue content = 6;
+    google.protobuf.StringValue warning = 7;
 
-    string parent_id = 10;
-    repeated Post ancestors = 11;
-    repeated Post children = 12;
-    bool has_children = 13;
+    repeated MediaItem media_items = 10;
+
+    google.protobuf.StringValue parent_post_id = 20;
+
+    // This may be unset if the post was not retrieved.
+    Post parent_post = 21;
+
+    // Ordered lists of children, from newest to oldest.
+    repeated Post children = 22;
+    string children_next_page_token = 23;
+    int32 num_children = 24;
 }

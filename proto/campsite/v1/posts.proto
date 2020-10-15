@@ -5,14 +5,15 @@ package campsite.v1;
 option go_package = "campsite.rocks/campsite/proto/campsite/v1;campsitev1";
 
 import "google/api/annotations.proto";
+import "google/protobuf/wrappers.proto";
 
 import "campsite/v1/models.proto";
 
 message CreatePostRequest {
     string content = 1;
-    repeated string media_item_ids = 3;
-
-    string parent_id = 10;
+    google.protobuf.StringValue warning = 2;
+    repeated string media_item_ids = 10;
+    google.protobuf.StringValue parent_post_id = 20;
 }
 
 message CreatePostResponse {
@@ -21,21 +22,11 @@ message CreatePostResponse {
 
 message GetPostRequest {
     string id = 1;
+    int32 parent_depth = 2;
 }
 
 message GetPostResponse {
     Post post = 1;
-}
-
-message GetPostRevisionsRequest {
-    string post_id = 1;
-    string page_token = 2;
-    int32 limit = 3;
-}
-
-message GetPostRevisionsResponse {
-    repeated PostRevision post_revisions = 1;
-    string next_page_token = 2;
 }
 
 message UpdatePostRequest {
@@ -57,11 +48,23 @@ message DeletePostResponse {
 
 message ListPostsRequest {
     string user_id = 1;
-    string page_token = 2;
-    int32 limit = 3;
+    string page_token = 10;
+    int32 limit = 11;
 }
 
 message ListPostsResponse {
+    repeated Post posts = 1;
+    string next_page_token = 2;
+}
+
+message GetPostChildrenRequest {
+    string post_id = 1;
+    int32 child_depth = 2;
+    string page_token = 3;
+    int32 limit = 4;
+}
+
+message GetPostChildrenResponse {
     repeated Post posts = 1;
     string next_page_token = 2;
 }
@@ -82,9 +85,9 @@ service Posts {
         };
     }
 
-    rpc GetPostRevisions(GetPostRevisionsRequest) returns (GetPostRevisionsResponse) {
+    rpc GetPostChildren(GetPostChildrenRequest) returns (GetPostChildrenResponse) {
         option (google.api.http) = {
-            get: "/v1/posts/{post_id}/revisions"
+            get: "/v1/posts/{post_id}/children"
         };
     }
 
