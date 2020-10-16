@@ -13,7 +13,6 @@ import (
 	"campsite.rocks/campsite/services"
 	"github.com/BurntSushi/toml"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
@@ -91,8 +90,6 @@ func main() {
 		DB: db,
 	}
 
-	authFunc := security.MakeAuthFunc(env)
-
 	grpcServer := grpc.NewServer(
 		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 		grpc_middleware.WithStreamServerChain(
@@ -100,7 +97,7 @@ func main() {
 				return errorHandler(info.FullMethod, handler(srv, stream))
 			},
 			grpc_recovery.StreamServerInterceptor(grpc_recovery.WithRecoveryHandler(recoveryHandler)),
-			grpc_auth.StreamServerInterceptor(authFunc),
+			security.MakeStreamServerInterceptor(env),
 		),
 		grpc_middleware.WithUnaryServerChain(
 			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
@@ -111,7 +108,7 @@ func main() {
 				return resp, nil
 			},
 			grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandler(recoveryHandler)),
-			grpc_auth.UnaryServerInterceptor(authFunc),
+			security.MakeUnaryServerInterceptor(env),
 		),
 	)
 	registerServers(grpcServer, env)

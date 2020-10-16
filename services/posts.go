@@ -31,7 +31,7 @@ func (ps *postsServer) GetPost(ctx context.Context, in *campsitev1.GetPostReques
 
 	postID, err := types.DecodeID(in.PostId)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, "id")
+		return nil, status.Error(codes.NotFound, "post_id")
 	}
 
 	posts, err := db.PostsByID(ctx, tx, []uuid.UUID{postID}, int(in.ParentDepth))
@@ -40,7 +40,7 @@ func (ps *postsServer) GetPost(ctx context.Context, in *campsitev1.GetPostReques
 	}
 
 	if len(posts) == 0 {
-		return nil, status.Error(codes.NotFound, "id")
+		return nil, status.Error(codes.NotFound, "post_id")
 	}
 
 	return &campsitev1.GetPostResponse{
@@ -104,7 +104,7 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 
 	postID, err := types.DecodeID(in.PostId)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, "id")
+		return nil, status.Error(codes.NotFound, "post_id")
 	}
 
 	pageToken := types.PageToken{
