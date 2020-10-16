@@ -185,15 +185,7 @@ func (ps *postsServer) WaitForPostChildren(ctx context.Context, in *campsitev1.W
 		return nil, status.Error(codes.NotFound, "post_id")
 	}
 
-	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{
-		AccessMode: pgx.ReadOnly,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-
-	if err := db.WaitForPostChildren(ctx, tx, ps.Nats, postID, pageToken); err != nil {
+	if err := db.WaitForPostChildren(ctx, ps.DB, ps.Nats, postID, pageToken); err != nil {
 		return nil, err
 	}
 

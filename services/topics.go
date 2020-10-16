@@ -89,15 +89,7 @@ func (ts *topicsServer) WaitForFeed(ctx context.Context, in *campsitev1.WaitForF
 		return nil, status.Error(codes.InvalidArgument, "page_token")
 	}
 
-	tx, err := ts.DB.BeginTx(ctx, pgx.TxOptions{
-		AccessMode: pgx.ReadOnly,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-
-	if err := db.WaitForUserTopic(ctx, tx, ts.Nats, principal.UserID, pageToken); err != nil {
+	if err := db.WaitForUserTopic(ctx, ts.DB, ts.Nats, principal.UserID, pageToken); err != nil {
 		return nil, err
 	}
 

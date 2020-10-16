@@ -7,6 +7,7 @@ import (
 	"campsite.rocks/campsite/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/nats-io/nats.go"
 )
 
@@ -79,7 +80,7 @@ func publishUserTopic(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID uuid
 	return nil
 }
 
-func WaitForUserTopic(ctx context.Context, tx pgx.Tx, nc *nats.Conn, userID uuid.UUID, pageToken types.PageToken) error {
+func WaitForUserTopic(ctx context.Context, db *pgxpool.Pool, nc *nats.Conn, userID uuid.UUID, pageToken types.PageToken) error {
 	// We must subscribe before we check hasNewer, otherwise we have a race condition.
 	sub, err := nc.SubscribeSync("user:" + types.EncodeID(userID))
 	if err != nil {
@@ -87,44 +88,47 @@ func WaitForUserTopic(ctx context.Context, tx pgx.Tx, nc *nats.Conn, userID uuid
 	}
 	defer sub.Unsubscribe()
 
-	var hasNewer bool
-	if err := tx.QueryRow(ctx, `
-		select exists(
-			select 1
-			from publications
-			where
-				(
+	for {
+		var hasNewer bool
+		if err := db.QueryRow(ctx, `
+			select exists(
+				select 1
+				from publications
+				where
 					(
-						topic_id = any(
-							select
-								subscriptions.topic_id
-							from
-								subscriptions
-							where
-								subscriptions.user_id = $1
-						) and not private
-					) or (
-						topic_id = $1
+						(
+							topic_id = any(
+								select
+									subscriptions.topic_id
+								from
+									subscriptions
+								where
+									subscriptions.user_id = $1
+							) and not private
+						) or (
+							topic_id = $1
+						)
+					) and (
+						case
+							when $4 = -1 then (
+								(published_at < $2) or
+								(published_at = $2 and post_id > $3)
+							)
+							when $4 = 1 then (
+								(published_at > $2) or
+								(published_at = $2 and post_id < $3)
+							)
+							else false
+						end
 					)
-				) and (
-					case
-						when $4 = -1 then (
-							(published_at < $2) or
-							(published_at = $2 and post_id > $3)
-						)
-						when $4 = 1 then (
-							(published_at > $2) or
-							(published_at = $2 and post_id < $3)
-						)
-						else false
-					end
-				)
-		)
-	`, userID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction).Scan(&hasNewer); err != nil {
-		return err
-	}
+			)
+		`, userID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction).Scan(&hasNewer); err != nil {
+			return err
+		}
 
-	if !hasNewer {
+		if hasNewer {
+			break
+		}
 		msg, err := sub.NextMsgWithContext(ctx)
 		if err != nil {
 			return err

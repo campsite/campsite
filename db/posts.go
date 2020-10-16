@@ -7,6 +7,7 @@ import (
 	"campsite.rocks/campsite/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/nats-io/nats.go"
 )
 
@@ -374,7 +375,7 @@ func notifyParentPost(ctx context.Context, nc *nats.Conn, parentPostID uuid.UUID
 	return nil
 }
 
-func WaitForPostChildren(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID uuid.UUID, pageToken types.PageToken) error {
+func WaitForPostChildren(ctx context.Context, db *pgxpool.Pool, nc *nats.Conn, postID uuid.UUID, pageToken types.PageToken) error {
 	// We must subscribe before we check hasNewer, otherwise we have a race condition.
 	sub, err := nc.SubscribeSync("postchildren:" + types.EncodeID(postID))
 	if err != nil {
@@ -382,31 +383,35 @@ func WaitForPostChildren(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID u
 	}
 	defer sub.Unsubscribe()
 
-	var hasNewer bool
-	if err := tx.QueryRow(ctx, `
-		select exists(
-			select 1
-			from posts
-			where
-				parent_post_id = $1 and (
-					case
-						when $4 = -1 then (
-							(created_at < $2) or
-							(created_at = $2 and id > $3)
-						)
-						when $4 = 1 then (
-							(created_at > $2) or
-							(created_at = $2 and id < $3)
-						)
-						else false
-					end
-				)
-		)
-	`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction).Scan(&hasNewer); err != nil {
-		return err
-	}
+	for {
+		var hasNewer bool
+		if err := db.QueryRow(ctx, `
+			select exists(
+				select 1
+				from posts
+				where
+					parent_post_id = $1 and (
+						case
+							when $4 = -1 then (
+								(created_at < $2) or
+								(created_at = $2 and id > $3)
+							)
+							when $4 = 1 then (
+								(created_at > $2) or
+								(created_at = $2 and id < $3)
+							)
+							else false
+						end
+					)
+			)
+		`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction).Scan(&hasNewer); err != nil {
+			return err
+		}
 
-	if !hasNewer {
+		if hasNewer {
+			break
+		}
+
 		msg, err := sub.NextMsgWithContext(ctx)
 		if err != nil {
 			return err
