@@ -12,6 +12,6 @@ Conceptually:
 
 All publications in Campsite can be globally ordered based on their publishing timestamps and ID. This simplifies many things, e.g. users can paginate across all of their subscriptions with a simple timestamp-ID cursor. The downside is that because all publications are serialized across an entire Campsite instance, there is a single contention point on ordering. However, Campsite can still provide "good enough" semantics: events happening at the exact same timestamp may be lost, but can be recovered on a fresh fetching of data from the database.
 
-Campsite uses fan-in on read, rather than fan-out on write, to find the relevant publications across all subscriptions.
+When fetching from the database, Campsite uses fan-in on read, rather than fan-out on write, to find the relevant publications across all subscriptions.
 
-**Open questions:** It is unclear how to implement live subscriptions: if multiple Campsite servers are in use, will they be required to process **all** messages through the system (via an external message queuing system)? Or it subscribe on demand to each user's subscribed topics (may be expensive to start listening if a user has a lot of subscribed topics/complicated if a user has dynamic subscriptions)?
+When updating interested parties on changes, Campsite uses fan-out on write to notify: this is so subscribers can subscribe to a single channel in the backing message queue without having to maintain dynamic membership.
