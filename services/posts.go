@@ -64,9 +64,20 @@ func (ps *postsServer) CreatePost(ctx context.Context, in *campsitev1.CreatePost
 	if in.ParentPostId != nil {
 		postID, err := types.DecodeID(in.ParentPostId.Value)
 		if err != nil {
-			return nil, status.Error(codes.InvalidArgument, "parent_post_id")
+			return nil, status.Error(codes.NotFound, "parent_post_id")
 		}
+
 		parentPostID = &postID
+
+		// Verify the post exists.
+		parentPosts, err := db.PostsByID(ctx, tx, []uuid.UUID{*parentPostID}, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(parentPosts) == 0 {
+			return nil, status.Error(codes.NotFound, "parent_post_id")
+		}
 	}
 
 	var warning *string
