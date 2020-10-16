@@ -7,7 +7,6 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func PostToProto(post *db.Post) (*campsitev1.Post, error) {
@@ -45,17 +44,17 @@ func PostToProto(post *db.Post) (*campsitev1.Post, error) {
 
 	var ptypesContent *wrappers.StringValue
 	if post.Content != nil {
-		ptypesContent = &wrapperspb.StringValue{Value: *post.Content}
+		ptypesContent = &wrappers.StringValue{Value: *post.Content}
 	}
 
 	var ptypesWarning *wrappers.StringValue
 	if post.Warning != nil {
-		ptypesWarning = &wrapperspb.StringValue{Value: *post.Warning}
+		ptypesWarning = &wrappers.StringValue{Value: *post.Warning}
 	}
 
 	var ptypesParentPostID *wrappers.StringValue
 	if post.ParentPostID != nil {
-		ptypesParentPostID = &wrapperspb.StringValue{Value: types.EncodeID(*post.ParentPostID)}
+		ptypesParentPostID = &wrappers.StringValue{Value: types.EncodeID(*post.ParentPostID)}
 	}
 
 	var parentPost *campsitev1.Post
