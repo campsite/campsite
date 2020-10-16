@@ -43,6 +43,7 @@ type config struct {
 func registerServers(grpcServer *grpc.Server, env *env.Env) {
 	campsitev1.RegisterPostsServer(grpcServer, services.NewPostsServer(env))
 	campsitev1.RegisterUsersServer(grpcServer, services.NewUsersServer(env))
+	campsitev1.RegisterTopicsServer(grpcServer, services.NewTopicsServer(env))
 }
 
 func errorHandler(fullMethod string, err error) error {

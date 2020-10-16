@@ -46,17 +46,6 @@ message DeletePostRequest {
 message DeletePostResponse {
 }
 
-message ListPostsRequest {
-    string user_id = 1;
-    string page_token = 10;
-    int32 limit = 11;
-}
-
-message ListPostsResponse {
-    repeated Post posts = 1;
-    string next_page_token = 2;
-}
-
 message GetPostChildrenRequest {
     string post_id = 1;
     int32 child_depth = 2;
@@ -101,13 +90,6 @@ service Posts {
     rpc DeletePost(DeletePostRequest) returns (DeletePostResponse) {
         option (google.api.http) = {
             delete: "/v1/posts/{post_id}"
-        };
-    }
-
-    rpc ListPosts(ListPostsRequest) returns (ListPostsResponse) {
-        option (google.api.http) = {
-            get: "/v1/posts"
-            body: "*"
         };
     }
 }

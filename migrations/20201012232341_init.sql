@@ -3,10 +3,18 @@
 create extension if not exists "uuid-ossp";
 create extension if not exists "pgcrypto";
 
-create table users (
-    id uuid primary key default uuid_generate_v1mc(),
-    name text not null
+create table topics (
+    id uuid primary key default uuid_generate_v1mc()
 );
+
+create table users (
+    id uuid primary key references topics(id) on delete cascade,
+    name text not null,
+    private_topic_id uuid not null references topics(id) on delete cascade,
+    check (id != private_topic_id)
+);
+
+create unique index on users(private_topic_id);
 
 create table posts (
     id uuid primary key default uuid_generate_v1mc(),
@@ -56,8 +64,26 @@ create table sessions (
     scopes text[] not null default '{}'
 );
 
+create table publishes (
+    post_id uuid not null references posts(id) on delete cascade,
+    topic_id uuid not null references topics(id) on delete cascade,
+    publisher_user_id uuid references users(id) on delete set null,
+    published_at timestamptz not null default now(),
+    primary key (post_id, topic_id)
+);
+
+create index on publishes(published_at desc, post_id);
+
+create table subscriptions (
+    user_id uuid not null references users(id) on delete cascade,
+    topic_id uuid not null references topics(id) on delete cascade,
+    primary key (user_id, topic_id)
+);
+
 -- +goose Down
 -- SQL in this section is executed when the migration is rolled back.
+drop table subscriptions;
+drop table publishes;
 drop table sessions;
 drop table post_media_items;
 drop table media_items;
@@ -65,3 +91,4 @@ drop type media_type;
 drop table posts;
 drop table posts;
 drop table users;
+drop table topics;

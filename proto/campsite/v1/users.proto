@@ -26,7 +26,6 @@ service Users {
     rpc GetMe(GetMeRequest) returns (GetMeResponse) {
         option (google.api.http) = {
             get: "/v1/users/me"
-            body: "*"
             response_body: "user"
         };
     }
@@ -34,7 +33,6 @@ service Users {
     rpc GetUser(GetUserRequest) returns (GetUserResponse) {
         option (google.api.http) = {
             get: "/v1/users/{user_id}"
-            body: "*"
             response_body: "user"
         };
     }

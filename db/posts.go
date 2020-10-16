@@ -331,19 +331,19 @@ func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDep
 	return childPosts, nextPageToken, nil
 }
 
-type PostPrototype struct {
+type PostSkeleton struct {
 	AuthorUserID uuid.UUID
 	Content      string
 	Warning      *string
 	ParentPostID *uuid.UUID
 }
 
-func CreatePost(ctx context.Context, tx pgx.Tx, postProto *PostPrototype) (*Post, error) {
+func CreatePost(ctx context.Context, tx pgx.Tx, postSkeleton *PostSkeleton) (*Post, error) {
 	var postID uuid.UUID
 	var createdAt time.Time
 
 	// Retrieve the author.
-	author, err := UserByID(ctx, tx, postProto.AuthorUserID)
+	author, err := UserByID(ctx, tx, postSkeleton.AuthorUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -364,25 +364,70 @@ func CreatePost(ctx context.Context, tx pgx.Tx, postProto *PostPrototype) (*Post
 		)
 		returning id, created_at
 	`,
-		postProto.AuthorUserID,
-		postProto.ParentPostID,
-		postProto.Content,
-		postProto.Warning,
+		postSkeleton.AuthorUserID,
+		postSkeleton.ParentPostID,
+		postSkeleton.Content,
+		postSkeleton.Warning,
 	).Scan(&postID, &createdAt); err != nil {
 		return nil, err
+	}
+
+	if postSkeleton.ParentPostID == nil {
+		// If there is no parent post, we will publish to the user's topic by default.
+		if _, err := tx.Exec(ctx, `
+			insert into publishes (
+				post_id,
+				topic_id,
+				publisher_user_id
+			)
+			select
+				$1,
+				$2,
+				$2
+		`, postID, author.ID); err != nil {
+			return nil, err
+		}
+	} else {
+		// If there is a parent post, we will publish to the parent post's author's private topic.
+		// TODO: What if the post author is null?
+		if _, err := tx.Exec(ctx, `
+			insert into publishes (
+				post_id,
+				topic_id,
+				publisher_user_id
+			)
+			select
+				$1,
+				(
+					select private_topic_id
+					from users
+					where users.id = (
+						select posts.author_user_id
+						from posts
+						where posts.id = (
+							select p2.parent_post_id
+							from posts p2
+							where p2.id = $1
+						)
+					)
+				),
+				$2
+		`, postID, author.ID); err != nil {
+			return nil, err
+		}
 	}
 
 	return &Post{
 		ID:        postID,
 		CreatedAt: createdAt,
 		Author:    author,
-		Warning:   postProto.Warning,
-		Content:   &postProto.Content,
+		Warning:   postSkeleton.Warning,
+		Content:   &postSkeleton.Content,
 		ChildrenNextPageToken: &types.PageToken{
 			ID:        postID,
 			CreatedAt: createdAt,
 		},
-		ParentPostID: postProto.ParentPostID,
+		ParentPostID: postSkeleton.ParentPostID,
 	}, nil
 }
 

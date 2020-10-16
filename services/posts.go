@@ -92,7 +92,7 @@ func (ps *postsServer) CreatePost(ctx context.Context, in *campsitev1.CreatePost
 		warning = &in.Warning.Value
 	}
 
-	post, err := db.CreatePost(ctx, tx, &db.PostPrototype{
+	post, err := db.CreatePost(ctx, tx, &db.PostSkeleton{
 		AuthorUserID: principal.UserID,
 		Content:      in.Content,
 		Warning:      warning,

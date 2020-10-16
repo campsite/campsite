@@ -51,3 +51,9 @@ message Post {
     string children_next_page_token = 23;
     int32 num_children = 24;
 }
+
+message Publish {
+    Post post = 1;
+    google.protobuf.Timestamp published_at = 2;
+    User publisher = 3;
+}

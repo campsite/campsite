@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package campsite.v1;
+
+option go_package = "campsite.rocks/campsite/proto/campsite/v1;campsitev1";
+
+import "google/api/annotations.proto";
+
+import "campsite/v1/models.proto";
+
+message GetFeedRequest {
+    int32 parent_depth = 1;
+    string page_token = 2;
+    int32 limit = 3;
+}
+
+message GetFeedResponse {
+    repeated Publish publishes = 1;
+    string next_page_token = 2;
+}
+
+service Topics {
+    rpc GetFeed(GetFeedRequest) returns (GetFeedResponse) {
+        option (google.api.http) = {
+            get: "/v1/feed"
+        };
+    }
+}
