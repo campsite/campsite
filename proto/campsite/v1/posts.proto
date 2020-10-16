@@ -21,7 +21,7 @@ message CreatePostResponse {
 }
 
 message GetPostRequest {
-    string id = 1;
+    string post_id = 1;
     int32 parent_depth = 2;
 }
 
@@ -30,7 +30,7 @@ message GetPostResponse {
 }
 
 message UpdatePostRequest {
-    string id = 1;
+    string post_id = 1;
     string content = 2;
     repeated string media_item_ids = 3;
 }
@@ -40,7 +40,7 @@ message UpdatePostResponse {
 }
 
 message DeletePostRequest {
-    string id = 1;
+    string post_id = 1;
 }
 
 message DeletePostResponse {
@@ -80,7 +80,7 @@ service Posts {
 
     rpc GetPost(GetPostRequest) returns (GetPostResponse) {
         option (google.api.http) = {
-            get: "/v1/posts/{id}"
+            get: "/v1/posts/{post_id}"
             response_body: "post"
         };
     }
@@ -93,14 +93,14 @@ service Posts {
 
     rpc UpdatePost(UpdatePostRequest) returns (UpdatePostResponse) {
         option (google.api.http) = {
-            put: "/v1/posts/{id}"
+            put: "/v1/posts/{post_id}"
             response_body: "post"
         };
     }
 
     rpc DeletePost(DeletePostRequest) returns (DeletePostResponse) {
         option (google.api.http) = {
-            delete: "/v1/posts/{id}"
+            delete: "/v1/posts/{post_id}"
         };
     }
 
