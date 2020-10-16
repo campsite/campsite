@@ -22,6 +22,11 @@ type postsServer struct {
 }
 
 func (ps *postsServer) GetPost(ctx context.Context, in *campsitev1.GetPostRequest) (*campsitev1.GetPostResponse, error) {
+	postID, err := types.DecodeID(in.PostId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "post_id")
+	}
+
 	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{
 		AccessMode: pgx.ReadOnly,
 	})
@@ -29,11 +34,6 @@ func (ps *postsServer) GetPost(ctx context.Context, in *campsitev1.GetPostReques
 		return nil, err
 	}
 	defer tx.Rollback(ctx)
-
-	postID, err := types.DecodeID(in.PostId)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, "post_id")
-	}
 
 	posts, err := db.PostsByID(ctx, tx, []uuid.UUID{postID}, int(in.ParentDepth))
 	if err != nil {
@@ -59,6 +59,11 @@ func (ps *postsServer) CreatePost(ctx context.Context, in *campsitev1.CreatePost
 	principal := security.PrincipalFromContext(ctx)
 	if principal == nil {
 		return nil, status.Error(codes.Unauthenticated, "")
+	}
+
+	var warning *string
+	if in.Warning != nil {
+		warning = &in.Warning.Value
 	}
 
 	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{})
@@ -87,11 +92,6 @@ func (ps *postsServer) CreatePost(ctx context.Context, in *campsitev1.CreatePost
 		}
 	}
 
-	var warning *string
-	if in.Warning != nil {
-		warning = &in.Warning.Value
-	}
-
 	post, err := db.CreatePost(ctx, tx, ps.Nats, &db.PostSkeleton{
 		AuthorUserID: principal.UserID,
 		Content:      in.Content,
@@ -117,14 +117,6 @@ func (ps *postsServer) CreatePost(ctx context.Context, in *campsitev1.CreatePost
 }
 
 func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPostChildrenRequest) (*campsitev1.GetPostChildrenResponse, error) {
-	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{
-		AccessMode: pgx.ReadOnly,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-
 	postID, err := types.DecodeID(in.PostId)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "post_id")
@@ -141,6 +133,14 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 			return nil, status.Error(codes.InvalidArgument, "page_token")
 		}
 	}
+
+	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{
+		AccessMode: pgx.ReadOnly,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
 
 	children, pageTokenPair, err := db.PostChildrenByID(ctx, tx, postID, int(in.ChildDepth), pageToken, int(in.Limit))
 	if err != nil {
@@ -169,10 +169,46 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 	return resp, nil
 }
 
+func (ps *postsServer) WaitForPostChildren(ctx context.Context, in *campsitev1.WaitForPostChildrenRequest) (*campsitev1.WaitForPostChildrenResponse, error) {
+	pageToken, err := types.DecodePageToken(in.PageToken)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "page_token")
+	}
+
+	// Only allow newer pagination.
+	if pageToken.Direction != types.PageDirectionNewer {
+		return nil, status.Error(codes.InvalidArgument, "page_token")
+	}
+
+	postID, err := types.DecodeID(in.PostId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "post_id")
+	}
+
+	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{
+		AccessMode: pgx.ReadOnly,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	if err := db.WaitForPostChildren(ctx, tx, ps.Nats, postID, pageToken); err != nil {
+		return nil, err
+	}
+
+	return &campsitev1.WaitForPostChildrenResponse{}, nil
+}
+
 func (ps *postsServer) DeletePost(ctx context.Context, in *campsitev1.DeletePostRequest) (*campsitev1.DeletePostResponse, error) {
 	principal := security.PrincipalFromContext(ctx)
 	if principal == nil {
 		return nil, status.Error(codes.Unauthenticated, "")
+	}
+
+	postID, err := types.DecodeID(in.PostId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "post_id")
 	}
 
 	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{})
@@ -180,10 +216,6 @@ func (ps *postsServer) DeletePost(ctx context.Context, in *campsitev1.DeletePost
 		return nil, err
 	}
 	defer tx.Rollback(ctx)
-	postID, err := types.DecodeID(in.PostId)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, "post_id")
-	}
 
 	posts, err := db.PostsByID(ctx, tx, []uuid.UUID{postID}, 0)
 	if err != nil {

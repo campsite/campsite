@@ -53,6 +53,11 @@ func (ps *usersServer) GetMe(ctx context.Context, in *campsitev1.GetMeRequest) (
 }
 
 func (ps *usersServer) GetUser(ctx context.Context, in *campsitev1.GetUserRequest) (*campsitev1.GetUserResponse, error) {
+	userID, err := types.DecodeID(in.UserId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "user_id")
+	}
+
 	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{
 		AccessMode: pgx.ReadOnly,
 	})
@@ -60,11 +65,6 @@ func (ps *usersServer) GetUser(ctx context.Context, in *campsitev1.GetUserReques
 		return nil, err
 	}
 	defer tx.Rollback(ctx)
-
-	userID, err := types.DecodeID(in.UserId)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, "user_id")
-	}
 
 	user, err := db.UserByID(ctx, tx, userID)
 	if err != nil {

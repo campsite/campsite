@@ -367,6 +367,57 @@ func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDep
 	}, nil
 }
 
+func notifyParentPost(ctx context.Context, nc *nats.Conn, parentPostID uuid.UUID) error {
+	if err := nc.Publish("postchildren:"+types.EncodeID(parentPostID), []byte{}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func WaitForPostChildren(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID uuid.UUID, pageToken types.PageToken) error {
+	// We must subscribe before we check hasNewer, otherwise we have a race condition.
+	sub, err := nc.SubscribeSync("postchildren:" + types.EncodeID(postID))
+	if err != nil {
+		return err
+	}
+	defer sub.Unsubscribe()
+
+	var hasNewer bool
+	if err := tx.QueryRow(ctx, `
+		select exists(
+			select 1
+			from posts
+			where
+				parent_post_id = $1 and (
+					case
+						when $4 = -1 then (
+							(created_at < $2) or
+							(created_at = $2 and id > $3)
+						)
+						when $4 = 1 then (
+							(created_at > $2) or
+							(created_at = $2 and id < $3)
+						)
+						else false
+					end
+				)
+		)
+	`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction).Scan(&hasNewer); err != nil {
+		return err
+	}
+
+	if !hasNewer {
+		msg, err := sub.NextMsgWithContext(ctx)
+		if err != nil {
+			return err
+		}
+
+		_ = msg
+	}
+
+	return nil
+}
+
 type PostSkeleton struct {
 	AuthorUserID uuid.UUID
 	Content      string
@@ -410,7 +461,7 @@ func CreatePost(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postSkeleton *Pos
 
 	if postSkeleton.ParentPostID == nil {
 		// If there is no parent post, we will publish to the user's topic by default, publicly.
-		if err := publish(ctx, tx, nc, postID, author.ID, author.ID, publishOpts{Private: false}); err != nil {
+		if err := publishUserTopic(ctx, tx, nc, postID, author.ID, author.ID, publishOpts{Private: false}); err != nil {
 			return nil, err
 		}
 	} else {
@@ -430,9 +481,13 @@ func CreatePost(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postSkeleton *Pos
 		}
 
 		if parentAuthorUserID != nil {
-			if err := publish(ctx, tx, nc, postID, *parentAuthorUserID, author.ID, publishOpts{Private: true}); err != nil {
+			if err := publishUserTopic(ctx, tx, nc, postID, *parentAuthorUserID, author.ID, publishOpts{Private: true}); err != nil {
 				return nil, err
 			}
+		}
+
+		if err := notifyParentPost(ctx, nc, *postSkeleton.ParentPostID); err != nil {
+			return nil, err
 		}
 	}
 

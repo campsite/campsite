@@ -20,7 +20,7 @@ type publishOpts struct {
 	Private bool
 }
 
-func publish(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID uuid.UUID, topicID uuid.UUID, publisherUserID uuid.UUID, opts publishOpts) error {
+func publishUserTopic(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID uuid.UUID, userTopicID uuid.UUID, publisherUserID uuid.UUID, opts publishOpts) error {
 	if _, err := tx.Exec(ctx, `
 		insert into publications (
 			post_id,
@@ -33,12 +33,11 @@ func publish(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID uuid.UUID, to
 			$2,
 			$3,
 			$4
-	`, postID, topicID, publisherUserID, opts.Private); err != nil {
+	`, postID, userTopicID, publisherUserID, opts.Private); err != nil {
 		return err
 	}
 
-	// The topic might not actually be a user, but we just send it to any listening users anyway.
-	userIDs := []uuid.UUID{topicID}
+	userIDs := []uuid.UUID{userTopicID}
 	if !opts.Private {
 		// Non-private posts need to be fanned out to all subscriptions.
 		if err := func() error {
@@ -46,7 +45,7 @@ func publish(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID uuid.UUID, to
 			select user_id
 			from subscriptions
 			where topic_id = $1
-		`, topicID)
+		`, userTopicID)
 			if err != nil {
 				return err
 			}
@@ -80,7 +79,14 @@ func publish(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID uuid.UUID, to
 	return nil
 }
 
-func CheckFeedHasNewer(ctx context.Context, tx pgx.Tx, userID uuid.UUID, pageToken types.PageToken) (bool, error) {
+func WaitForUserTopic(ctx context.Context, tx pgx.Tx, nc *nats.Conn, userID uuid.UUID, pageToken types.PageToken) error {
+	// We must subscribe before we check hasNewer, otherwise we have a race condition.
+	sub, err := nc.SubscribeSync("user:" + types.EncodeID(userID))
+	if err != nil {
+		return err
+	}
+	defer sub.Unsubscribe()
+
 	var hasNewer bool
 	if err := tx.QueryRow(ctx, `
 		select exists(
@@ -115,10 +121,19 @@ func CheckFeedHasNewer(ctx context.Context, tx pgx.Tx, userID uuid.UUID, pageTok
 				)
 		)
 	`, userID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction).Scan(&hasNewer); err != nil {
-		return false, err
+		return err
 	}
 
-	return hasNewer, nil
+	if !hasNewer {
+		msg, err := sub.NextMsgWithContext(ctx)
+		if err != nil {
+			return err
+		}
+
+		_ = msg
+	}
+
+	return nil
 }
 
 func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pageToken types.PageToken, limit int) ([]*Publication, types.PageTokenPair, error) {

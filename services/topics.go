@@ -26,14 +26,6 @@ func (ts *topicsServer) GetFeed(ctx context.Context, in *campsitev1.GetFeedReque
 		return nil, status.Error(codes.Unauthenticated, "")
 	}
 
-	tx, err := ts.DB.BeginTx(ctx, pgx.TxOptions{
-		AccessMode: pgx.ReadOnly,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-
 	pageToken := types.PageToken{
 		CreatedAt: time.Now(),
 		Direction: types.PageDirectionOlder,
@@ -45,6 +37,14 @@ func (ts *topicsServer) GetFeed(ctx context.Context, in *campsitev1.GetFeedReque
 			return nil, status.Error(codes.InvalidArgument, "page_token")
 		}
 	}
+
+	tx, err := ts.DB.BeginTx(ctx, pgx.TxOptions{
+		AccessMode: pgx.ReadOnly,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
 
 	pubs, pageTokenPair, err := db.Feed(ctx, tx, principal.UserID, int(in.ParentDepth), pageToken, int(in.Limit))
 	if err != nil {
@@ -97,25 +97,8 @@ func (ts *topicsServer) WaitForFeed(ctx context.Context, in *campsitev1.WaitForF
 	}
 	defer tx.Rollback(ctx)
 
-	// Check that we have no posts before attempting to subscribe.
-	hasNewer, err := db.CheckFeedHasNewer(ctx, tx, principal.UserID, pageToken)
-	if err != nil {
+	if err := db.WaitForUserTopic(ctx, tx, ts.Nats, principal.UserID, pageToken); err != nil {
 		return nil, err
-	}
-
-	if !hasNewer {
-		sub, err := ts.Nats.SubscribeSync("user:" + types.EncodeID(principal.UserID))
-		if err != nil {
-			return nil, err
-		}
-		defer sub.Unsubscribe()
-
-		msg, err := sub.NextMsgWithContext(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		_ = msg
 	}
 
 	return &campsitev1.WaitForFeedResponse{}, nil
