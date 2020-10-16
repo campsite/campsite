@@ -9,6 +9,7 @@ import (
 	campsitev1 "campsite.rocks/campsite/proto/campsite/v1"
 	"campsite.rocks/campsite/security"
 	"campsite.rocks/campsite/types"
+	"campsite.rocks/campsite/types/dbtopb"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"google.golang.org/grpc/codes"
@@ -39,12 +40,18 @@ func (ps *postsServer) GetPost(ctx context.Context, in *campsitev1.GetPostReques
 		return nil, err
 	}
 
-	if len(posts) == 0 {
+	post, ok := posts[postID]
+	if !ok {
 		return nil, status.Error(codes.NotFound, "post_id")
 	}
 
+	postpb, err := dbtopb.PostToProto(post)
+	if err != nil {
+		return nil, err
+	}
+
 	return &campsitev1.GetPostResponse{
-		Post: posts[postID],
+		Post: postpb,
 	}, nil
 }
 
@@ -75,7 +82,7 @@ func (ps *postsServer) CreatePost(ctx context.Context, in *campsitev1.CreatePost
 			return nil, err
 		}
 
-		if len(parentPosts) == 0 {
+		if _, ok := parentPosts[*parentPostID]; !ok {
 			return nil, status.Error(codes.NotFound, "parent_post_id")
 		}
 	}
@@ -99,8 +106,13 @@ func (ps *postsServer) CreatePost(ctx context.Context, in *campsitev1.CreatePost
 		return nil, err
 	}
 
+	postpb, err := dbtopb.PostToProto(post)
+	if err != nil {
+		return nil, err
+	}
+
 	return &campsitev1.CreatePostResponse{
-		Post: post,
+		Post: postpb,
 	}, nil
 }
 
@@ -134,8 +146,17 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 		return nil, err
 	}
 
+	posts := make([]*campsitev1.Post, len(children))
+	for i, child := range children {
+		var err error
+		posts[i], err = dbtopb.PostToProto(child)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	resp := &campsitev1.GetPostChildrenResponse{
-		Posts: children,
+		Posts: posts,
 	}
 
 	if nextPageToken != nil {
@@ -147,6 +168,47 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 	}
 
 	return resp, nil
+}
+
+func (ps *postsServer) DeletePost(ctx context.Context, in *campsitev1.DeletePostRequest) (*campsitev1.DeletePostResponse, error) {
+	principal := security.PrincipalFromContext(ctx)
+	if principal == nil {
+		return nil, status.Error(codes.Unauthenticated, "")
+	}
+
+	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+	postID, err := types.DecodeID(in.PostId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "post_id")
+	}
+
+	posts, err := db.PostsByID(ctx, tx, []uuid.UUID{postID}, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	post, ok := posts[postID]
+	if !ok {
+		return nil, status.Error(codes.NotFound, "post_id")
+	}
+
+	if post.Author == nil || post.Author.ID != principal.UserID {
+		return nil, status.Error(codes.PermissionDenied, "")
+	}
+
+	if err := db.DeletePost(ctx, tx, postID); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	return &campsitev1.DeletePostResponse{}, nil
 }
 
 func NewPostsServer(env *env.Env) campsitev1.PostsServer {

@@ -8,6 +8,7 @@ import (
 	campsitev1 "campsite.rocks/campsite/proto/campsite/v1"
 	"campsite.rocks/campsite/security"
 	"campsite.rocks/campsite/types"
+	"campsite.rocks/campsite/types/dbtopb"
 	"github.com/jackc/pgx/v4"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -41,8 +42,13 @@ func (ps *usersServer) GetMe(ctx context.Context, in *campsitev1.GetMeRequest) (
 		return nil, status.Error(codes.NotFound, "")
 	}
 
+	userpb, err := dbtopb.UserToProto(user)
+	if err != nil {
+		return nil, err
+	}
+
 	return &campsitev1.GetMeResponse{
-		User: user,
+		User: userpb,
 	}, nil
 }
 
@@ -69,8 +75,13 @@ func (ps *usersServer) GetUser(ctx context.Context, in *campsitev1.GetUserReques
 		return nil, status.Error(codes.NotFound, "")
 	}
 
+	userpb, err := dbtopb.UserToProto(user)
+	if err != nil {
+		return nil, err
+	}
+
 	return &campsitev1.GetUserResponse{
-		User: user,
+		User: userpb,
 	}, nil
 }
 

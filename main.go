@@ -13,7 +13,6 @@ import (
 	"campsite.rocks/campsite/services"
 	"github.com/BurntSushi/toml"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -46,13 +45,9 @@ func registerServers(grpcServer *grpc.Server, env *env.Env) {
 	campsitev1.RegisterUsersServer(grpcServer, services.NewUsersServer(env))
 }
 
-func recoveryHandler(p interface{}) error {
-	return errors.WithStack(errors.Errorf("panic: %+v", p))
-}
-
 func errorHandler(fullMethod string, err error) error {
 	if _, ok := status.FromError(err); !ok {
-		log.Error().Stack().Err(errors.WithStack(err)).Str("method", fullMethod).Msg("Error handling request")
+		log.Error().Stack().Err(err).Str("method", fullMethod).Msg("Error handling request")
 		err = status.Error(codes.Unknown, "")
 	}
 	return err
@@ -96,7 +91,15 @@ func main() {
 			func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 				return errorHandler(info.FullMethod, handler(srv, stream))
 			},
-			grpc_recovery.StreamServerInterceptor(grpc_recovery.WithRecoveryHandler(recoveryHandler)),
+			func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
+				defer func() {
+					if r := recover(); r != nil {
+						err = errors.WithStack(errors.Errorf("panic: %s", r))
+					}
+				}()
+				err = handler(srv, stream)
+				return
+			},
 			security.MakeStreamServerInterceptor(env),
 		),
 		grpc_middleware.WithUnaryServerChain(
@@ -107,7 +110,15 @@ func main() {
 				}
 				return resp, nil
 			},
-			grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandler(recoveryHandler)),
+			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+				defer func() {
+					if r := recover(); r != nil {
+						err = errors.WithStack(errors.Errorf("panic: %s", r))
+					}
+				}()
+				resp, err = handler(ctx, req)
+				return
+			},
 			security.MakeUnaryServerInterceptor(env),
 		),
 	)

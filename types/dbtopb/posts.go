@@ -1,0 +1,102 @@
+package dbtopb
+
+import (
+	"campsite.rocks/campsite/db"
+	campsitev1 "campsite.rocks/campsite/proto/campsite/v1"
+	"campsite.rocks/campsite/types"
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/wrappers"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+)
+
+func PostToProto(post *db.Post) (*campsitev1.Post, error) {
+	ptypesCreatedAt, err := ptypes.TimestampProto(post.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	var ptypesEditedAt *timestamppb.Timestamp
+	if post.EditedAt != nil {
+		var err error
+		ptypesEditedAt, err = ptypes.TimestampProto(*post.EditedAt)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var ptypesDeletedAt *timestamppb.Timestamp
+	if post.DeletedAt != nil {
+		var err error
+		ptypesDeletedAt, err = ptypes.TimestampProto(*post.DeletedAt)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var author *campsitev1.User
+	if post.Author != nil {
+		var err error
+		author, err = UserToProto(post.Author)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var ptypesContent *wrappers.StringValue
+	if post.Content != nil {
+		ptypesContent = &wrapperspb.StringValue{Value: *post.Content}
+	}
+
+	var ptypesWarning *wrappers.StringValue
+	if post.Warning != nil {
+		ptypesWarning = &wrapperspb.StringValue{Value: *post.Warning}
+	}
+
+	var ptypesParentPostID *wrappers.StringValue
+	if post.ParentPostID != nil {
+		ptypesParentPostID = &wrapperspb.StringValue{Value: types.EncodeID(*post.ParentPostID)}
+	}
+
+	var parentPost *campsitev1.Post
+	if post.ParentPost != nil {
+		var err error
+		parentPost, err = PostToProto(post.ParentPost)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	children := make([]*campsitev1.Post, len(post.Children))
+	for i, child := range post.Children {
+		var err error
+		children[i], err = PostToProto(child)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var npt string
+	if post.ChildrenNextPageToken != nil {
+		var err error
+		npt, err = types.EncodePageToken(*post.ChildrenNextPageToken)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &campsitev1.Post{
+		Id:                    types.EncodeID(post.ID),
+		CreatedAt:             ptypesCreatedAt,
+		EditedAt:              ptypesEditedAt,
+		DeletedAt:             ptypesDeletedAt,
+		Author:                author,
+		Content:               ptypesContent,
+		Warning:               ptypesWarning,
+		ParentPostId:          ptypesParentPostID,
+		ParentPost:            parentPost,
+		Children:              children,
+		ChildrenNextPageToken: npt,
+		NumChildren:           int32(post.NumChildren),
+	}, nil
+}

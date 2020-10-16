@@ -4,27 +4,39 @@ import (
 	"context"
 	"time"
 
-	campsitev1 "campsite.rocks/campsite/proto/campsite/v1"
 	"campsite.rocks/campsite/types"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
+type Post struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	EditedAt  *time.Time
+	DeletedAt *time.Time
+	Content   *string
+	Warning   *string
+
+	Author *User
+
+	ParentPostID *uuid.UUID
+	ParentPost   *Post
+
+	Children              []*Post
+	ChildrenNextPageToken *types.PageToken
+	NumChildren           int
+}
+
 type deferredLoadsForPost struct {
-	usersToFetch map[uuid.UUID][]*campsitev1.User
+	usersToFetch map[uuid.UUID][]*User
 }
 
 // basePostsByID only fetches records from the posts table. This is to allow for recursive lookup of parent posts in one go without running N+1 queries.
-func basePostsByID(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, parentDepth int) (map[uuid.UUID]*campsitev1.Post, *deferredLoadsForPost, error) {
-	posts := map[uuid.UUID]*campsitev1.Post{}
+func basePostsByID(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, parentDepth int) (map[uuid.UUID]*Post, *deferredLoadsForPost, error) {
+	posts := map[uuid.UUID]*Post{}
 
 	deferred := &deferredLoadsForPost{
-		usersToFetch: map[uuid.UUID][]*campsitev1.User{},
+		usersToFetch: map[uuid.UUID][]*User{},
 	}
 
 	// Fetch the posts.
@@ -51,85 +63,26 @@ func basePostsByID(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, parentDepth 
 		defer rows.Close()
 
 		for rows.Next() {
-			var postID uuid.UUID
-			var createdAt time.Time
-			var editedAt *time.Time
-			var deletedAt *time.Time
-			var content *string
-			var warning *string
+			p := &Post{}
+
 			var authorUserID *uuid.UUID
-			var parentPostID *uuid.UUID
-			var numChildren int
-			if err := rows.Scan(&postID, &createdAt, &editedAt, &deletedAt, &content, &warning, &authorUserID, &parentPostID, &numChildren); err != nil {
+			if err := rows.Scan(&p.ID, &p.CreatedAt, &p.EditedAt, &p.DeletedAt, &p.Content, &p.Warning, &authorUserID, &p.ParentPostID, &p.NumChildren); err != nil {
 				return err
 			}
 
-			ptypesCreatedAt, err := ptypes.TimestampProto(createdAt)
-			if err != nil {
-				return err
-			}
-
-			var ptypesEditedAt *timestamppb.Timestamp
-			if editedAt != nil {
-				var err error
-				ptypesEditedAt, err = ptypes.TimestampProto(*editedAt)
-				if err != nil {
-					return err
-				}
-			}
-
-			var ptypesDeletedAt *timestamppb.Timestamp
-			if deletedAt != nil {
-				var err error
-				ptypesDeletedAt, err = ptypes.TimestampProto(*deletedAt)
-				if err != nil {
-					return err
-				}
-			}
-
-			var author *campsitev1.User
 			if authorUserID != nil {
-				author = &campsitev1.User{
-					Id: types.EncodeID(*authorUserID),
+				p.Author = &User{
+					ID: *authorUserID,
 				}
-				deferred.usersToFetch[*authorUserID] = append(deferred.usersToFetch[*authorUserID], author)
+				deferred.usersToFetch[*authorUserID] = append(deferred.usersToFetch[*authorUserID], p.Author)
 			}
 
-			var ptypesContent *wrappers.StringValue
-			if content != nil {
-				ptypesContent = &wrapperspb.StringValue{Value: *content}
+			p.ChildrenNextPageToken = &types.PageToken{
+				ID:        p.ID,
+				CreatedAt: p.CreatedAt,
 			}
 
-			var ptypesWarning *wrappers.StringValue
-			if warning != nil {
-				ptypesWarning = &wrapperspb.StringValue{Value: *warning}
-			}
-
-			var ptypesParentPostID *wrappers.StringValue
-			if parentPostID != nil {
-				ptypesParentPostID = &wrappers.StringValue{Value: types.EncodeID(*parentPostID)}
-			}
-
-			pt, err := types.EncodePageToken(types.PageToken{
-				ID:        postID,
-				CreatedAt: createdAt,
-			})
-			if err != nil {
-				return err
-			}
-
-			posts[postID] = &campsitev1.Post{
-				Id:                    types.EncodeID(postID),
-				CreatedAt:             ptypesCreatedAt,
-				EditedAt:              ptypesEditedAt,
-				DeletedAt:             ptypesDeletedAt,
-				Content:               ptypesContent,
-				Warning:               ptypesWarning,
-				Author:                author,
-				ParentPostId:          ptypesParentPostID,
-				ChildrenNextPageToken: pt,
-				NumChildren:           int32(numChildren),
-			}
+			posts[p.ID] = p
 		}
 
 		if err := rows.Err(); err != nil {
@@ -228,7 +181,7 @@ func basePostsByID(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, parentDepth 
 	return posts, deferred, nil
 }
 
-func PostsByID(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, parentDepth int) (map[uuid.UUID]*campsitev1.Post, error) {
+func PostsByID(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, parentDepth int) (map[uuid.UUID]*Post, error) {
 	posts, deferred, err := basePostsByID(ctx, tx, ids, parentDepth)
 	if err != nil {
 		return nil, err
@@ -246,25 +199,18 @@ func PostsByID(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, parentDepth int)
 
 	for userID, us := range deferred.usersToFetch {
 		for _, u := range us {
-			proto.Merge(u, users[userID])
+			*users[userID] = *u
 		}
 	}
 
 	return posts, nil
 }
 
-func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDepth int, pageToken types.PageToken, limit int) ([]*campsitev1.Post, *types.PageToken, error) {
-	type postTreeNode struct {
-		id        uuid.UUID
-		post      *campsitev1.Post
-		createdAt time.Time
-		children  []*postTreeNode
-	}
+func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDepth int, pageToken types.PageToken, limit int) ([]*Post, *types.PageToken, error) {
+	var rootPosts []*Post
 
-	var rootPosts []*postTreeNode
-
-	postTreeNodesByID := map[uuid.UUID]*postTreeNode{}
-	var postIDs []uuid.UUID
+	childPostsByID := map[uuid.UUID]*Post{}
+	var childPostIDs []uuid.UUID
 
 	if err := func() error {
 		rows, err := tx.Query(ctx, `
@@ -323,32 +269,22 @@ func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDep
 		defer rows.Close()
 
 		for rows.Next() {
-			var postID uuid.UUID
-			var createdAt time.Time
+			child := &Post{}
 			var path []uuid.UUID
 
-			if err := rows.Scan(&postID, &createdAt, &path); err != nil {
+			if err := rows.Scan(&child.ID, &child.CreatedAt, &path); err != nil {
 				return err
 			}
 
-			postIDs = append(postIDs, postID)
-
-			node := &postTreeNode{
-				id:        postID,
-				createdAt: createdAt,
-				post: &campsitev1.Post{
-					Id: types.EncodeID(postID),
-				},
-			}
-			postTreeNodesByID[postID] = node
+			childPostIDs = append(childPostIDs, child.ID)
+			childPostsByID[child.ID] = child
 
 			if len(path) == 0 {
-				rootPosts = append(rootPosts, node)
+				rootPosts = append(rootPosts, child)
 			} else {
 				// Rows are retrieved in level-order traversal, so we can materialize the tree in the order we receive the nodes.
-				parentNode := postTreeNodesByID[path[len(path)-1]]
-				parentNode.children = append(parentNode.children, node)
-				parentNode.post.Children = append(parentNode.post.Children, node.post)
+				parentNode := childPostsByID[path[len(path)-1]]
+				parentNode.Children = append(parentNode.Children, child)
 			}
 		}
 
@@ -361,30 +297,34 @@ func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDep
 		return nil, nil, err
 	}
 
-	posts, err := PostsByID(ctx, tx, postIDs, 0)
+	posts, err := PostsByID(ctx, tx, childPostIDs, 0)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Fill in the post tree.
-	for postID, node := range postTreeNodesByID {
-		proto.Merge(node.post, posts[postID])
-		if len(node.children) < limit {
+	for _, child := range childPostsByID {
+		// We have to preserve the children because otherwise they will be overridden by copying the fetched post in.
+		children := child.Children
+		*child = *posts[child.ID]
+		child.Children = children
+
+		if len(child.Children) < limit {
 			// Blank the next page tokens if we are under the limit.
-			node.post.ChildrenNextPageToken = ""
+			child.ChildrenNextPageToken = nil
 		}
 	}
 
-	childPosts := make([]*campsitev1.Post, len(rootPosts))
+	childPosts := make([]*Post, len(rootPosts))
 	for i, rootPost := range rootPosts {
-		childPosts[i] = rootPost.post
+		childPosts[i] = rootPost
 	}
 
 	var nextPageToken *types.PageToken
 	if len(rootPosts) >= limit {
 		nextPageToken = &types.PageToken{
-			CreatedAt: rootPosts[len(rootPosts)-1].createdAt,
-			ID:        rootPosts[len(rootPosts)-1].id,
+			CreatedAt: rootPosts[len(rootPosts)-1].CreatedAt,
+			ID:        rootPosts[len(rootPosts)-1].ID,
 		}
 	}
 
@@ -398,7 +338,7 @@ type PostPrototype struct {
 	ParentPostID *uuid.UUID
 }
 
-func CreatePost(ctx context.Context, tx pgx.Tx, postProto *PostPrototype) (*campsitev1.Post, error) {
+func CreatePost(ctx context.Context, tx pgx.Tx, postProto *PostPrototype) (*Post, error) {
 	var postID uuid.UUID
 	var createdAt time.Time
 
@@ -410,20 +350,20 @@ func CreatePost(ctx context.Context, tx pgx.Tx, postProto *PostPrototype) (*camp
 
 	// Create the initial post.
 	if err := tx.QueryRow(ctx, `
-			insert into posts (
-				author_user_id,
-				parent_post_id,
-				content,
-				warning
-			)
-			values (
-				$1,
-				$2,
-				$3,
-				$4
-			)
-			returning id, created_at
-		`,
+		insert into posts (
+			author_user_id,
+			parent_post_id,
+			content,
+			warning
+		)
+		values (
+			$1,
+			$2,
+			$3,
+			$4
+		)
+		returning id, created_at
+	`,
 		postProto.AuthorUserID,
 		postProto.ParentPostID,
 		postProto.Content,
@@ -432,36 +372,33 @@ func CreatePost(ctx context.Context, tx pgx.Tx, postProto *PostPrototype) (*camp
 		return nil, err
 	}
 
-	ptypesCreatedAt, err := ptypes.TimestampProto(createdAt)
-	if err != nil {
-		return nil, err
-	}
-
-	var ptypesWarning *wrappers.StringValue
-	if postProto.Warning != nil {
-		ptypesWarning = &wrappers.StringValue{Value: *postProto.Warning}
-	}
-
-	var ptypesParentPostID *wrappers.StringValue
-	if postProto.ParentPostID != nil {
-		ptypesParentPostID = &wrappers.StringValue{Value: types.EncodeID(*postProto.ParentPostID)}
-	}
-
-	pt, err := types.EncodePageToken(types.PageToken{
+	return &Post{
 		ID:        postID,
 		CreatedAt: createdAt,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &campsitev1.Post{
-		Id:                    types.EncodeID(postID),
-		CreatedAt:             ptypesCreatedAt,
-		Author:                author,
-		Warning:               ptypesWarning,
-		Content:               &wrappers.StringValue{Value: postProto.Content},
-		ChildrenNextPageToken: pt,
-		ParentPostId:          ptypesParentPostID,
+		Author:    author,
+		Warning:   postProto.Warning,
+		Content:   &postProto.Content,
+		ChildrenNextPageToken: &types.PageToken{
+			ID:        postID,
+			CreatedAt: createdAt,
+		},
+		ParentPostID: postProto.ParentPostID,
 	}, nil
+}
+
+func DeletePost(ctx context.Context, tx pgx.Tx, postID uuid.UUID) error {
+	// We don't actually delete the post, we just turn it into a tombstone.
+	if _, err := tx.Exec(ctx, `
+		update posts
+		set
+			deleted_at = now(),
+			content = null,
+			warning = null
+		where
+			id = $1 and
+			deleted_at is null
+	`, postID); err != nil {
+		return err
+	}
+	return nil
 }
