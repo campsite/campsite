@@ -23,7 +23,7 @@ type Post struct {
 	ParentPost   *Post
 
 	Children              []*Post
-	ChildrenNextPageToken *types.PageToken
+	ChildrenPageTokenPair types.PageTokenPair
 	NumChildren           int
 }
 
@@ -75,11 +75,6 @@ func basePostsByID(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, parentDepth 
 					ID: *authorUserID,
 				}
 				deferred.usersToFetch[*authorUserID] = append(deferred.usersToFetch[*authorUserID], p.Author)
-			}
-
-			p.ChildrenNextPageToken = &types.PageToken{
-				ID:        p.ID,
-				CreatedAt: p.CreatedAt,
 			}
 
 			posts[p.ID] = p
@@ -206,7 +201,7 @@ func PostsByID(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, parentDepth int)
 	return posts, nil
 }
 
-func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDepth int, pageToken types.PageToken, limit int) ([]*Post, *types.PageToken, error) {
+func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDepth int, pageToken types.PageToken, limit int) ([]*Post, types.PageTokenPair, error) {
 	var rootPosts []*Post
 
 	childPostsByID := map[uuid.UUID]*Post{}
@@ -224,14 +219,22 @@ func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDep
 					from
 						posts
 					where
-						parent_post_id = $1 and
-						(
-							(created_at < $2) or
-							(created_at = $2 and id > $3)
+						parent_post_id = $1 and (
+							case
+								when $4 = -1 then (
+									(created_at < $2) or
+									(created_at = $2 and id > $3)
+								)
+								when $4 = 1 then (
+									(created_at > $2) or
+									(created_at = $2 and id < $3)
+								)
+								else false
+							end
 						)
 					order by
 						created_at desc, id
-					limit $5
+					limit $6
 				)
 				union all
 				(
@@ -244,10 +247,10 @@ func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDep
 						posts p
 					where
 						p.parent_post_id = children.post_id and
-						coalesce(array_length(children.path, 1), 0) < $4
+						coalesce(array_length(children.path, 1), 0) < $5
 					order by
 						p.created_at desc, p.id
-					limit $5
+					limit $6
 				)
 			)
 			select
@@ -262,7 +265,7 @@ func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDep
 				coalesce(path, '{}'),
 				created_at desc,
 				post_id
-		`, postID, pageToken.CreatedAt, pageToken.ID, childDepth, limit)
+		`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, childDepth, limit)
 		if err != nil {
 			return err
 		}
@@ -294,12 +297,12 @@ func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDep
 
 		return nil
 	}(); err != nil {
-		return nil, nil, err
+		return nil, types.PageTokenPair{}, err
 	}
 
 	posts, err := PostsByID(ctx, tx, childPostIDs, 0)
 	if err != nil {
-		return nil, nil, err
+		return nil, types.PageTokenPair{}, err
 	}
 
 	// Fill in the post tree.
@@ -309,9 +312,27 @@ func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDep
 		*child = *posts[child.ID]
 		child.Children = children
 
-		if len(child.Children) < limit {
-			// Blank the next page tokens if we are under the limit.
-			child.ChildrenNextPageToken = nil
+		var nextPageToken *types.PageToken
+		if len(children) >= limit {
+			nextPageToken = &types.PageToken{
+				CreatedAt: children[len(children)-1].CreatedAt,
+				ID:        children[len(children)-1].ID,
+				Direction: types.PageDirectionOlder,
+			}
+		}
+
+		var prevPageToken *types.PageToken
+		if len(children) > 0 {
+			prevPageToken = &types.PageToken{
+				CreatedAt: children[0].CreatedAt,
+				ID:        children[0].ID,
+				Direction: types.PageDirectionNewer,
+			}
+		}
+
+		child.ChildrenPageTokenPair = types.PageTokenPair{
+			Next: nextPageToken,
+			Prev: prevPageToken,
 		}
 	}
 
@@ -321,14 +342,27 @@ func PostChildrenByID(ctx context.Context, tx pgx.Tx, postID uuid.UUID, childDep
 	}
 
 	var nextPageToken *types.PageToken
-	if len(rootPosts) >= limit {
+	if len(rootPosts) >= limit || (len(rootPosts) > 0 && pageToken.Direction == types.PageDirectionNewer) {
 		nextPageToken = &types.PageToken{
 			CreatedAt: rootPosts[len(rootPosts)-1].CreatedAt,
 			ID:        rootPosts[len(rootPosts)-1].ID,
+			Direction: types.PageDirectionOlder,
 		}
 	}
 
-	return childPosts, nextPageToken, nil
+	var prevPageToken *types.PageToken
+	if len(rootPosts) > 0 {
+		prevPageToken = &types.PageToken{
+			CreatedAt: rootPosts[0].CreatedAt,
+			ID:        rootPosts[0].ID,
+			Direction: types.PageDirectionNewer,
+		}
+	}
+
+	return childPosts, types.PageTokenPair{
+		Next: nextPageToken,
+		Prev: prevPageToken,
+	}, nil
 }
 
 type PostSkeleton struct {
@@ -375,7 +409,7 @@ func CreatePost(ctx context.Context, tx pgx.Tx, postSkeleton *PostSkeleton) (*Po
 	if postSkeleton.ParentPostID == nil {
 		// If there is no parent post, we will publish to the user's topic by default.
 		if _, err := tx.Exec(ctx, `
-			insert into publishes (
+			insert into publications (
 				post_id,
 				topic_id,
 				publisher_user_id
@@ -391,7 +425,7 @@ func CreatePost(ctx context.Context, tx pgx.Tx, postSkeleton *PostSkeleton) (*Po
 		// If there is a parent post, we will publish to the parent post's author's private topic.
 		// TODO: What if the post author is null?
 		if _, err := tx.Exec(ctx, `
-			insert into publishes (
+			insert into publications (
 				post_id,
 				topic_id,
 				publisher_user_id
@@ -418,15 +452,11 @@ func CreatePost(ctx context.Context, tx pgx.Tx, postSkeleton *PostSkeleton) (*Po
 	}
 
 	return &Post{
-		ID:        postID,
-		CreatedAt: createdAt,
-		Author:    author,
-		Warning:   postSkeleton.Warning,
-		Content:   &postSkeleton.Content,
-		ChildrenNextPageToken: &types.PageToken{
-			ID:        postID,
-			CreatedAt: createdAt,
-		},
+		ID:           postID,
+		CreatedAt:    createdAt,
+		Author:       author,
+		Warning:      postSkeleton.Warning,
+		Content:      &postSkeleton.Content,
 		ParentPostID: postSkeleton.ParentPostID,
 	}, nil
 }

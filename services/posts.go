@@ -132,6 +132,7 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 
 	pageToken := types.PageToken{
 		CreatedAt: time.Now(),
+		Direction: types.PageDirectionOlder,
 	}
 	if in.PageToken != "" {
 		var err error
@@ -141,7 +142,7 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 		}
 	}
 
-	children, nextPageToken, err := db.PostChildrenByID(ctx, tx, postID, int(in.ChildDepth), pageToken, int(in.Limit))
+	children, pageTokenPair, err := db.PostChildrenByID(ctx, tx, postID, int(in.ChildDepth), pageToken, int(in.Limit))
 	if err != nil {
 		return nil, err
 	}
@@ -159,13 +160,11 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 		Posts: posts,
 	}
 
-	if nextPageToken != nil {
-		pt, err := types.EncodePageToken(*nextPageToken)
-		if err != nil {
-			return nil, err
-		}
-		resp.NextPageToken = pt
+	protoPageTokenPair, err := types.PageTokenPairToProto(pageTokenPair)
+	if err != nil {
+		return nil, err
 	}
+	resp.PageTokens = protoPageTokenPair
 
 	return resp, nil
 }

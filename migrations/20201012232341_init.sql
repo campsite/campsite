@@ -32,7 +32,8 @@ create table posts (
     parent_post_id uuid references posts(id) on delete set null
 );
 
-create index on posts(created_at desc, id);
+create index on posts(created_at asc, id desc);
+create index on posts(created_at desc, id asc);
 
 create type media_type as enum (
     'raw',
@@ -72,7 +73,8 @@ create table publications (
     primary key (post_id, topic_id)
 );
 
-create index on publications(published_at desc, post_id);
+create index on publications(published_at asc, post_id desc);
+create index on publications(published_at desc, post_id asc);
 
 create table subscriptions (
     user_id uuid not null references users(id) on delete cascade,

@@ -15,14 +15,27 @@ message GetFeedRequest {
 }
 
 message GetFeedResponse {
-    repeated Publish publishes = 1;
-    string next_page_token = 2;
+    repeated Publication publications = 1;
+    PageTokenPair page_tokens = 2;
+}
+
+message WaitForFeedRequest {
+    string page_token = 1;
+}
+
+message WaitForFeedResponse {
 }
 
 service Topics {
     rpc GetFeed(GetFeedRequest) returns (GetFeedResponse) {
         option (google.api.http) = {
             get: "/v1/feed"
+        };
+    }
+
+    rpc WaitForFeed(WaitForFeedRequest) returns (WaitForFeedResponse) {
+        option (google.api.http) = {
+            get: "/v1/feed/wait"
         };
     }
 }

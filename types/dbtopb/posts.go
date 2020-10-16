@@ -75,27 +75,23 @@ func PostToProto(post *db.Post) (*campsitev1.Post, error) {
 		}
 	}
 
-	var npt string
-	if post.ChildrenNextPageToken != nil {
-		var err error
-		npt, err = types.EncodePageToken(*post.ChildrenNextPageToken)
-		if err != nil {
-			return nil, err
-		}
+	protoPageTokenPair, err := types.PageTokenPairToProto(post.ChildrenPageTokenPair)
+	if err != nil {
+		return nil, err
 	}
 
 	return &campsitev1.Post{
-		Id:                    types.EncodeID(post.ID),
-		CreatedAt:             ptypesCreatedAt,
-		EditedAt:              ptypesEditedAt,
-		DeletedAt:             ptypesDeletedAt,
-		Author:                author,
-		Content:               ptypesContent,
-		Warning:               ptypesWarning,
-		ParentPostId:          ptypesParentPostID,
-		ParentPost:            parentPost,
-		Children:              children,
-		ChildrenNextPageToken: npt,
-		NumChildren:           int32(post.NumChildren),
+		Id:                 types.EncodeID(post.ID),
+		CreatedAt:          ptypesCreatedAt,
+		EditedAt:           ptypesEditedAt,
+		DeletedAt:          ptypesDeletedAt,
+		Author:             author,
+		Content:            ptypesContent,
+		Warning:            ptypesWarning,
+		ParentPostId:       ptypesParentPostID,
+		ParentPost:         parentPost,
+		Children:           children,
+		ChildrenPageTokens: protoPageTokenPair,
+		NumChildren:        int32(post.NumChildren),
 	}, nil
 }

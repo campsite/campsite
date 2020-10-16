@@ -36,6 +36,7 @@ func (ts *topicsServer) GetFeed(ctx context.Context, in *campsitev1.GetFeedReque
 
 	pageToken := types.PageToken{
 		CreatedAt: time.Now(),
+		Direction: types.PageDirectionOlder,
 	}
 	if in.PageToken != "" {
 		var err error
@@ -45,12 +46,12 @@ func (ts *topicsServer) GetFeed(ctx context.Context, in *campsitev1.GetFeedReque
 		}
 	}
 
-	pubs, nextPageToken, err := db.Feed(ctx, tx, principal.UserID, int(in.ParentDepth), pageToken, int(in.Limit))
+	pubs, pageTokenPair, err := db.Feed(ctx, tx, principal.UserID, int(in.ParentDepth), pageToken, int(in.Limit))
 	if err != nil {
 		return nil, err
 	}
 
-	pubPbs := make([]*campsitev1.Publish, len(pubs))
+	pubPbs := make([]*campsitev1.Publication, len(pubs))
 	for i, pub := range pubs {
 		var err error
 		pubPbs[i], err = dbtopb.PublicationToProto(pub)
@@ -60,18 +61,48 @@ func (ts *topicsServer) GetFeed(ctx context.Context, in *campsitev1.GetFeedReque
 	}
 
 	resp := &campsitev1.GetFeedResponse{
-		Publishes: pubPbs,
+		Publications: pubPbs,
 	}
 
-	if nextPageToken != nil {
-		pt, err := types.EncodePageToken(*nextPageToken)
-		if err != nil {
-			return nil, err
-		}
-		resp.NextPageToken = pt
+	protoPageTokenPair, err := types.PageTokenPairToProto(pageTokenPair)
+	if err != nil {
+		return nil, err
 	}
+	resp.PageTokens = protoPageTokenPair
 
 	return resp, nil
+}
+
+func (ts *topicsServer) WaitForFeed(ctx context.Context, in *campsitev1.WaitForFeedRequest) (*campsitev1.WaitForFeedResponse, error) {
+	principal := security.PrincipalFromContext(ctx)
+	if principal == nil {
+		return nil, status.Error(codes.Unauthenticated, "")
+	}
+
+	pageToken, err := types.DecodePageToken(in.PageToken)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "page_token")
+	}
+
+	// Only allow newer pagination.
+	if pageToken.Direction != types.PageDirectionNewer {
+		return nil, status.Error(codes.InvalidArgument, "page_token")
+	}
+
+	sub, err := ts.Nats.SubscribeSync("feed:" + types.EncodeID(principal.UserID))
+	if err != nil {
+		return nil, err
+	}
+	defer sub.Unsubscribe()
+
+	msg, err := sub.NextMsgWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	_ = msg
+
+	return &campsitev1.WaitForFeedResponse{}, nil
 }
 
 func NewTopicsServer(env *env.Env) campsitev1.TopicsServer {

@@ -14,6 +14,7 @@ import (
 	"github.com/BurntSushi/toml"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/nats-io/nats.go"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -34,6 +35,7 @@ type config struct {
 	LogLevel                 string
 	ListenAddr               string
 	DatabaseConnectionString string
+	NatsURL                  string
 	Debug                    struct {
 		ListenAddr       string
 		EnableReflection bool
@@ -72,6 +74,11 @@ func main() {
 		zerolog.SetGlobalLevel(logLevel)
 	}
 
+	nc, err := nats.Connect(c.NatsURL)
+	if err != nil {
+		log.Panic().Err(err).Msg("Failed to connect to NATS")
+	}
+
 	pgxConfig, err := pgxpool.ParseConfig(c.DatabaseConnectionString)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to parse config string")
@@ -83,7 +90,8 @@ func main() {
 	}
 
 	env := &env.Env{
-		DB: db,
+		DB:   db,
+		Nats: nc,
 	}
 
 	grpcServer := grpc.NewServer(

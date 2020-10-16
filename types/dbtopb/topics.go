@@ -6,7 +6,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 )
 
-func PublicationToProto(pub *db.Publication) (*campsitev1.Publish, error) {
+func PublicationToProto(pub *db.Publication) (*campsitev1.Publication, error) {
 	ptypesPublishedAt, err := ptypes.TimestampProto(pub.PublishedAt)
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func PublicationToProto(pub *db.Publication) (*campsitev1.Publish, error) {
 		}
 	}
 
-	return &campsitev1.Publish{
+	return &campsitev1.Publication{
 		Post:        post,
 		PublishedAt: ptypesPublishedAt,
 		Publisher:   publisher,

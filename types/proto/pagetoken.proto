@@ -4,7 +4,14 @@ package campsite.v1;
 
 option go_package = "campsite.rocks/campsite/types/proto";
 
+enum PageDirection {
+    UNKNOWN = 0;
+    NEWER = 1;
+    OLDER = 2;
+}
+
 message PageToken {
     int64 created_at = 1;
     bytes id = 2;
+    PageDirection direction = 3;
 }

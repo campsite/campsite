@@ -55,7 +55,7 @@ message GetPostChildrenRequest {
 
 message GetPostChildrenResponse {
     repeated Post posts = 1;
-    string next_page_token = 2;
+    PageTokenPair page_tokens = 2;
 }
 
 service Posts {

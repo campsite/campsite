@@ -9,6 +9,8 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/jackc/pgx/v4 v4.9.0
 	github.com/lib/pq v1.8.0 // indirect
+	github.com/nats-io/nats-server/v2 v2.1.8 // indirect
+	github.com/nats-io/nats.go v1.10.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.20.0

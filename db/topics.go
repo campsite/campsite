@@ -15,7 +15,7 @@ type Publication struct {
 	Post        *Post
 }
 
-func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pageToken types.PageToken, limit int) ([]*Publication, *types.PageToken, error) {
+func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pageToken types.PageToken, limit int) ([]*Publication, types.PageTokenPair, error) {
 	var pubs []*Publication
 	var postIDs []uuid.UUID
 	var publisherIDs []uuid.UUID
@@ -44,13 +44,22 @@ func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pag
 						where id = $1
 					)
 				) and (
-					(published_at < $2) or
-					(published_at = $2 and post_id > $3)
+					case
+						when $4 = -1 then (
+							(published_at < $2) or
+							(published_at = $2 and post_id > $3)
+						)
+						when $4 = 1 then (
+							(published_at > $2) or
+							(published_at = $2 and post_id < $3)
+						)
+						else false
+					end
 				)
 			order by
 				published_at desc, post_id
-			limit $4
-		`, userID, pageToken.CreatedAt, pageToken.ID, limit)
+			limit $5
+		`, userID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, limit)
 		if err != nil {
 			return err
 		}
@@ -77,12 +86,12 @@ func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pag
 
 		return nil
 	}(); err != nil {
-		return nil, nil, err
+		return nil, types.PageTokenPair{}, err
 	}
 
 	posts, err := PostsByID(ctx, tx, postIDs, parentDepth)
 	if err != nil {
-		return nil, nil, err
+		return nil, types.PageTokenPair{}, err
 	}
 
 	for _, postID := range postIDs {
@@ -91,7 +100,7 @@ func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pag
 
 	publishers, err := UsersByID(ctx, tx, publisherIDs)
 	if err != nil {
-		return nil, nil, err
+		return nil, types.PageTokenPair{}, err
 	}
 
 	for _, pub := range pubs {
@@ -99,12 +108,25 @@ func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pag
 	}
 
 	var nextPageToken *types.PageToken
-	if len(pubs) >= limit {
+	if len(pubs) >= limit || (len(pubs) > 0 && pageToken.Direction == types.PageDirectionNewer) {
 		nextPageToken = &types.PageToken{
 			CreatedAt: pubs[len(pubs)-1].PublishedAt,
 			ID:        pubs[len(pubs)-1].Post.ID,
+			Direction: types.PageDirectionOlder,
 		}
 	}
 
-	return pubs, nextPageToken, nil
+	var prevPageToken *types.PageToken
+	if len(pubs) > 0 {
+		prevPageToken = &types.PageToken{
+			CreatedAt: pubs[0].PublishedAt,
+			ID:        pubs[0].Post.ID,
+			Direction: types.PageDirectionNewer,
+		}
+	}
+
+	return pubs, types.PageTokenPair{
+		Next: nextPageToken,
+		Prev: prevPageToken,
+	}, nil
 }
