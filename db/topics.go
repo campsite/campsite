@@ -7,12 +7,118 @@ import (
 	"campsite.rocks/campsite/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
+	"github.com/nats-io/nats.go"
 )
 
 type Publication struct {
 	PublishedAt time.Time
 	Publisher   *User
 	Post        *Post
+}
+
+type publishOpts struct {
+	Private bool
+}
+
+func publish(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID uuid.UUID, topicID uuid.UUID, publisherUserID uuid.UUID, opts publishOpts) error {
+	if _, err := tx.Exec(ctx, `
+		insert into publications (
+			post_id,
+			topic_id,
+			publisher_user_id,
+			private
+		)
+		select
+			$1,
+			$2,
+			$3,
+			$4
+	`, postID, topicID, publisherUserID, opts.Private); err != nil {
+		return err
+	}
+
+	// The topic might not actually be a user, but we just send it to any listening users anyway.
+	userIDs := []uuid.UUID{topicID}
+	if !opts.Private {
+		// Non-private posts need to be fanned out to all subscriptions.
+		if err := func() error {
+			rows, err := tx.Query(ctx, `
+			select user_id
+			from subscriptions
+			where topic_id = $1
+		`, topicID)
+			if err != nil {
+				return err
+			}
+			defer rows.Close()
+
+			for rows.Next() {
+				var userID uuid.UUID
+				if err := rows.Scan(&userID); err != nil {
+					return err
+				}
+				userIDs = append(userIDs, userID)
+			}
+
+			if err := rows.Err(); err != nil {
+				return err
+			}
+
+			return nil
+		}(); err != nil {
+			return err
+		}
+	}
+
+	// TODO: Consider running this outside a transaction/aggregating publishes.
+	for _, userID := range userIDs {
+		if err := nc.Publish("user:"+types.EncodeID(userID), []byte{}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func CheckFeedHasNewer(ctx context.Context, tx pgx.Tx, userID uuid.UUID, pageToken types.PageToken) (bool, error) {
+	var hasNewer bool
+	if err := tx.QueryRow(ctx, `
+		select exists(
+			select 1
+			from publications
+			where
+				(
+					(
+						topic_id = any(
+							select
+								subscriptions.topic_id
+							from
+								subscriptions
+							where
+								subscriptions.user_id = $1
+						) and not private
+					) or (
+						topic_id = $1
+					)
+				) and (
+					case
+						when $4 = -1 then (
+							(published_at < $2) or
+							(published_at = $2 and post_id > $3)
+						)
+						when $4 = 1 then (
+							(published_at > $2) or
+							(published_at = $2 and post_id < $3)
+						)
+						else false
+					end
+				)
+		)
+	`, userID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction).Scan(&hasNewer); err != nil {
+		return false, err
+	}
+
+	return hasNewer, nil
 }
 
 func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pageToken types.PageToken, limit int) ([]*Publication, types.PageTokenPair, error) {
@@ -29,19 +135,17 @@ func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pag
 				publications
 			where
 				(
-					topic_id = any(
-						select
-							subscriptions.topic_id
-						from
-							subscriptions
-						where
-							subscriptions.user_id = $1
-					) or
-					topic_id = $1 or
-					topic_id = (
-						select private_topic_id
-						from users
-						where id = $1
+					(
+						topic_id = any(
+							select
+								subscriptions.topic_id
+							from
+								subscriptions
+							where
+								subscriptions.user_id = $1
+						) and not private
+					) or (
+						topic_id = $1
 					)
 				) and (
 					case

@@ -9,9 +9,7 @@ create table topics (
 
 create table users (
     id uuid primary key references topics(id) on delete cascade,
-    name text not null,
-    private_topic_id uuid not null references topics(id) on delete cascade,
-    check (id != private_topic_id)
+    name text not null
 );
 
 create unique index on users(private_topic_id);
@@ -68,9 +66,13 @@ create table sessions (
 create table publications (
     post_id uuid not null references posts(id) on delete cascade,
     topic_id uuid not null references topics(id) on delete cascade,
-    publisher_user_id uuid references users(id) on delete set null,
+    publisher_user_id uuid references users(id) on delete cascade,
     published_at timestamptz not null default now(),
-    primary key (post_id, topic_id)
+
+    -- Additional flags.
+    private boolean not null default false,
+
+    primary key (post_id, topic_id, publisher_user_id)
 );
 
 create index on publications(published_at asc, post_id desc);

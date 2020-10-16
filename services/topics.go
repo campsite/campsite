@@ -89,18 +89,34 @@ func (ts *topicsServer) WaitForFeed(ctx context.Context, in *campsitev1.WaitForF
 		return nil, status.Error(codes.InvalidArgument, "page_token")
 	}
 
-	sub, err := ts.Nats.SubscribeSync("feed:" + types.EncodeID(principal.UserID))
+	tx, err := ts.DB.BeginTx(ctx, pgx.TxOptions{
+		AccessMode: pgx.ReadOnly,
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer sub.Unsubscribe()
+	defer tx.Rollback(ctx)
 
-	msg, err := sub.NextMsgWithContext(ctx)
+	// Check that we have no posts before attempting to subscribe.
+	hasNewer, err := db.CheckFeedHasNewer(ctx, tx, principal.UserID, pageToken)
 	if err != nil {
 		return nil, err
 	}
 
-	_ = msg
+	if !hasNewer {
+		sub, err := ts.Nats.SubscribeSync("user:" + types.EncodeID(principal.UserID))
+		if err != nil {
+			return nil, err
+		}
+		defer sub.Unsubscribe()
+
+		msg, err := sub.NextMsgWithContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		_ = msg
+	}
 
 	return &campsitev1.WaitForFeedResponse{}, nil
 }

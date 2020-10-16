@@ -7,6 +7,7 @@ import (
 	"campsite.rocks/campsite/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
+	"github.com/nats-io/nats.go"
 )
 
 type Post struct {
@@ -183,6 +184,7 @@ func PostsByID(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, parentDepth int)
 	}
 
 	userIDs := make([]uuid.UUID, 0, len(deferred.usersToFetch))
+
 	for userID := range deferred.usersToFetch {
 		userIDs = append(userIDs, userID)
 	}
@@ -194,7 +196,7 @@ func PostsByID(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, parentDepth int)
 
 	for userID, us := range deferred.usersToFetch {
 		for _, u := range us {
-			*users[userID] = *u
+			*u = *users[userID]
 		}
 	}
 
@@ -372,7 +374,7 @@ type PostSkeleton struct {
 	ParentPostID *uuid.UUID
 }
 
-func CreatePost(ctx context.Context, tx pgx.Tx, postSkeleton *PostSkeleton) (*Post, error) {
+func CreatePost(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postSkeleton *PostSkeleton) (*Post, error) {
 	var postID uuid.UUID
 	var createdAt time.Time
 
@@ -407,47 +409,30 @@ func CreatePost(ctx context.Context, tx pgx.Tx, postSkeleton *PostSkeleton) (*Po
 	}
 
 	if postSkeleton.ParentPostID == nil {
-		// If there is no parent post, we will publish to the user's topic by default.
-		if _, err := tx.Exec(ctx, `
-			insert into publications (
-				post_id,
-				topic_id,
-				publisher_user_id
-			)
-			select
-				$1,
-				$2,
-				$2
-		`, postID, author.ID); err != nil {
+		// If there is no parent post, we will publish to the user's topic by default, publicly.
+		if err := publish(ctx, tx, nc, postID, author.ID, author.ID, publishOpts{Private: false}); err != nil {
 			return nil, err
 		}
 	} else {
-		// If there is a parent post, we will publish to the parent post's author's private topic.
-		// TODO: What if the post author is null?
-		if _, err := tx.Exec(ctx, `
-			insert into publications (
-				post_id,
-				topic_id,
-				publisher_user_id
+		// If there is a parent post, we will publish to the parent post's author's topic, privately.
+		var parentAuthorUserID *uuid.UUID
+
+		if err := tx.QueryRow(ctx, `
+			select posts.author_user_id
+			from posts
+			where posts.id = (
+				select p2.parent_post_id
+				from posts p2
+				where p2.id = $1
 			)
-			select
-				$1,
-				(
-					select private_topic_id
-					from users
-					where users.id = (
-						select posts.author_user_id
-						from posts
-						where posts.id = (
-							select p2.parent_post_id
-							from posts p2
-							where p2.id = $1
-						)
-					)
-				),
-				$2
-		`, postID, author.ID); err != nil {
+		`, postID).Scan(&parentAuthorUserID); err != nil {
 			return nil, err
+		}
+
+		if parentAuthorUserID != nil {
+			if err := publish(ctx, tx, nc, postID, *parentAuthorUserID, author.ID, publishOpts{Private: true}); err != nil {
+				return nil, err
+			}
 		}
 	}
 
