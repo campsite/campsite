@@ -51,19 +51,13 @@ message GetPostChildrenRequest {
     int32 child_depth = 2;
     string page_token = 3;
     int32 limit = 4;
+
+    bool wait = 10;
 }
 
 message GetPostChildrenResponse {
     repeated Post posts = 1;
     PageTokenPair page_tokens = 2;
-}
-
-message WaitForPostChildrenRequest {
-    string post_id = 1;
-    string page_token = 2;
-}
-
-message WaitForPostChildrenResponse {
 }
 
 service Posts {
@@ -85,12 +79,6 @@ service Posts {
     rpc GetPostChildren(GetPostChildrenRequest) returns (GetPostChildrenResponse) {
         option (google.api.http) = {
             get: "/v1/posts/{post_id}/children"
-        };
-    }
-
-    rpc WaitForPostChildren(WaitForPostChildrenRequest) returns (WaitForPostChildrenResponse) {
-        option (google.api.http) = {
-            get: "/v1/posts/{post_id}/children/wait"
         };
     }
 

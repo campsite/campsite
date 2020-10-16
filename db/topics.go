@@ -80,7 +80,7 @@ func publishUserTopic(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID uuid
 	return nil
 }
 
-func WaitForUserTopic(ctx context.Context, db *pgxpool.Pool, nc *nats.Conn, userID uuid.UUID, pageToken types.PageToken) error {
+func WaitForFeed(ctx context.Context, db *pgxpool.Pool, nc *nats.Conn, userID uuid.UUID, pageToken types.PageToken) error {
 	// We must subscribe before we check hasNewer, otherwise we have a race condition.
 	sub, err := nc.SubscribeSync("user:" + types.EncodeID(userID))
 	if err != nil {

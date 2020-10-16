@@ -134,6 +134,12 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 		}
 	}
 
+	if in.Wait && pageToken.Direction == types.PageDirectionNewer {
+		if err := db.WaitForPostChildren(ctx, ps.DB, ps.Nats, postID, pageToken); err != nil {
+			return nil, err
+		}
+	}
+
 	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{
 		AccessMode: pgx.ReadOnly,
 	})
@@ -167,29 +173,6 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 	resp.PageTokens = protoPageTokenPair
 
 	return resp, nil
-}
-
-func (ps *postsServer) WaitForPostChildren(ctx context.Context, in *campsitev1.WaitForPostChildrenRequest) (*campsitev1.WaitForPostChildrenResponse, error) {
-	pageToken, err := types.DecodePageToken(in.PageToken)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "page_token")
-	}
-
-	// Only allow newer pagination.
-	if pageToken.Direction != types.PageDirectionNewer {
-		return nil, status.Error(codes.InvalidArgument, "page_token")
-	}
-
-	postID, err := types.DecodeID(in.PostId)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, "post_id")
-	}
-
-	if err := db.WaitForPostChildren(ctx, ps.DB, ps.Nats, postID, pageToken); err != nil {
-		return nil, err
-	}
-
-	return &campsitev1.WaitForPostChildrenResponse{}, nil
 }
 
 func (ps *postsServer) DeletePost(ctx context.Context, in *campsitev1.DeletePostRequest) (*campsitev1.DeletePostResponse, error) {

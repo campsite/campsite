@@ -38,6 +38,12 @@ func (ts *topicsServer) GetFeed(ctx context.Context, in *campsitev1.GetFeedReque
 		}
 	}
 
+	if in.Wait && pageToken.Direction == types.PageDirectionNewer {
+		if err := db.WaitForFeed(ctx, ts.DB, ts.Nats, principal.UserID, pageToken); err != nil {
+			return nil, err
+		}
+	}
+
 	tx, err := ts.DB.BeginTx(ctx, pgx.TxOptions{
 		AccessMode: pgx.ReadOnly,
 	})
@@ -71,29 +77,6 @@ func (ts *topicsServer) GetFeed(ctx context.Context, in *campsitev1.GetFeedReque
 	resp.PageTokens = protoPageTokenPair
 
 	return resp, nil
-}
-
-func (ts *topicsServer) WaitForFeed(ctx context.Context, in *campsitev1.WaitForFeedRequest) (*campsitev1.WaitForFeedResponse, error) {
-	principal := security.PrincipalFromContext(ctx)
-	if principal == nil {
-		return nil, status.Error(codes.Unauthenticated, "")
-	}
-
-	pageToken, err := types.DecodePageToken(in.PageToken)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "page_token")
-	}
-
-	// Only allow newer pagination.
-	if pageToken.Direction != types.PageDirectionNewer {
-		return nil, status.Error(codes.InvalidArgument, "page_token")
-	}
-
-	if err := db.WaitForUserTopic(ctx, ts.DB, ts.Nats, principal.UserID, pageToken); err != nil {
-		return nil, err
-	}
-
-	return &campsitev1.WaitForFeedResponse{}, nil
 }
 
 func NewTopicsServer(env *env.Env) campsitev1.TopicsServer {

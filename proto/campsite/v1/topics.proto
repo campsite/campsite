@@ -12,6 +12,8 @@ message GetFeedRequest {
     int32 parent_depth = 1;
     string page_token = 2;
     int32 limit = 3;
+
+    bool wait = 10;
 }
 
 message GetFeedResponse {
@@ -19,23 +21,10 @@ message GetFeedResponse {
     PageTokenPair page_tokens = 2;
 }
 
-message WaitForFeedRequest {
-    string page_token = 1;
-}
-
-message WaitForFeedResponse {
-}
-
 service Topics {
     rpc GetFeed(GetFeedRequest) returns (GetFeedResponse) {
         option (google.api.http) = {
             get: "/v1/feed"
-        };
-    }
-
-    rpc WaitForFeed(WaitForFeedRequest) returns (WaitForFeedResponse) {
-        option (google.api.http) = {
-            get: "/v1/feed/wait"
         };
     }
 }
