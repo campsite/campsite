@@ -64,7 +64,7 @@ create table sessions (
     scopes text[] not null default '{}'
 );
 
-create table publishes (
+create table publications (
     post_id uuid not null references posts(id) on delete cascade,
     topic_id uuid not null references topics(id) on delete cascade,
     publisher_user_id uuid references users(id) on delete set null,
@@ -72,7 +72,7 @@ create table publishes (
     primary key (post_id, topic_id)
 );
 
-create index on publishes(published_at desc, post_id);
+create index on publications(published_at desc, post_id);
 
 create table subscriptions (
     user_id uuid not null references users(id) on delete cascade,
@@ -83,7 +83,7 @@ create table subscriptions (
 -- +goose Down
 -- SQL in this section is executed when the migration is rolled back.
 drop table subscriptions;
-drop table publishes;
+drop table publications;
 drop table sessions;
 drop table post_media_items;
 drop table media_items;

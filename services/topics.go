@@ -45,22 +45,22 @@ func (ts *topicsServer) GetFeed(ctx context.Context, in *campsitev1.GetFeedReque
 		}
 	}
 
-	publishes, nextPageToken, err := db.Feed(ctx, tx, principal.UserID, int(in.ParentDepth), pageToken, int(in.Limit))
+	pubs, nextPageToken, err := db.Feed(ctx, tx, principal.UserID, int(in.ParentDepth), pageToken, int(in.Limit))
 	if err != nil {
 		return nil, err
 	}
 
-	publishPbs := make([]*campsitev1.Publish, len(publishes))
-	for i, publish := range publishes {
+	pubPbs := make([]*campsitev1.Publish, len(pubs))
+	for i, pub := range pubs {
 		var err error
-		publishPbs[i], err = dbtopb.PublishToProto(publish)
+		pubPbs[i], err = dbtopb.PublicationToProto(pub)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	resp := &campsitev1.GetFeedResponse{
-		Publishes: publishPbs,
+		Publishes: pubPbs,
 	}
 
 	if nextPageToken != nil {

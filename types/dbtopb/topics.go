@@ -6,21 +6,21 @@ import (
 	"github.com/golang/protobuf/ptypes"
 )
 
-func PublishToProto(publish *db.Publish) (*campsitev1.Publish, error) {
-	ptypesPublishedAt, err := ptypes.TimestampProto(publish.PublishedAt)
+func PublicationToProto(pub *db.Publication) (*campsitev1.Publish, error) {
+	ptypesPublishedAt, err := ptypes.TimestampProto(pub.PublishedAt)
 	if err != nil {
 		return nil, err
 	}
 
-	post, err := PostToProto(publish.Post)
+	post, err := PostToProto(pub.Post)
 	if err != nil {
 		return nil, err
 	}
 
 	var publisher *campsitev1.User
-	if publish.Publisher != nil {
+	if pub.Publisher != nil {
 		var err error
-		publisher, err = UserToProto(*&publish.Publisher)
+		publisher, err = UserToProto(*&pub.Publisher)
 		if err != nil {
 			return nil, err
 		}

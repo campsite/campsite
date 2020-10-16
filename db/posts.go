@@ -445,5 +445,14 @@ func DeletePost(ctx context.Context, tx pgx.Tx, postID uuid.UUID) error {
 	`, postID); err != nil {
 		return err
 	}
+
+	// But we do delete all publications of it.
+	if _, err := tx.Exec(ctx, `
+		delete from publications
+		where post_id = $1
+	`, postID); err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -9,14 +9,14 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-type Publish struct {
+type Publication struct {
 	PublishedAt time.Time
 	Publisher   *User
 	Post        *Post
 }
 
-func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pageToken types.PageToken, limit int) ([]*Publish, *types.PageToken, error) {
-	var publishes []*Publish
+func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pageToken types.PageToken, limit int) ([]*Publication, *types.PageToken, error) {
+	var pubs []*Publication
 	var postIDs []uuid.UUID
 	var publisherIDs []uuid.UUID
 	postsByID := map[uuid.UUID]*Post{}
@@ -26,7 +26,7 @@ func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pag
 			select
 				post_id, published_at, publisher_user_id
 			from
-				publishes
+				publications
 			where
 				(
 					topic_id = any(
@@ -57,7 +57,7 @@ func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pag
 		defer rows.Close()
 
 		for rows.Next() {
-			pub := &Publish{
+			pub := &Publication{
 				Post:      &Post{},
 				Publisher: &User{},
 			}
@@ -65,7 +65,7 @@ func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pag
 				return err
 			}
 
-			publishes = append(publishes, pub)
+			pubs = append(pubs, pub)
 			postIDs = append(postIDs, pub.Post.ID)
 			publisherIDs = append(publisherIDs, pub.Publisher.ID)
 			postsByID[pub.Post.ID] = pub.Post
@@ -94,17 +94,17 @@ func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pag
 		return nil, nil, err
 	}
 
-	for _, pub := range publishes {
+	for _, pub := range pubs {
 		*pub.Publisher = *publishers[pub.Publisher.ID]
 	}
 
 	var nextPageToken *types.PageToken
-	if len(publishes) >= limit {
+	if len(pubs) >= limit {
 		nextPageToken = &types.PageToken{
-			CreatedAt: publishes[len(publishes)-1].PublishedAt,
-			ID:        publishes[len(publishes)-1].Post.ID,
+			CreatedAt: pubs[len(pubs)-1].PublishedAt,
+			ID:        pubs[len(pubs)-1].Post.ID,
 		}
 	}
 
-	return publishes, nextPageToken, nil
+	return pubs, nextPageToken, nil
 }
