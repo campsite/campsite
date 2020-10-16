@@ -11,7 +11,6 @@ import (
 	"campsite.rocks/campsite/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
-	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -26,8 +25,7 @@ func (ps *postsServer) GetPost(ctx context.Context, in *campsitev1.GetPostReques
 		AccessMode: pgx.ReadOnly,
 	})
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
-		return nil, status.Error(codes.Internal, "")
+		return nil, err
 	}
 	defer tx.Rollback(ctx)
 
@@ -38,8 +36,7 @@ func (ps *postsServer) GetPost(ctx context.Context, in *campsitev1.GetPostReques
 
 	posts, err := db.PostsByID(ctx, tx, []uuid.UUID{postID}, int(in.ParentDepth))
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
-		return nil, status.Error(codes.Internal, "")
+		return nil, err
 	}
 
 	if len(posts) == 0 {
@@ -59,8 +56,7 @@ func (ps *postsServer) CreatePost(ctx context.Context, in *campsitev1.CreatePost
 
 	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
-		return nil, status.Error(codes.Internal, "")
+		return nil, err
 	}
 	defer tx.Rollback(ctx)
 
@@ -85,13 +81,11 @@ func (ps *postsServer) CreatePost(ctx context.Context, in *campsitev1.CreatePost
 		ParentPostID: parentPostID,
 	})
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
-		return nil, status.Error(codes.Internal, "")
+		return nil, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		log.Error().Stack().Err(err).Msg("")
-		return nil, status.Error(codes.Internal, "")
+		return nil, err
 	}
 
 	return &campsitev1.CreatePostResponse{
@@ -104,8 +98,7 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 		AccessMode: pgx.ReadOnly,
 	})
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
-		return nil, status.Error(codes.Internal, "")
+		return nil, err
 	}
 	defer tx.Rollback(ctx)
 
@@ -127,8 +120,7 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 
 	children, nextPageToken, err := db.PostChildrenByID(ctx, tx, postID, int(in.ChildDepth), pageToken, int(in.Limit))
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
-		return nil, status.Error(codes.Internal, "")
+		return nil, err
 	}
 
 	resp := &campsitev1.GetPostChildrenResponse{
@@ -138,8 +130,7 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 	if nextPageToken != nil {
 		pt, err := types.EncodePageToken(*nextPageToken)
 		if err != nil {
-			log.Error().Stack().Err(err).Msg("")
-			return nil, status.Error(codes.Internal, "")
+			return nil, err
 		}
 		resp.NextPageToken = pt
 	}

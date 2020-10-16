@@ -8,7 +8,6 @@ import (
 	campsitev1 "campsite.rocks/campsite/proto/campsite/v1"
 	"campsite.rocks/campsite/security"
 	"github.com/jackc/pgx/v4"
-	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -28,15 +27,13 @@ func (ps *usersServer) GetMe(ctx context.Context, in *campsitev1.GetMeRequest) (
 		AccessMode: pgx.ReadOnly,
 	})
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
-		return nil, status.Error(codes.Internal, "")
+		return nil, err
 	}
 	defer tx.Rollback(ctx)
 
 	user, err := db.UserByID(ctx, tx, principal.UserID)
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
-		return nil, status.Error(codes.Internal, "")
+		return nil, err
 	}
 
 	if user == nil {

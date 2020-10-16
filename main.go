@@ -14,14 +14,18 @@ import (
 	"github.com/BurntSushi/toml"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/rs/zerolog/pkgerrors"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/zpages"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -41,6 +45,18 @@ type config struct {
 func registerServers(grpcServer *grpc.Server, env *env.Env) {
 	campsitev1.RegisterPostsServer(grpcServer, services.NewPostsServer(env))
 	campsitev1.RegisterUsersServer(grpcServer, services.NewUsersServer(env))
+}
+
+func recoveryHandler(p interface{}) error {
+	return errors.WithStack(errors.Errorf("panic: %+v", p))
+}
+
+func errorHandler(fullMethod string, err error) error {
+	if _, ok := status.FromError(err); !ok {
+		log.Error().Stack().Err(errors.WithStack(err)).Str("method", fullMethod).Msg("Error handling request")
+		err = status.Error(codes.Unknown, "")
+	}
+	return err
 }
 
 func main() {
@@ -80,9 +96,21 @@ func main() {
 	grpcServer := grpc.NewServer(
 		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 		grpc_middleware.WithStreamServerChain(
+			func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+				return errorHandler(info.FullMethod, handler(srv, stream))
+			},
+			grpc_recovery.StreamServerInterceptor(grpc_recovery.WithRecoveryHandler(recoveryHandler)),
 			grpc_auth.StreamServerInterceptor(authFunc),
 		),
 		grpc_middleware.WithUnaryServerChain(
+			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+				resp, err := handler(ctx, req)
+				if err != nil {
+					return nil, errorHandler(info.FullMethod, err)
+				}
+				return resp, nil
+			},
+			grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandler(recoveryHandler)),
 			grpc_auth.UnaryServerInterceptor(authFunc),
 		),
 	)

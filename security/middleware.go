@@ -9,9 +9,6 @@ import (
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func findPrincipalFromContext(ctx context.Context, env *env.Env) (*Principal, error) {
@@ -42,8 +39,7 @@ func findPrincipalFromContext(ctx context.Context, env *env.Env) (*Principal, er
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		log.Error().Stack().Err(errors.WithStack(err)).Msg("Failed to query for session")
-		return nil, status.Error(codes.Internal, "")
+		return nil, err
 	}
 
 	return &Principal{
