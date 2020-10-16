@@ -7,7 +7,6 @@ import (
 	"campsite.rocks/campsite/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/nats-io/nats.go"
 )
 
@@ -21,8 +20,8 @@ type publishOpts struct {
 	Private bool
 }
 
-func publishUserTopic(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID uuid.UUID, userTopicID uuid.UUID, publisherUserID uuid.UUID, opts publishOpts) error {
-	if _, err := tx.Exec(ctx, `
+func publishUserTopic(ctx context.Context, tx *Tx, nc *nats.Conn, postID uuid.UUID, userTopicID uuid.UUID, publisherUserID uuid.UUID, opts publishOpts) error {
+	if _, err := tx.Query(ctx, `
 		insert into publications (
 			post_id,
 			topic_id,
@@ -34,38 +33,25 @@ func publishUserTopic(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID uuid
 			$2,
 			$3,
 			$4
-	`, postID, userTopicID, publisherUserID, opts.Private); err != nil {
+	`, postID, userTopicID, publisherUserID, opts.Private).Exec(); err != nil {
 		return err
 	}
 
 	userIDs := []uuid.UUID{userTopicID}
 	if !opts.Private {
 		// Non-private posts need to be fanned out to all subscriptions.
-		if err := func() error {
-			rows, err := tx.Query(ctx, `
+		if err := tx.Query(ctx, `
 			select user_id
 			from subscriptions
 			where topic_id = $1
-		`, userTopicID)
-			if err != nil {
+		`, userTopicID).Rows(func(rows pgx.Rows) error {
+			var userID uuid.UUID
+			if err := rows.Scan(&userID); err != nil {
 				return err
 			}
-			defer rows.Close()
-
-			for rows.Next() {
-				var userID uuid.UUID
-				if err := rows.Scan(&userID); err != nil {
-					return err
-				}
-				userIDs = append(userIDs, userID)
-			}
-
-			if err := rows.Err(); err != nil {
-				return err
-			}
-
+			userIDs = append(userIDs, userID)
 			return nil
-		}(); err != nil {
+		}); err != nil {
 			return err
 		}
 	}
@@ -80,7 +66,7 @@ func publishUserTopic(ctx context.Context, tx pgx.Tx, nc *nats.Conn, postID uuid
 	return nil
 }
 
-func WaitForFeed(ctx context.Context, db *pgxpool.Pool, nc *nats.Conn, userID uuid.UUID, pageToken types.PageToken) error {
+func WaitForFeed(ctx context.Context, db *DB, nc *nats.Conn, userID uuid.UUID, pageToken types.PageToken) error {
 	// We must subscribe before we check hasNewer, otherwise we have a race condition.
 	sub, err := nc.SubscribeSync("user:" + types.EncodeID(userID))
 	if err != nil {
@@ -90,7 +76,7 @@ func WaitForFeed(ctx context.Context, db *pgxpool.Pool, nc *nats.Conn, userID uu
 
 	for {
 		var hasNewer bool
-		if err := db.QueryRow(ctx, `
+		if err := db.Query(ctx, `
 			select exists(
 				select 1
 				from publications
@@ -122,7 +108,7 @@ func WaitForFeed(ctx context.Context, db *pgxpool.Pool, nc *nats.Conn, userID uu
 						end
 					)
 			)
-		`, userID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction).Scan(&hasNewer); err != nil {
+		`, userID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction).Row(&hasNewer); err != nil {
 			return err
 		}
 
@@ -140,75 +126,62 @@ func WaitForFeed(ctx context.Context, db *pgxpool.Pool, nc *nats.Conn, userID uu
 	return nil
 }
 
-func Feed(ctx context.Context, tx pgx.Tx, userID uuid.UUID, parentDepth int, pageToken types.PageToken, limit int) ([]*Publication, types.PageTokenPair, error) {
+func Feed(ctx context.Context, tx *Tx, userID uuid.UUID, parentDepth int, pageToken types.PageToken, limit int) ([]*Publication, types.PageTokenPair, error) {
 	var pubs []*Publication
 	var postIDs []uuid.UUID
 	var publisherIDs []uuid.UUID
 	postsByID := map[uuid.UUID]*Post{}
 
-	if err := func() error {
-		rows, err := tx.Query(ctx, `
-			select
-				post_id, published_at, publisher_user_id
-			from
-				publications
-			where
+	if err := tx.Query(ctx, `
+		select
+			post_id, published_at, publisher_user_id
+		from
+			publications
+		where
+			(
 				(
-					(
-						topic_id = any(
-							select
-								subscriptions.topic_id
-							from
-								subscriptions
-							where
-								subscriptions.user_id = $1
-						) and not private
-					) or (
-						topic_id = $1
-					)
-				) and (
-					case
-						when $4 = -1 then (
-							(published_at < $2) or
-							(published_at = $2 and post_id > $3)
-						)
-						when $4 = 1 then (
-							(published_at > $2) or
-							(published_at = $2 and post_id < $3)
-						)
-						else false
-					end
+					topic_id = any(
+						select
+							subscriptions.topic_id
+						from
+							subscriptions
+						where
+							subscriptions.user_id = $1
+					) and not private
+				) or (
+					topic_id = $1
 				)
-			order by
-				published_at desc, post_id
-			limit $5
-		`, userID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, limit)
-		if err != nil {
-			return err
+			) and (
+				case
+					when $4 = -1 then (
+						(published_at < $2) or
+						(published_at = $2 and post_id > $3)
+					)
+					when $4 = 1 then (
+						(published_at > $2) or
+						(published_at = $2 and post_id < $3)
+					)
+					else false
+				end
+			)
+		order by
+			published_at desc, post_id
+		limit $5
+	`, userID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, limit).Rows(func(rows pgx.Rows) error {
+		pub := &Publication{
+			Post:      &Post{},
+			Publisher: &User{},
 		}
-		defer rows.Close()
-
-		for rows.Next() {
-			pub := &Publication{
-				Post:      &Post{},
-				Publisher: &User{},
-			}
-			if err := rows.Scan(&pub.Post.ID, &pub.PublishedAt, &pub.Publisher.ID); err != nil {
-				return err
-			}
-
-			pubs = append(pubs, pub)
-			postIDs = append(postIDs, pub.Post.ID)
-			publisherIDs = append(publisherIDs, pub.Publisher.ID)
-			postsByID[pub.Post.ID] = pub.Post
-		}
-
-		if err := rows.Err(); err != nil {
+		if err := rows.Scan(&pub.Post.ID, &pub.PublishedAt, &pub.Publisher.ID); err != nil {
 			return err
 		}
 
+		pubs = append(pubs, pub)
+		postIDs = append(postIDs, pub.Post.ID)
+		publisherIDs = append(publisherIDs, pub.Publisher.ID)
+		postsByID[pub.Post.ID] = pub.Post
 		return nil
-	}(); err != nil {
+	}); err != nil {
 		return nil, types.PageTokenPair{}, err
 	}
 

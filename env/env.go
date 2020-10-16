@@ -1,11 +1,11 @@
 package env
 
 import (
-	"github.com/jackc/pgx/v4/pgxpool"
+	"campsite.rocks/campsite/db"
 	"github.com/nats-io/nats.go"
 )
 
 type Env struct {
-	DB   *pgxpool.Pool
+	DB   *db.DB
 	Nats *nats.Conn
 }

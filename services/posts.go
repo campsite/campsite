@@ -27,16 +27,17 @@ func (ps *postsServer) GetPost(ctx context.Context, in *campsitev1.GetPostReques
 		return nil, status.Error(codes.NotFound, "post_id")
 	}
 
-	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{
+	var posts map[uuid.UUID]*db.Post
+	if err := ps.DB.Begin(ctx, pgx.TxOptions{
 		AccessMode: pgx.ReadOnly,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-
-	posts, err := db.PostsByID(ctx, tx, []uuid.UUID{postID}, int(in.ParentDepth))
-	if err != nil {
+	}, func(ctx context.Context, tx *db.Tx) error {
+		var err error
+		posts, err = db.PostsByID(ctx, tx, []uuid.UUID{postID}, int(in.ParentDepth))
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 
@@ -66,43 +67,41 @@ func (ps *postsServer) CreatePost(ctx context.Context, in *campsitev1.CreatePost
 		warning = &in.Warning.Value
 	}
 
-	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-
+	var post *db.Post
 	var parentPostID *uuid.UUID
-	if in.ParentPostId != nil {
-		postID, err := types.DecodeID(in.ParentPostId.Value)
+	if err := ps.DB.Begin(ctx, pgx.TxOptions{}, func(ctx context.Context, tx *db.Tx) error {
+		if in.ParentPostId != nil {
+			postID, err := types.DecodeID(in.ParentPostId.Value)
+			if err != nil {
+				return status.Error(codes.NotFound, "parent_post_id")
+			}
+
+			parentPostID = &postID
+
+			// Verify the post exists.
+			parentPosts, err := db.PostsByID(ctx, tx, []uuid.UUID{*parentPostID}, 0)
+			if err != nil {
+				return err
+			}
+
+			if _, ok := parentPosts[*parentPostID]; !ok {
+				return status.Error(codes.NotFound, "parent_post_id")
+			}
+		}
+
+		var err error
+		post, err = db.CreatePost(ctx, tx, ps.Nats, &db.PostSkeleton{
+			AuthorUserID: principal.UserID,
+			Content:      in.Content,
+			Warning:      warning,
+			ParentPostID: parentPostID,
+		})
 		if err != nil {
-			return nil, status.Error(codes.NotFound, "parent_post_id")
+			return err
 		}
 
-		parentPostID = &postID
-
-		// Verify the post exists.
-		parentPosts, err := db.PostsByID(ctx, tx, []uuid.UUID{*parentPostID}, 0)
-		if err != nil {
-			return nil, err
-		}
-
-		if _, ok := parentPosts[*parentPostID]; !ok {
-			return nil, status.Error(codes.NotFound, "parent_post_id")
-		}
-	}
-
-	post, err := db.CreatePost(ctx, tx, ps.Nats, &db.PostSkeleton{
-		AuthorUserID: principal.UserID,
-		Content:      in.Content,
-		Warning:      warning,
-		ParentPostID: parentPostID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if err := tx.Commit(ctx); err != nil {
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 
@@ -140,16 +139,14 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 		}
 	}
 
-	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{
-		AccessMode: pgx.ReadOnly,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
+	var children []*db.Post
+	var pageTokenPair types.PageTokenPair
 
-	children, pageTokenPair, err := db.PostChildrenByID(ctx, tx, postID, int(in.ChildDepth), pageToken, int(in.Limit))
-	if err != nil {
+	if err := ps.DB.Begin(ctx, pgx.TxOptions{}, func(ctx context.Context, tx *db.Tx) error {
+		var err error
+		children, pageTokenPair, err = db.PostChildrenByID(ctx, tx, postID, int(in.ChildDepth), pageToken, int(in.Limit))
+		return err
+	}); err != nil {
 		return nil, err
 	}
 
@@ -186,31 +183,27 @@ func (ps *postsServer) DeletePost(ctx context.Context, in *campsitev1.DeletePost
 		return nil, status.Error(codes.NotFound, "post_id")
 	}
 
-	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
+	if err := ps.DB.Begin(ctx, pgx.TxOptions{}, func(ctx context.Context, tx *db.Tx) error {
+		posts, err := db.PostsByID(ctx, tx, []uuid.UUID{postID}, 0)
+		if err != nil {
+			return err
+		}
 
-	posts, err := db.PostsByID(ctx, tx, []uuid.UUID{postID}, 0)
-	if err != nil {
-		return nil, err
-	}
+		post, ok := posts[postID]
+		if !ok {
+			return status.Error(codes.NotFound, "post_id")
+		}
 
-	post, ok := posts[postID]
-	if !ok {
-		return nil, status.Error(codes.NotFound, "post_id")
-	}
+		if post.Author == nil || post.Author.ID != principal.UserID {
+			return status.Error(codes.PermissionDenied, "")
+		}
 
-	if post.Author == nil || post.Author.ID != principal.UserID {
-		return nil, status.Error(codes.PermissionDenied, "")
-	}
+		if err := db.DeletePost(ctx, tx, postID); err != nil {
+			return err
+		}
 
-	if err := db.DeletePost(ctx, tx, postID); err != nil {
-		return nil, err
-	}
-
-	if err := tx.Commit(ctx); err != nil {
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 

@@ -25,16 +25,17 @@ func (ps *usersServer) GetMe(ctx context.Context, in *campsitev1.GetMeRequest) (
 		return nil, status.Error(codes.Unauthenticated, "")
 	}
 
-	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{
+	var user *db.User
+	if err := ps.DB.Begin(ctx, pgx.TxOptions{
 		AccessMode: pgx.ReadOnly,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-
-	user, err := db.UserByID(ctx, tx, principal.UserID)
-	if err != nil {
+	}, func(ctx context.Context, tx *db.Tx) error {
+		var err error
+		user, err = db.UserByID(ctx, tx, principal.UserID)
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 
@@ -58,16 +59,17 @@ func (ps *usersServer) GetUser(ctx context.Context, in *campsitev1.GetUserReques
 		return nil, status.Error(codes.NotFound, "user_id")
 	}
 
-	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{
+	var user *db.User
+	if err := ps.DB.Begin(ctx, pgx.TxOptions{
 		AccessMode: pgx.ReadOnly,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-
-	user, err := db.UserByID(ctx, tx, userID)
-	if err != nil {
+	}, func(ctx context.Context, tx *db.Tx) error {
+		var err error
+		user, err = db.UserByID(ctx, tx, userID)
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 

@@ -33,12 +33,12 @@ func findPrincipalFromContext(ctx context.Context, env *env.Env) (*Principal, er
 	var userID uuid.UUID
 	var scopes []string
 
-	if err := env.DB.QueryRow(ctx, `
+	if err := env.DB.Query(ctx, `
 		update sessions
 		set last_active_at = now()
 		where id = $1
 		returning user_id, scopes
-	`, sessionID).Scan(&userID, &scopes); err != nil {
+	`, sessionID).Row(&userID, &scopes); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}

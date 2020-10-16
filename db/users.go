@@ -12,36 +12,26 @@ type User struct {
 	Name string
 }
 
-func UsersByID(ctx context.Context, tx pgx.Tx, userIDs []uuid.UUID) (map[uuid.UUID]*User, error) {
+func UsersByID(ctx context.Context, tx *Tx, userIDs []uuid.UUID) (map[uuid.UUID]*User, error) {
 	users := map[uuid.UUID]*User{}
-
-	rows, err := tx.Query(ctx, `
+	if err := tx.Query(ctx, `
 		select id, name
 		from users
 		where id = any($1)
-	`, userIDs)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
+	`, userIDs).Rows(func(rows pgx.Rows) error {
 		u := &User{}
 		if err := rows.Scan(&u.ID, &u.Name); err != nil {
-			return nil, err
+			return err
 		}
-
 		users[u.ID] = u
-	}
-
-	if err := rows.Err(); err != nil {
+		return nil
+	}); err != nil {
 		return nil, err
 	}
-
 	return users, nil
 }
 
-func UserByID(ctx context.Context, tx pgx.Tx, userID uuid.UUID) (*User, error) {
+func UserByID(ctx context.Context, tx *Tx, userID uuid.UUID) (*User, error) {
 	users, err := UsersByID(ctx, tx, []uuid.UUID{userID})
 	if err != nil {
 		return nil, err

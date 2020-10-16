@@ -44,16 +44,18 @@ func (ts *topicsServer) GetFeed(ctx context.Context, in *campsitev1.GetFeedReque
 		}
 	}
 
-	tx, err := ts.DB.BeginTx(ctx, pgx.TxOptions{
+	var pubs []*db.Publication
+	var pageTokenPair types.PageTokenPair
+	if err := ts.DB.Begin(ctx, pgx.TxOptions{
 		AccessMode: pgx.ReadOnly,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-
-	pubs, pageTokenPair, err := db.Feed(ctx, tx, principal.UserID, int(in.ParentDepth), pageToken, int(in.Limit))
-	if err != nil {
+	}, func(ctx context.Context, tx *db.Tx) error {
+		var err error
+		pubs, pageTokenPair, err = db.Feed(ctx, tx, principal.UserID, int(in.ParentDepth), pageToken, int(in.Limit))
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 

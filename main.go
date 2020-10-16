@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"campsite.rocks/campsite/db"
 	"campsite.rocks/campsite/env"
 	campsitev1 "campsite.rocks/campsite/proto/campsite/v1"
 	"campsite.rocks/campsite/security"
@@ -84,13 +85,13 @@ func main() {
 		log.Panic().Err(err).Msg("Failed to parse config string")
 	}
 
-	db, err := pgxpool.ConnectConfig(context.Background(), pgxConfig)
+	pool, err := pgxpool.ConnectConfig(context.Background(), pgxConfig)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to connect to database")
 	}
 
 	env := &env.Env{
-		DB:   db,
+		DB:   db.Wrap(pool),
 		Nats: nc,
 	}
 
