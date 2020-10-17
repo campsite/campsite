@@ -18,5 +18,9 @@ type principalKey struct{}
 // PrincipalFromContext retrieves the current authenticated principal from the context.
 // If nil is returned, there is no logged in user.
 func PrincipalFromContext(ctx context.Context) *Principal {
-	return ctx.Value(principalKey{}).(*Principal)
+	raw := ctx.Value(principalKey{})
+	if raw == nil {
+		return nil
+	}
+	return raw.(*Principal)
 }

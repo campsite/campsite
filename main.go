@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 
 	"campsite.rocks/campsite/db"
 	"campsite.rocks/campsite/env"
@@ -17,6 +18,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/go-redis/redis/v8"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/jackc/pgx/v4/pgxpool"
 	openzipkin "github.com/openzipkin/zipkin-go"
 	zipkinhttp "github.com/openzipkin/zipkin-go/reporter/http"
@@ -27,6 +29,7 @@ import (
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/trace"
 	"go.opencensus.io/zpages"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
@@ -40,6 +43,7 @@ var (
 type config struct {
 	LogLevel                 string
 	ListenAddr               string
+	GatewayListenAddr        string
 	DatabaseConnectionString string
 	RedisURL                 string
 	ZipkinReporterURL        string
@@ -56,6 +60,19 @@ func registerServers(grpcServer *grpc.Server, env *env.Env) {
 	campsitev1.RegisterTopicsServer(grpcServer, services.NewTopicsServer(env))
 }
 
+func registerGatewayHandlers(ctx context.Context, gatewayMux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	if err := campsitev1.RegisterPostsHandler(ctx, gatewayMux, conn); err != nil {
+		return err
+	}
+	if err := campsitev1.RegisterUsersHandler(ctx, gatewayMux, conn); err != nil {
+		return err
+	}
+	if err := campsitev1.RegisterTopicsHandler(ctx, gatewayMux, conn); err != nil {
+		return err
+	}
+	return nil
+}
+
 func errorHandler(fullMethod string, err error) error {
 	if _, ok := status.FromError(err); !ok {
 		log.Error().Stack().Err(err).Str("method", fullMethod).Msg("Error handling request")
@@ -65,6 +82,8 @@ func errorHandler(fullMethod string, err error) error {
 }
 
 func main() {
+	ctx := context.Background()
+
 	flag.Parse()
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
@@ -94,7 +113,7 @@ func main() {
 		log.Panic().Err(err).Msg("Failed to parse database connection string")
 	}
 
-	pool, err := pgxpool.ConnectConfig(context.Background(), pgxConfig)
+	pool, err := pgxpool.ConnectConfig(ctx, pgxConfig)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to connect to database")
 	}
@@ -141,7 +160,66 @@ func main() {
 			security.MakeUnaryServerInterceptor(env),
 		),
 	)
+
+	var g errgroup.Group
+
 	registerServers(grpcServer, env)
+
+	if c.Debug.EnableReflection {
+		reflection.Register(grpcServer)
+		log.Warn().Msgf("Reflection enabled.")
+	}
+
+	var localAddr net.Addr
+	{
+		lis, err := net.Listen("tcp", c.ListenAddr)
+		if err != nil {
+			log.Panic().Err(err).Msg("Failed to listen")
+		}
+		localAddr = lis.Addr()
+		g.Go(func() error {
+			return grpcServer.Serve(lis)
+		})
+		log.Info().Msgf("gRPC server running on: %s", lis.Addr())
+
+		if c.ZipkinReporterURL != "" {
+			localEndpoint, err := openzipkin.NewEndpoint("campsite", lis.Addr().String())
+			if err != nil {
+				log.Panic().Err(err).Msg("Failed to create local endpoint")
+			}
+
+			trace.RegisterExporter(zipkin.NewExporter(zipkinhttp.NewReporter(c.ZipkinReporterURL), localEndpoint))
+			log.Info().Msgf("Zipkin tracing enabled: %+v", c.ZipkinReporterURL)
+		}
+	}
+
+	if c.GatewayListenAddr != "" {
+		conn, err := grpc.DialContext(ctx, localAddr.String(), grpc.WithInsecure())
+		if err != nil {
+			log.Panic().Err(err).Msg("Failed to connect to self")
+		}
+
+		gatewayMux := runtime.NewServeMux(runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) {
+			switch strings.ToLower(key) {
+			case "authorization":
+				return key, true
+			default:
+				return runtime.DefaultHeaderMatcher(key)
+			}
+		}))
+		if err := registerGatewayHandlers(ctx, gatewayMux, conn); err != nil {
+			log.Panic().Err(err).Msg("Failed to register gateway handlers")
+		}
+
+		lis, err := net.Listen("tcp", c.GatewayListenAddr)
+		if err != nil {
+			log.Panic().Err(err).Msg("Failed to listen")
+		}
+		g.Go(func() error {
+			return http.Serve(lis, gatewayMux)
+		})
+		log.Info().Msgf("gRPC Gateway listening on: %s", lis.Addr())
+	}
 
 	if c.Debug.ListenAddr != "" {
 		debugLis, err := net.Listen("tcp", c.Debug.ListenAddr)
@@ -151,14 +229,10 @@ func main() {
 
 		mux := http.NewServeMux()
 		zpages.Handle(mux, "/")
-		go http.Serve(debugLis, mux)
-
-		log.Warn().Msgf("Started debug server: %s", debugLis.Addr())
-	}
-
-	if c.Debug.EnableReflection {
-		reflection.Register(grpcServer)
-		log.Warn().Msgf("Reflection enabled.")
+		g.Go(func() error {
+			return http.Serve(debugLis, mux)
+		})
+		log.Warn().Msgf("Debug server listening on: %s", debugLis.Addr())
 	}
 
 	if c.Debug.SampleAllTraces {
@@ -166,21 +240,7 @@ func main() {
 		log.Warn().Msgf("All traces are being sampled.")
 	}
 
-	lis, err := net.Listen("tcp", c.ListenAddr)
-	if err != nil {
-		log.Panic().Err(err).Msg("Failed to listen")
+	if err := g.Wait(); err != nil {
+		log.Panic().Err(err).Msg("Failed to serve")
 	}
-	log.Info().Msgf("Listening on: %s", lis.Addr())
-
-	if c.ZipkinReporterURL != "" {
-		localEndpoint, err := openzipkin.NewEndpoint("campsite", lis.Addr().String())
-		if err != nil {
-			log.Panic().Err(err).Msg("Failed to create local endpoint")
-		}
-
-		trace.RegisterExporter(zipkin.NewExporter(zipkinhttp.NewReporter(c.ZipkinReporterURL), localEndpoint))
-		log.Info().Msgf("Zipkin tracing enabled: %+v", c.ZipkinReporterURL)
-	}
-
-	grpcServer.Serve(lis)
 }

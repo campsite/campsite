@@ -9,6 +9,7 @@ require (
 	github.com/golang/protobuf v1.4.2
 	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
+	github.com/grpc-ecosystem/grpc-gateway v1.15.2
 	github.com/jackc/pgconn v1.7.0
 	github.com/jackc/pgx/v4 v4.9.0
 	github.com/lib/pq v1.8.0 // indirect
@@ -18,6 +19,7 @@ require (
 	github.com/rs/zerolog v1.20.0
 	go.opencensus.io v0.22.4
 	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
+	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	google.golang.org/genproto v0.0.0-20200806141610-86f49bd18e98
 	google.golang.org/grpc v1.32.0
 	google.golang.org/grpc/examples v0.0.0-20201013205100-7745e521ff61 // indirect
