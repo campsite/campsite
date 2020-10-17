@@ -1,4 +1,4 @@
-module campsite.rocks/campsite
+module campsite.social/campsite
 
 go 1.15
 
@@ -19,7 +19,7 @@ require (
 	github.com/rs/zerolog v1.20.0
 	go.opencensus.io v0.22.4
 	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
-	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
+	golang.org/x/sync v0.0.0-20201008141435-b3e1573b7520
 	google.golang.org/genproto v0.0.0-20200806141610-86f49bd18e98
 	google.golang.org/grpc v1.32.0
 	google.golang.org/grpc/examples v0.0.0-20201013205100-7745e521ff61 // indirect

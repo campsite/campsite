@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package campsite.v1;
 
-option go_package = "campsite.rocks/campsite/apiserver/types/proto";
+option go_package = "campsite.social/campsite/apiserver/types/proto";
 
 enum PageDirection {
     UNKNOWN = 0;

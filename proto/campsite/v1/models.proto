@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package campsite.v1;
 
-option go_package = "campsite.rocks/campsite/proto/campsite/v1;campsitev1";
+option go_package = "campsite.social/campsite/proto/campsite/v1;campsitev1";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";

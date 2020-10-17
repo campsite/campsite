@@ -1,8 +1,8 @@
 package env
 
 import (
-	"campsite.rocks/campsite/apiserver/db"
-	"campsite.rocks/campsite/apiserver/pubsub"
+	"campsite.social/campsite/apiserver/db"
+	"campsite.social/campsite/apiserver/pubsub"
 )
 
 type Env struct {

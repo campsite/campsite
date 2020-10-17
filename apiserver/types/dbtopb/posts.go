@@ -1,9 +1,9 @@
 package dbtopb
 
 import (
-	"campsite.rocks/campsite/apiserver/db"
-	"campsite.rocks/campsite/apiserver/types"
-	campsitev1 "campsite.rocks/campsite/gen/proto/campsite/v1"
+	"campsite.social/campsite/apiserver/db"
+	"campsite.social/campsite/apiserver/types"
+	campsitev1 "campsite.social/campsite/gen/proto/campsite/v1"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/protobuf/types/known/timestamppb"

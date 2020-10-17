@@ -1,4 +1,4 @@
-<p align="center"><a href="https://campsite.rocks" target="_blank"><img src="https://raw.githubusercontent.com/campsite/campsite/master/logo.png" width="100" alt="campsite" title="campsite"></a><br>A place to get together</p>
+<p align="center"><a href="https://campsite.social" target="_blank"><img src="https://raw.githubusercontent.com/campsite/campsite/master/logo.png" width="100" alt="campsite" title="campsite"></a><br>A place to get together</p>
 
 ---
 

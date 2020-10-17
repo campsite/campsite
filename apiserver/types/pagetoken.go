@@ -4,8 +4,8 @@ import (
 	"encoding/base64"
 	"time"
 
-	tpb "campsite.rocks/campsite/apiserver/types/proto"
-	campsitev1 "campsite.rocks/campsite/gen/proto/campsite/v1"
+	tpb "campsite.social/campsite/apiserver/types/proto"
+	campsitev1 "campsite.social/campsite/gen/proto/campsite/v1"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 )

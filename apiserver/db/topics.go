@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"campsite.rocks/campsite/apiserver/pubsub"
-	"campsite.rocks/campsite/apiserver/types"
+	"campsite.social/campsite/apiserver/pubsub"
+	"campsite.social/campsite/apiserver/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 )
