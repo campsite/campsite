@@ -1,9 +1,9 @@
 package dbtopb
 
 import (
-	"campsite.rocks/campsite/db"
+	"campsite.rocks/campsite/apiserver/db"
+	"campsite.rocks/campsite/apiserver/types"
 	campsitev1 "campsite.rocks/campsite/proto/campsite/v1"
-	"campsite.rocks/campsite/types"
 )
 
 func UserToProto(user *db.User) (*campsitev1.User, error) {

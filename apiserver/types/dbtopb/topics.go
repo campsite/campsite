@@ -1,7 +1,7 @@
 package dbtopb
 
 import (
-	"campsite.rocks/campsite/db"
+	"campsite.rocks/campsite/apiserver/db"
 	campsitev1 "campsite.rocks/campsite/proto/campsite/v1"
 	"github.com/golang/protobuf/ptypes"
 )

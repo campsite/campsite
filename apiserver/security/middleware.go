@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"campsite.rocks/campsite/env"
+	"campsite.rocks/campsite/apiserver/env"
 	"github.com/google/uuid"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
