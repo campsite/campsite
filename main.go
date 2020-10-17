@@ -10,17 +10,22 @@ import (
 	"campsite.rocks/campsite/db"
 	"campsite.rocks/campsite/env"
 	campsitev1 "campsite.rocks/campsite/proto/campsite/v1"
+	"campsite.rocks/campsite/pubsub"
 	"campsite.rocks/campsite/security"
 	"campsite.rocks/campsite/services"
+	"contrib.go.opencensus.io/exporter/zipkin"
 	"github.com/BurntSushi/toml"
+	"github.com/go-redis/redis/v8"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/nats-io/nats.go"
+	openzipkin "github.com/openzipkin/zipkin-go"
+	zipkinhttp "github.com/openzipkin/zipkin-go/reporter/http"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/rs/zerolog/pkgerrors"
 	"go.opencensus.io/plugin/ocgrpc"
+	"go.opencensus.io/trace"
 	"go.opencensus.io/zpages"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -36,10 +41,12 @@ type config struct {
 	LogLevel                 string
 	ListenAddr               string
 	DatabaseConnectionString string
-	NatsURL                  string
+	RedisURL                 string
+	ZipkinReporterURL        string
 	Debug                    struct {
 		ListenAddr       string
 		EnableReflection bool
+		SampleAllTraces  bool
 	}
 }
 
@@ -75,14 +82,16 @@ func main() {
 		zerolog.SetGlobalLevel(logLevel)
 	}
 
-	nc, err := nats.Connect(c.NatsURL)
+	redisOptions, err := redis.ParseURL(c.RedisURL)
 	if err != nil {
-		log.Panic().Err(err).Msg("Failed to connect to NATS")
+		log.Panic().Err(err).Msg("Failed to parse Redis URL")
 	}
+
+	rdb := redis.NewClient(redisOptions)
 
 	pgxConfig, err := pgxpool.ParseConfig(c.DatabaseConnectionString)
 	if err != nil {
-		log.Panic().Err(err).Msg("Failed to parse config string")
+		log.Panic().Err(err).Msg("Failed to parse database connection string")
 	}
 
 	pool, err := pgxpool.ConnectConfig(context.Background(), pgxConfig)
@@ -91,8 +100,8 @@ func main() {
 	}
 
 	env := &env.Env{
-		DB:   db.Wrap(pool),
-		Nats: nc,
+		DB:     db.Wrap(pool),
+		PubSub: pubsub.Wrap(rdb),
 	}
 
 	grpcServer := grpc.NewServer(
@@ -152,11 +161,26 @@ func main() {
 		log.Warn().Msgf("Reflection enabled.")
 	}
 
+	if c.Debug.SampleAllTraces {
+		trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
+		log.Warn().Msgf("All traces are being sampled.")
+	}
+
 	lis, err := net.Listen("tcp", c.ListenAddr)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to listen")
 	}
 	log.Info().Msgf("Listening on: %s", lis.Addr())
+
+	if c.ZipkinReporterURL != "" {
+		localEndpoint, err := openzipkin.NewEndpoint("campsite", lis.Addr().String())
+		if err != nil {
+			log.Panic().Err(err).Msg("Failed to create local endpoint")
+		}
+
+		trace.RegisterExporter(zipkin.NewExporter(zipkinhttp.NewReporter(c.ZipkinReporterURL), localEndpoint))
+		log.Info().Msgf("Zipkin tracing enabled: %+v", c.ZipkinReporterURL)
+	}
 
 	grpcServer.Serve(lis)
 }

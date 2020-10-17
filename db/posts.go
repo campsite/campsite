@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"campsite.rocks/campsite/pubsub"
 	"campsite.rocks/campsite/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
-	"github.com/nats-io/nats.go"
 )
 
 type Post struct {
@@ -328,20 +328,20 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 	}, nil
 }
 
-func notifyParentPost(ctx context.Context, nc *nats.Conn, parentPostID uuid.UUID) error {
-	if err := nc.Publish("postchildren:"+types.EncodeID(parentPostID), []byte{}); err != nil {
+func notifyParentPost(ctx context.Context, pbsb *pubsub.PubSub, parentPostID uuid.UUID) error {
+	if err := pbsb.Publish(ctx, "postchildren:"+types.EncodeID(parentPostID), ""); err != nil {
 		return err
 	}
 	return nil
 }
 
-func WaitForPostChildren(ctx context.Context, db *DB, nc *nats.Conn, postID uuid.UUID, pageToken types.PageToken) error {
+func WaitForPostChildren(ctx context.Context, db *DB, pbsb *pubsub.PubSub, postID uuid.UUID, pageToken types.PageToken) error {
 	// We must subscribe before we check hasNewer, otherwise we have a race condition.
-	sub, err := nc.SubscribeSync("postchildren:" + types.EncodeID(postID))
+	sub, err := pbsb.Subscribe(ctx, "postchildren:"+types.EncodeID(postID))
 	if err != nil {
 		return err
 	}
-	defer sub.Unsubscribe()
+	defer sub.Unsubscribe(ctx)
 
 	for {
 		var hasNewer bool
@@ -372,7 +372,7 @@ func WaitForPostChildren(ctx context.Context, db *DB, nc *nats.Conn, postID uuid
 			break
 		}
 
-		msg, err := sub.NextMsgWithContext(ctx)
+		msg, err := sub.Receive(ctx)
 		if err != nil {
 			return err
 		}
@@ -390,7 +390,7 @@ type PostSkeleton struct {
 	ParentPostID *uuid.UUID
 }
 
-func CreatePost(ctx context.Context, tx *Tx, nc *nats.Conn, postSkeleton *PostSkeleton) (*Post, error) {
+func CreatePost(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postSkeleton *PostSkeleton) (*Post, error) {
 	var postID uuid.UUID
 	var createdAt time.Time
 
@@ -426,7 +426,7 @@ func CreatePost(ctx context.Context, tx *Tx, nc *nats.Conn, postSkeleton *PostSk
 
 	if postSkeleton.ParentPostID == nil {
 		// If there is no parent post, we will publish to the user's topic by default, publicly.
-		if err := publishUserTopic(ctx, tx, nc, postID, author.ID, author.ID, publishOpts{Private: false}); err != nil {
+		if err := publishUserTopic(ctx, tx, pbsb, postID, author.ID, author.ID, publishOpts{Private: false}); err != nil {
 			return nil, err
 		}
 	} else {
@@ -446,12 +446,12 @@ func CreatePost(ctx context.Context, tx *Tx, nc *nats.Conn, postSkeleton *PostSk
 		}
 
 		if parentAuthorUserID != nil {
-			if err := publishUserTopic(ctx, tx, nc, postID, *parentAuthorUserID, author.ID, publishOpts{Private: true}); err != nil {
+			if err := publishUserTopic(ctx, tx, pbsb, postID, *parentAuthorUserID, author.ID, publishOpts{Private: true}); err != nil {
 				return nil, err
 			}
 		}
 
-		if err := notifyParentPost(ctx, nc, *postSkeleton.ParentPostID); err != nil {
+		if err := notifyParentPost(ctx, pbsb, *postSkeleton.ParentPostID); err != nil {
 			return nil, err
 		}
 	}

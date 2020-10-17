@@ -90,7 +90,7 @@ func (ps *postsServer) CreatePost(ctx context.Context, in *campsitev1.CreatePost
 		}
 
 		var err error
-		post, err = db.CreatePost(ctx, tx, ps.Nats, &db.PostSkeleton{
+		post, err = db.CreatePost(ctx, tx, ps.PubSub, &db.PostSkeleton{
 			AuthorUserID: principal.UserID,
 			Content:      in.Content,
 			Warning:      warning,
@@ -134,7 +134,7 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 	}
 
 	if in.Wait && pageToken.Direction == types.PageDirectionNewer {
-		if err := db.WaitForPostChildren(ctx, ps.DB, ps.Nats, postID, pageToken); err != nil {
+		if err := db.WaitForPostChildren(ctx, ps.DB, ps.PubSub, postID, pageToken); err != nil {
 			return nil, err
 		}
 	}

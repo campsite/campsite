@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"campsite.rocks/campsite/pubsub"
 	"campsite.rocks/campsite/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
-	"github.com/nats-io/nats.go"
 )
 
 type Publication struct {
@@ -20,7 +20,7 @@ type publishOpts struct {
 	Private bool
 }
 
-func publishUserTopic(ctx context.Context, tx *Tx, nc *nats.Conn, postID uuid.UUID, userTopicID uuid.UUID, publisherUserID uuid.UUID, opts publishOpts) error {
+func publishUserTopic(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postID uuid.UUID, userTopicID uuid.UUID, publisherUserID uuid.UUID, opts publishOpts) error {
 	if _, err := tx.Query(ctx, `
 		insert into publications (
 			post_id,
@@ -58,7 +58,7 @@ func publishUserTopic(ctx context.Context, tx *Tx, nc *nats.Conn, postID uuid.UU
 
 	// TODO: Consider running this outside a transaction/aggregating publishes.
 	for _, userID := range userIDs {
-		if err := nc.Publish("user:"+types.EncodeID(userID), []byte{}); err != nil {
+		if err := pbsb.Publish(ctx, "user:"+types.EncodeID(userID), ""); err != nil {
 			return err
 		}
 	}
@@ -66,13 +66,13 @@ func publishUserTopic(ctx context.Context, tx *Tx, nc *nats.Conn, postID uuid.UU
 	return nil
 }
 
-func WaitForFeed(ctx context.Context, db *DB, nc *nats.Conn, userID uuid.UUID, pageToken types.PageToken) error {
+func WaitForFeed(ctx context.Context, db *DB, pbsb *pubsub.PubSub, userID uuid.UUID, pageToken types.PageToken) error {
 	// We must subscribe before we check hasNewer, otherwise we have a race condition.
-	sub, err := nc.SubscribeSync("user:" + types.EncodeID(userID))
+	sub, err := pbsb.Subscribe(ctx, "user:"+types.EncodeID(userID))
 	if err != nil {
 		return err
 	}
-	defer sub.Unsubscribe()
+	defer sub.Unsubscribe(ctx)
 
 	for {
 		var hasNewer bool
@@ -115,7 +115,7 @@ func WaitForFeed(ctx context.Context, db *DB, nc *nats.Conn, userID uuid.UUID, p
 		if hasNewer {
 			break
 		}
-		msg, err := sub.NextMsgWithContext(ctx)
+		msg, err := sub.Receive(ctx)
 		if err != nil {
 			return err
 		}

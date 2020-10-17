@@ -2,10 +2,10 @@ package env
 
 import (
 	"campsite.rocks/campsite/db"
-	"github.com/nats-io/nats.go"
+	"campsite.rocks/campsite/pubsub"
 )
 
 type Env struct {
-	DB   *db.DB
-	Nats *nats.Conn
+	DB     *db.DB
+	PubSub *pubsub.PubSub
 }
