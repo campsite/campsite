@@ -170,13 +170,11 @@ func main() {
 		log.Warn().Msgf("Reflection enabled.")
 	}
 
-	var localAddr net.Addr
 	{
 		lis, err := net.Listen("tcp", c.ListenAddr)
 		if err != nil {
 			log.Panic().Err(err).Msg("Failed to listen")
 		}
-		localAddr = lis.Addr()
 		g.Go(func() error {
 			return grpcServer.Serve(lis)
 		})
@@ -194,7 +192,16 @@ func main() {
 	}
 
 	if c.GatewayListenAddr != "" {
-		conn, err := grpc.DialContext(ctx, localAddr.String(), grpc.WithInsecure())
+		// Start a private listener.
+		privateLis, err := net.Listen("tcp", "localhost:0")
+		if err != nil {
+			log.Panic().Err(err).Msg("Failed to listen")
+		}
+		g.Go(func() error {
+			return grpcServer.Serve(privateLis)
+		})
+
+		conn, err := grpc.DialContext(ctx, privateLis.Addr().String(), grpc.WithInsecure())
 		if err != nil {
 			log.Panic().Err(err).Msg("Failed to connect to self")
 		}
@@ -218,7 +225,7 @@ func main() {
 		g.Go(func() error {
 			return http.Serve(lis, gatewayMux)
 		})
-		log.Info().Msgf("gRPC Gateway listening on: %s", lis.Addr())
+		log.Info().Msgf("gRPC Gateway listening on: %s (mapped to private server on: %s)", lis.Addr(), privateLis.Addr())
 	}
 
 	if c.Debug.ListenAddr != "" {
