@@ -304,28 +304,24 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 		childPosts[i] = rootPost
 	}
 
-	var nextPageToken *types.PageToken
-	if len(rootPosts) >= limit || (len(rootPosts) > 0 && pageToken.Direction == types.PageDirectionNewer) {
-		nextPageToken = &types.PageToken{
-			CreatedAt: rootPosts[len(rootPosts)-1].CreatedAt,
-			ID:        rootPosts[len(rootPosts)-1].ID,
-			Direction: types.PageDirectionOlder,
-		}
-	}
-
-	var prevPageToken *types.PageToken
+	var ptp types.PageTokenPair
 	if len(rootPosts) > 0 {
-		prevPageToken = &types.PageToken{
+		if len(rootPosts) >= limit || pageToken.Direction == types.PageDirectionNewer {
+			ptp.Next = &types.PageToken{
+				CreatedAt: rootPosts[len(rootPosts)-1].CreatedAt,
+				ID:        rootPosts[len(rootPosts)-1].ID,
+				Direction: types.PageDirectionOlder,
+			}
+		}
+
+		ptp.Prev = &types.PageToken{
 			CreatedAt: rootPosts[0].CreatedAt,
 			ID:        rootPosts[0].ID,
 			Direction: types.PageDirectionNewer,
 		}
 	}
 
-	return childPosts, types.PageTokenPair{
-		Next: nextPageToken,
-		Prev: prevPageToken,
-	}, nil
+	return childPosts, ptp, nil
 }
 
 func notifyParentPost(ctx context.Context, pbsb *pubsub.PubSub, parentPostID uuid.UUID) error {

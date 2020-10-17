@@ -203,26 +203,22 @@ func Feed(ctx context.Context, tx *Tx, userID uuid.UUID, parentDepth int, pageTo
 		*pub.Publisher = *publishers[pub.Publisher.ID]
 	}
 
-	var nextPageToken *types.PageToken
-	if len(pubs) >= limit || (len(pubs) > 0 && pageToken.Direction == types.PageDirectionNewer) {
-		nextPageToken = &types.PageToken{
-			CreatedAt: pubs[len(pubs)-1].PublishedAt,
-			ID:        pubs[len(pubs)-1].Post.ID,
-			Direction: types.PageDirectionOlder,
-		}
-	}
-
-	var prevPageToken *types.PageToken
+	var ptp types.PageTokenPair
 	if len(pubs) > 0 {
-		prevPageToken = &types.PageToken{
+		if len(pubs) >= limit || pageToken.Direction == types.PageDirectionNewer {
+			ptp.Next = &types.PageToken{
+				CreatedAt: pubs[len(pubs)-1].PublishedAt,
+				ID:        pubs[len(pubs)-1].Post.ID,
+				Direction: types.PageDirectionOlder,
+			}
+		}
+
+		ptp.Prev = &types.PageToken{
 			CreatedAt: pubs[0].PublishedAt,
 			ID:        pubs[0].Post.ID,
 			Direction: types.PageDirectionNewer,
 		}
 	}
 
-	return pubs, types.PageTokenPair{
-		Next: nextPageToken,
-		Prev: prevPageToken,
-	}, nil
+	return pubs, ptp, nil
 }
