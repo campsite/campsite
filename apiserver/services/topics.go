@@ -9,7 +9,7 @@ import (
 	"campsite.rocks/campsite/apiserver/security"
 	"campsite.rocks/campsite/apiserver/types"
 	"campsite.rocks/campsite/apiserver/types/dbtopb"
-	campsitev1 "campsite.rocks/campsite/proto/campsite/v1"
+	campsitev1 "campsite.rocks/campsite/gen/proto/campsite/v1"
 	"github.com/jackc/pgx/v4"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

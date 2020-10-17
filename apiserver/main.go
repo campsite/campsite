@@ -13,7 +13,7 @@ import (
 	"campsite.rocks/campsite/apiserver/pubsub"
 	"campsite.rocks/campsite/apiserver/security"
 	"campsite.rocks/campsite/apiserver/services"
-	campsitev1 "campsite.rocks/campsite/proto/campsite/v1"
+	campsitev1 "campsite.rocks/campsite/gen/proto/campsite/v1"
 	"contrib.go.opencensus.io/exporter/zipkin"
 	"github.com/BurntSushi/toml"
 	"github.com/go-redis/redis/v8"

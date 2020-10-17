@@ -5,7 +5,7 @@ import (
 	"time"
 
 	tpb "campsite.rocks/campsite/apiserver/types/proto"
-	campsitev1 "campsite.rocks/campsite/proto/campsite/v1"
+	campsitev1 "campsite.rocks/campsite/gen/proto/campsite/v1"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 )
