@@ -6,6 +6,18 @@ import { useTranslation } from '../i18n';
 import { TFunction, i18n } from 'i18next';
 import * as dateFns from 'date-fns';
 
+function formatDateLong(i18n: i18n, date: Date): string {
+    return `${(new Intl.DateTimeFormat(i18n.language, {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+    })).format(date)} · ${(new Intl.DateTimeFormat(i18n.language, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    })).format(date)}`;
+}
+
 function formatDuration(t: TFunction, i18n: i18n, left: Date, right: Date): string {
     const hours = dateFns.differenceInHours(left, right);
     if (hours < 24) {
@@ -48,7 +60,7 @@ function Time({ date }: { date: Date }) {
         return () => clearInterval(interval);
     });
 
-    return <time dateTime={date.toString()}>{formatDuration(t, i18n, now, date)}</time>;
+    return <time dateTime={date.toString()} title={formatDateLong(i18n, date)}>{formatDuration(t, i18n, now, date)}</time>;
 }
 
 function PostActions({ postPb }: { postPb: modelsPb.Post }) {
@@ -161,14 +173,7 @@ export default function Thread({ postPb, collapsible }: { postPb: modelsPb.Post,
                     <a className={styles['post-username']} href=''>{postPb.getAuthor() ? postPb.getAuthor().getName() : ''}</a><br />
                     <span className={styles['post-time']}>
                         <Link href={`/posts/${postPb.getId()}`}><a>
-                            <time dateTime={createdAtDate.toString()}>{(new Intl.DateTimeFormat(i18n.language, {
-                                hour: 'numeric',
-                                minute: 'numeric',
-                            })).format(createdAtDate)}{' · '}{(new Intl.DateTimeFormat(i18n.language, {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                            })).format(createdAtDate)}</time></a>
+                            <time dateTime={createdAtDate.toString()}>{formatDateLong(i18n, createdAtDate)}</time></a>
                         </Link>
                     </span>
                 </header>

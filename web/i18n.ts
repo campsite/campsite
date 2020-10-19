@@ -17,7 +17,7 @@ icu.addLocaleData(en);
 
 const nextI18next = new NextI18Next({
     defaultLanguage: 'en',
-    otherLanguages: ['de'],
+    otherLanguages: ['ja'],
     localePath: path.resolve('./public/static/locales'),
     use: [icu],
 });
