@@ -21,10 +21,12 @@ export default function Post() {
         const call = postsClient.getPost(req, {
             authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
         }, (err, resp) => {
+            setChildren([]);
             setPost(resp.getPost());
+            setPrevPageToken('');
         });
         return () => call.cancel();
-    }, []);
+    }, [id]);
 
     useEffect(() => {
         const req = new postsPb.GetPostChildrenRequest();
@@ -40,7 +42,7 @@ export default function Post() {
             setPrevPageToken(resp.getPageTokens().getPrev());
         });
         return () => call.cancel();
-    }, [prevPageToken]);
+    }, [id, prevPageToken]);
 
     if (!post) {
         return <div>Loading</div>;
