@@ -1,0 +1,50 @@
+@import "./reset.css";
+@import "line-awesome/dist/line-awesome/css/line-awesome.css";
+:root {
+    --muted-text-color: #888;
+    --primary-color: #45A392;
+}
+
+html,
+body {
+    padding: 0;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+    line-height: 1.4;
+    background: #303136;
+    color: #fff;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:link,
+a:visited {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:link:hover {
+    text-decoration: underline;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+p {
+    margin-bottom: 0.5rem;
+}
+
+p:last-child {
+    margin-bottom: 0;
+}
+
+.placeholder-link {
+    color: var(--muted-text-color) !important;
+}
+
+.avatar {
+    border-radius: 50%;
+}
