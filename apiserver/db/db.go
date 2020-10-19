@@ -14,8 +14,12 @@ type DB struct {
 	pool *pgxpool.Pool
 }
 
+type OnCommit func(ctx context.Context)
+
 type Tx struct {
-	tx pgx.Tx
+	tx       pgx.Tx
+	onCommit []OnCommit
+	isNested bool
 }
 
 type dbtx interface {
@@ -98,6 +102,25 @@ func (q *Query) Exec() (pgconn.CommandTag, error) {
 	return tag, nil
 }
 
+func (t *Tx) commit(ctx context.Context) error {
+	if err := t.tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	for _, oc := range t.onCommit {
+		oc(ctx)
+	}
+
+	return nil
+}
+
+func (t *Tx) OnCommit(f OnCommit) {
+	if t.isNested {
+		panic("cannot add OnCommit hook to a nested transaction")
+	}
+	t.onCommit = append(t.onCommit, f)
+}
+
 func (t *Tx) Begin(ctx context.Context, f func(ctx context.Context, tx *Tx) error) error {
 	ctx, span := trace.StartSpan(ctx, "db.Transaction")
 	defer span.End()
@@ -111,7 +134,8 @@ func (t *Tx) Begin(ctx context.Context, f func(ctx context.Context, tx *Tx) erro
 		return err
 	}
 
-	if err := f(ctx, &Tx{tx: tx}); err != nil {
+	subTx := &Tx{tx: tx, isNested: true}
+	if err := f(ctx, subTx); err != nil {
 		span.SetStatus(trace.Status{
 			Code:    int32(codes.Unknown),
 			Message: err.Error(),
@@ -120,7 +144,7 @@ func (t *Tx) Begin(ctx context.Context, f func(ctx context.Context, tx *Tx) erro
 		return err
 	}
 
-	if err := tx.Commit(ctx); err != nil {
+	if err := subTx.commit(ctx); err != nil {
 		span.SetStatus(trace.Status{
 			Code:    int32(codes.Unknown),
 			Message: err.Error(),
@@ -162,7 +186,8 @@ func (d *DB) Begin(ctx context.Context, txOptions pgx.TxOptions, f func(ctx cont
 		return err
 	}
 
-	if err := f(ctx, &Tx{tx: tx}); err != nil {
+	t := &Tx{tx: tx}
+	if err := f(ctx, t); err != nil {
 		span.SetStatus(trace.Status{
 			Code:    int32(codes.Unknown),
 			Message: err.Error(),
@@ -171,7 +196,7 @@ func (d *DB) Begin(ctx context.Context, txOptions pgx.TxOptions, f func(ctx cont
 		return err
 	}
 
-	if err := tx.Commit(ctx); err != nil {
+	if err := t.commit(ctx); err != nil {
 		span.SetStatus(trace.Status{
 			Code:    int32(codes.Unknown),
 			Message: err.Error(),

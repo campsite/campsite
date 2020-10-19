@@ -1,53 +1,55 @@
-import useSWR from "swr";
-
+import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
 import * as postsPb from '../../gen/proto/campsite/v1/posts_pb';
 import { useRouter } from 'next/router';
 import { postsClient } from '../../lib/rpc';
 
 import Thread from '../../components/Thread';
+import { useState, useEffect } from 'react';
 
 export default function Post() {
     const router = useRouter();
     const { id } = router.query;
 
-    const { data, error } = useSWR('/posts/' + id, async () => {
-        const req = new postsPb.GetPostRequest();
-        req.setPostId(id as string);
-        req.setParentDepth(5);
-        return (await postsClient.getPost(req, {
-            authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
-        }));
-    });
+    const [post, setPost]: [modelsPb.Post, Dispatch<SetStateAction<modelsPb.Post>>] = useState(null);
+    const [children, setChildren]: [modelsPb.Post[], Dispatch<SetStateAction<modelsPb.Post[]>>] = useState([]);
+    const [prevPageToken, setPrevPageToken] = useState("");
 
-    const { data: childrenData, error: childrenError } = useSWR('/posts/' + id + '/children', async () => {
-        const req = new postsPb.GetPostChildrenRequest();
-        req.setPostId(id as string);
-        req.setLimit(10);
-        req.setChildDepth(5);
-        return (await postsClient.getPostChildren(req, {
-            authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
-        }));
-    });
+    useEffect(() => {
+        (async () => {
+            const req = new postsPb.GetPostRequest();
+            req.setPostId(id as string);
+            req.setParentDepth(5);
+            const resp = (await postsClient.getPost(req, {
+                authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
+            }));
+            setPost(resp.getPost());
+        })();
+    }, []);
 
-    if (!data) {
+    useEffect(() => {
+        (async () => {
+            const req = new postsPb.GetPostChildrenRequest();
+            req.setPostId(id as string);
+            req.setLimit(10);
+            req.setChildDepth(5);
+            req.setWait(true);
+            req.setPageToken(prevPageToken);
+            const resp = (await postsClient.getPostChildren(req, {
+                authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
+            }));
+            setChildren([...resp.getPostsList(), ...children]);
+            setPrevPageToken(resp.getPageTokens().getPrev());
+        })();
+    }, [prevPageToken]);
+
+    if (!post) {
         return <div>Loading</div>;
     }
 
-    if (error) {
-        return <div>ERR: {JSON.stringify(error)}</div>;
-    }
-
-    if (!childrenData) {
-        return <div>Loading</div>;
-    }
-
-    if (childrenError) {
-        return <div>ERR: {JSON.stringify(childrenError)}</div>;
-    }
-
-    data.getPost().setChildrenList(childrenData.getPostsList());
+    const p = post.clone();
+    p.setChildrenList(children);
 
     return <div style={{ width: '600px', margin: '0 auto' }}>
-        <Thread postPb={data.getPost()}></Thread>
+        <Thread postPb={p}></Thread>
     </div>;
 }

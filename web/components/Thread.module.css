@@ -77,10 +77,15 @@
 .thread>.post-replies {
     margin-left: 0;
     padding: 1rem 0;
+    padding-bottom: 0;
 }
 
 .post-replies {
     margin-left: -2rem;
+}
+
+.post-replies>.post-secondary:last-child>.post-secondary-container>.post-secondary-rail>.post-secondary-gutter .post-gutter-line {
+    border-color: transparent;
 }
 
 .post-secondary-main {

@@ -8,6 +8,7 @@ import (
 	"campsite.social/campsite/apiserver/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
+	"github.com/rs/zerolog/log"
 )
 
 type Post struct {
@@ -319,6 +320,12 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 			ID:        rootPosts[0].ID,
 			Direction: types.PageDirectionNewer,
 		}
+	} else {
+		ptp.Prev = &types.PageToken{
+			CreatedAt: pageToken.CreatedAt,
+			ID:        pageToken.ID,
+			Direction: types.PageDirectionNewer,
+		}
 	}
 
 	return childPosts, ptp, nil
@@ -447,9 +454,11 @@ func CreatePost(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postSkeleton *
 			}
 		}
 
-		if err := notifyParentPost(ctx, pbsb, *postSkeleton.ParentPostID); err != nil {
-			return nil, err
-		}
+		tx.OnCommit(func(ctx context.Context) {
+			if err := notifyParentPost(ctx, pbsb, *postSkeleton.ParentPostID); err != nil {
+				log.Err(err).Msg("notifyParentPost: failed to publish")
+			}
+		})
 	}
 
 	return &Post{

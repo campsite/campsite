@@ -58,7 +58,7 @@ function Time({ date }: { date: Date }) {
             setNow(new Date());
         }, 60 * 1000);
         return () => clearInterval(interval);
-    });
+    }, [now]);
 
     return <time dateTime={date.toString()} title={formatDateLong(i18n, date)}>{formatDuration(t, i18n, now, date)}</time>;
 }

@@ -8,6 +8,7 @@ import (
 	"campsite.social/campsite/apiserver/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
+	"github.com/rs/zerolog/log"
 )
 
 type Publication struct {
@@ -57,11 +58,13 @@ func publishUserTopic(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postID u
 	}
 
 	// TODO: Consider running this outside a transaction/aggregating publishes.
-	for _, userID := range userIDs {
-		if err := pbsb.Publish(ctx, "user:"+types.EncodeID(userID), ""); err != nil {
-			return err
+	tx.OnCommit(func(ctx context.Context) {
+		for _, userID := range userIDs {
+			if err := pbsb.Publish(ctx, "user:"+types.EncodeID(userID), ""); err != nil {
+				log.Err(err).Msg("publishUserTopic: failed to publish")
+			}
 		}
-	}
+	})
 
 	return nil
 }
@@ -216,6 +219,12 @@ func Feed(ctx context.Context, tx *Tx, userID uuid.UUID, parentDepth int, pageTo
 		ptp.Prev = &types.PageToken{
 			CreatedAt: pubs[0].PublishedAt,
 			ID:        pubs[0].Post.ID,
+			Direction: types.PageDirectionNewer,
+		}
+	} else {
+		ptp.Prev = &types.PageToken{
+			CreatedAt: pageToken.CreatedAt,
+			ID:        pageToken.ID,
 			Direction: types.PageDirectionNewer,
 		}
 	}

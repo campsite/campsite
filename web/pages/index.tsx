@@ -1,31 +1,31 @@
-import useSWR from 'swr'
-
+import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
 import * as topicsPb from '../gen/proto/campsite/v1/topics_pb';
 import { topicsClient } from '../lib/rpc';
 import Thread from '../components/Thread';
-import { useTranslation } from '../i18n';
+import { useEffect, useState, Dispatch, SetStateAction } from 'react';
 
 export default function Index() {
-    const { data, error } = useSWR('self', async () => {
-        const req = new topicsPb.GetFeedRequest();
-        req.setLimit(10);
-        req.setParentDepth(5);
-        return (await topicsClient.getFeed(req, {
-            authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
-        }));
-    });
+    const [pubs, setPubs]: [modelsPb.Publication[], Dispatch<SetStateAction<modelsPb.Publication[]>>] = useState([]);
+    const [prevPageToken, setPrevPageToken] = useState("");
 
-    const [t, i18n] = useTranslation('thread');
+    useEffect(() => {
+        const load = async () => {
+            const req = new topicsPb.GetFeedRequest();
+            req.setLimit(10);
+            req.setParentDepth(5);
+            req.setWait(true);
+            req.setPageToken(prevPageToken);
 
-    if (!data) {
-        return <div>{t('show-more')}</div>;
-    }
+            const resp = (await topicsClient.getFeed(req, {
+                authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
+            }));
+            setPubs([...resp.getPublicationsList(), ...pubs]);
+            setPrevPageToken(resp.getPageTokens().getPrev());
+        };
+        load();
+    }, [prevPageToken]);
 
-    if (error) {
-        return <div>ERR: {JSON.stringify(error)}</div>;
-    }
-
-    return <div style={{width: '600px', margin: '0 auto'}}>
-        {data.getPublicationsList().map(pub => <Thread postPb={pub.getPost()} collapsible={true} key={pub.getPost().getId()}></Thread>)}
+    return <div style={{ width: '600px', margin: '0 auto' }}>
+        {pubs.map(pub => <Thread postPb={pub.getPost()} collapsible={true} key={pub.getPost().getId()}></Thread>)}
     </div>;
 }
