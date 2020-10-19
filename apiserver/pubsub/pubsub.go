@@ -5,6 +5,7 @@ import (
 
 	"github.com/nats-io/nats.go"
 	"go.opencensus.io/trace"
+	"google.golang.org/grpc/status"
 )
 
 type PubSub struct {
@@ -52,6 +53,11 @@ func (s *Subscription) Receive(ctx context.Context) ([]byte, error) {
 	span.AddAttributes(trace.StringAttribute("key", s.key))
 	msg, err := s.sub.NextMsgWithContext(ctx)
 	if err != nil {
+		s := status.FromContextError(err)
+		span.SetStatus(trace.Status{
+			Code:    s.Proto().Code,
+			Message: s.Message(),
+		})
 		return nil, err
 	}
 

@@ -5092,6 +5092,11 @@ use-subscription@1.4.1:
   dependencies:
     object-assign "^4.1.1"
 
+use-window-focus@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/use-window-focus/-/use-window-focus-1.2.0.tgz#e60f29865642575b0cd7861d24397b3f8b790a2f"
+  integrity sha512-PZXDqoNZZYz47C9rCv4geeD5PZRJ9uhaEqYij3KNQQ6KA6Cqg7qYi0JLppeMD7lr0g7hF8sAt8lSNbELdM+6FA==
+
 use@^3.1.0:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/use/-/use-3.1.1.tgz#d50c8cac79a19fbc20f2911f56eb973f4e10070f"

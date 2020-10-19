@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"go.opencensus.io/trace"
-	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const waitTimeout = 10 * time.Second
@@ -45,9 +45,10 @@ func (q *Query) Row(dest ...interface{}) error {
 	span.AddAttributes(trace.StringAttribute("sql", q.sql))
 
 	if err := q.dbtx.QueryRow(ctx, q.sql, q.args...).Scan(dest...); err != nil {
+		s := status.FromContextError(err)
 		span.SetStatus(trace.Status{
-			Code:    int32(codes.Unknown),
-			Message: err.Error(),
+			Code:    s.Proto().Code,
+			Message: s.Message(),
 		})
 		return err
 	}
@@ -63,9 +64,10 @@ func (q *Query) Rows(f func(rows pgx.Rows) error) error {
 
 	rows, err := q.dbtx.Query(ctx, q.sql, q.args...)
 	if err != nil {
+		s := status.FromContextError(err)
 		span.SetStatus(trace.Status{
-			Code:    int32(codes.Unknown),
-			Message: err.Error(),
+			Code:    s.Proto().Code,
+			Message: s.Message(),
 		})
 		return err
 	}
@@ -78,9 +80,10 @@ func (q *Query) Rows(f func(rows pgx.Rows) error) error {
 	}
 
 	if err := rows.Err(); err != nil {
+		s := status.FromContextError(err)
 		span.SetStatus(trace.Status{
-			Code:    int32(codes.Unknown),
-			Message: err.Error(),
+			Code:    s.Proto().Code,
+			Message: s.Message(),
 		})
 		return err
 	}
@@ -95,9 +98,10 @@ func (q *Query) Exec() (pgconn.CommandTag, error) {
 	span.AddAttributes(trace.StringAttribute("sql", q.sql))
 	tag, err := q.dbtx.Exec(ctx, q.sql, q.args...)
 	if err != nil {
+		s := status.FromContextError(err)
 		span.SetStatus(trace.Status{
-			Code:    int32(codes.Unknown),
-			Message: err.Error(),
+			Code:    s.Proto().Code,
+			Message: s.Message(),
 		})
 		return nil, err
 	}
@@ -131,9 +135,10 @@ func (t *Tx) Begin(ctx context.Context, f func(ctx context.Context, tx *Tx) erro
 
 	tx, err := t.tx.Begin(ctx)
 	if err != nil {
+		s := status.FromContextError(err)
 		span.SetStatus(trace.Status{
-			Code:    int32(codes.Unknown),
-			Message: err.Error(),
+			Code:    s.Proto().Code,
+			Message: s.Message(),
 		})
 		return err
 	}
@@ -144,18 +149,20 @@ func (t *Tx) Begin(ctx context.Context, f func(ctx context.Context, tx *Tx) erro
 	}
 	subTx := &Tx{tx: tx, rootTx: rootTx}
 	if err := f(ctx, subTx); err != nil {
+		s := status.FromContextError(err)
 		span.SetStatus(trace.Status{
-			Code:    int32(codes.Unknown),
-			Message: err.Error(),
+			Code:    s.Proto().Code,
+			Message: s.Message(),
 		})
 		tx.Rollback(ctx)
 		return err
 	}
 
 	if err := subTx.commit(ctx); err != nil {
+		s := status.FromContextError(err)
 		span.SetStatus(trace.Status{
-			Code:    int32(codes.Unknown),
-			Message: err.Error(),
+			Code:    s.Proto().Code,
+			Message: s.Message(),
 		})
 		return err
 	}
@@ -187,27 +194,30 @@ func (d *DB) Begin(ctx context.Context, txOptions pgx.TxOptions, f func(ctx cont
 
 	tx, err := d.pool.BeginTx(ctx, txOptions)
 	if err != nil {
+		s := status.FromContextError(err)
 		span.SetStatus(trace.Status{
-			Code:    int32(codes.Unknown),
-			Message: err.Error(),
+			Code:    s.Proto().Code,
+			Message: s.Message(),
 		})
 		return err
 	}
 
 	t := &Tx{tx: tx}
 	if err := f(ctx, t); err != nil {
+		s := status.FromContextError(err)
 		span.SetStatus(trace.Status{
-			Code:    int32(codes.Unknown),
-			Message: err.Error(),
+			Code:    s.Proto().Code,
+			Message: s.Message(),
 		})
 		tx.Rollback(ctx)
 		return err
 	}
 
 	if err := t.commit(ctx); err != nil {
+		s := status.FromContextError(err)
 		span.SetStatus(trace.Status{
-			Code:    int32(codes.Unknown),
-			Message: err.Error(),
+			Code:    s.Proto().Code,
+			Message: s.Message(),
 		})
 		return err
 	}
