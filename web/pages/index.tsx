@@ -9,20 +9,19 @@ export default function Index() {
     const [prevPageToken, setPrevPageToken] = useState("");
 
     useEffect(() => {
-        const load = async () => {
-            const req = new topicsPb.GetFeedRequest();
-            req.setLimit(10);
-            req.setParentDepth(5);
-            req.setWait(true);
-            req.setPageToken(prevPageToken);
+        const req = new topicsPb.GetFeedRequest();
+        req.setLimit(10);
+        req.setParentDepth(5);
+        req.setWait(true);
+        req.setPageToken(prevPageToken);
 
-            const resp = (await topicsClient.getFeed(req, {
-                authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
-            }));
+        const call = topicsClient.getFeed(req, {
+            authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
+        }, (err, resp) => {
             setPubs([...resp.getPublicationsList(), ...pubs]);
             setPrevPageToken(resp.getPageTokens().getPrev());
-        };
-        load();
+        });
+        return () => call.cancel();
     }, [prevPageToken]);
 
     return <div style={{ width: '600px', margin: '0 auto' }}>

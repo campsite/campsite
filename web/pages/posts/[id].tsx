@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import { postsClient } from '../../lib/rpc';
 
 import Thread from '../../components/Thread';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 
 export default function Post() {
     const router = useRouter();
@@ -15,31 +15,31 @@ export default function Post() {
     const [prevPageToken, setPrevPageToken] = useState("");
 
     useEffect(() => {
-        (async () => {
-            const req = new postsPb.GetPostRequest();
-            req.setPostId(id as string);
-            req.setParentDepth(5);
-            const resp = (await postsClient.getPost(req, {
-                authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
-            }));
+        const req = new postsPb.GetPostRequest();
+        req.setPostId(id as string);
+        req.setParentDepth(5);
+        const call = postsClient.getPost(req, {
+            authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
+        }, (err, resp) => {
             setPost(resp.getPost());
-        })();
+        });
+        return () => call.cancel();
     }, []);
 
     useEffect(() => {
-        (async () => {
-            const req = new postsPb.GetPostChildrenRequest();
-            req.setPostId(id as string);
-            req.setLimit(10);
-            req.setChildDepth(5);
-            req.setWait(true);
-            req.setPageToken(prevPageToken);
-            const resp = (await postsClient.getPostChildren(req, {
-                authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
-            }));
+        const req = new postsPb.GetPostChildrenRequest();
+        req.setPostId(id as string);
+        req.setLimit(10);
+        req.setChildDepth(5);
+        req.setWait(true);
+        req.setPageToken(prevPageToken);
+        const call = postsClient.getPostChildren(req, {
+            authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
+        }, (err, resp) => {
             setChildren([...resp.getPostsList(), ...children]);
             setPrevPageToken(resp.getPageTokens().getPrev());
-        })();
+        });
+        return () => call.cancel();
     }, [prevPageToken]);
 
     if (!post) {
