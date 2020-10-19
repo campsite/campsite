@@ -3,22 +3,21 @@ package pubsub
 import (
 	"context"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/nats-io/nats.go"
 	"go.opencensus.io/trace"
 )
 
 type PubSub struct {
-	rdb *redis.Client
+	nc *nats.Conn
 }
 
-func (ps *PubSub) Publish(ctx context.Context, key string, value string) error {
+func (ps *PubSub) Publish(ctx context.Context, key string, value []byte) error {
 	ctx, span := trace.StartSpan(ctx, "pubsub.Publish")
 	defer span.End()
 
 	span.AddAttributes(trace.StringAttribute("key", key))
 
-	_, err := ps.rdb.Publish(ctx, key, value).Result()
-	if err != nil {
+	if err := ps.nc.Publish(key, value); err != nil {
 		return err
 	}
 	return nil
@@ -30,41 +29,39 @@ func (ps *PubSub) Subscribe(ctx context.Context, key string) (*Subscription, err
 
 	span.AddAttributes(trace.StringAttribute("key", key))
 
-	rpubsub := ps.rdb.Subscribe(ctx, key)
-	// Wait for confirmation that subscription is created.
-	_, err := rpubsub.Receive(ctx)
+	sub, err := ps.nc.SubscribeSync(key)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Subscription{
-		key:     key,
-		rpubsub: rpubsub,
+		key: key,
+		sub: sub,
 	}, nil
 }
 
 type Subscription struct {
-	key     string
-	rpubsub *redis.PubSub
+	key string
+	sub *nats.Subscription
 }
 
-func (s *Subscription) Receive(ctx context.Context) (string, error) {
+func (s *Subscription) Receive(ctx context.Context) ([]byte, error) {
 	ctx, span := trace.StartSpan(ctx, "pubsub.Receive")
 	defer span.End()
 
 	span.AddAttributes(trace.StringAttribute("key", s.key))
-	msg, err := s.rpubsub.ReceiveMessage(ctx)
+	msg, err := s.sub.NextMsgWithContext(ctx)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return msg.Payload, nil
+	return msg.Data, nil
 }
 
 func (s *Subscription) Unsubscribe(ctx context.Context) error {
-	return s.rpubsub.Close()
+	return s.sub.Unsubscribe()
 }
 
-func Wrap(rdb *redis.Client) *PubSub {
-	return &PubSub{rdb: rdb}
+func Wrap(nc *nats.Conn) *PubSub {
+	return &PubSub{nc: nc}
 }

@@ -16,10 +16,10 @@ import (
 	campsitev1 "campsite.social/campsite/gen/proto/campsite/v1"
 	"contrib.go.opencensus.io/exporter/zipkin"
 	"github.com/BurntSushi/toml"
-	"github.com/go-redis/redis/v8"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/nats-io/nats.go"
 	openzipkin "github.com/openzipkin/zipkin-go"
 	zipkinhttp "github.com/openzipkin/zipkin-go/reporter/http"
 	"github.com/pkg/errors"
@@ -45,7 +45,7 @@ type config struct {
 	ListenAddr               string
 	GatewayListenAddr        string
 	DatabaseConnectionString string
-	RedisURL                 string
+	NatsURL                  string
 	ZipkinReporterURL        string
 	Debug                    struct {
 		ListenAddr       string
@@ -74,6 +74,10 @@ func registerGatewayHandlers(ctx context.Context, gatewayMux *runtime.ServeMux, 
 }
 
 func errorHandler(fullMethod string, err error) error {
+	if errors.Is(err, context.Canceled) {
+		return status.Error(codes.Canceled, "")
+	}
+
 	if _, ok := status.FromError(err); !ok {
 		log.Error().Stack().Err(err).Str("method", fullMethod).Msg("Error handling request")
 		err = status.Error(codes.Unknown, "")
@@ -101,12 +105,10 @@ func main() {
 		zerolog.SetGlobalLevel(logLevel)
 	}
 
-	redisOptions, err := redis.ParseURL(c.RedisURL)
+	nc, err := nats.Connect(c.NatsURL)
 	if err != nil {
-		log.Panic().Err(err).Msg("Failed to parse Redis URL")
+		log.Panic().Err(err).Msg("Failed to connect to nats")
 	}
-
-	rdb := redis.NewClient(redisOptions)
 
 	pgxConfig, err := pgxpool.ParseConfig(c.DatabaseConnectionString)
 	if err != nil {
@@ -120,7 +122,7 @@ func main() {
 
 	env := &env.Env{
 		DB:     db.Wrap(pool),
-		PubSub: pubsub.Wrap(rdb),
+		PubSub: pubsub.Wrap(nc),
 	}
 
 	grpcServer := grpc.NewServer(

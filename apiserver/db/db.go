@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
@@ -9,6 +10,8 @@ import (
 	"go.opencensus.io/trace"
 	"google.golang.org/grpc/codes"
 )
+
+const waitTimeout = 10 * time.Second
 
 type DB struct {
 	pool *pgxpool.Pool

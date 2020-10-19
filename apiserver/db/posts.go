@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"campsite.social/campsite/apiserver/pubsub"
@@ -332,7 +333,7 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 }
 
 func notifyParentPost(ctx context.Context, pbsb *pubsub.PubSub, parentPostID uuid.UUID) error {
-	if err := pbsb.Publish(ctx, "postchildren:"+types.EncodeID(parentPostID), ""); err != nil {
+	if err := pbsb.Publish(ctx, "postchildren:"+types.EncodeID(parentPostID), []byte{}); err != nil {
 		return err
 	}
 	return nil
@@ -375,12 +376,24 @@ func WaitForPostChildren(ctx context.Context, db *DB, pbsb *pubsub.PubSub, postI
 			break
 		}
 
-		msg, err := sub.Receive(ctx)
-		if err != nil {
+		if err := func() error {
+			// Wake up every 10 seconds to check for new posts, in case we missed them.
+			ctx, cancel := context.WithTimeout(ctx, waitTimeout)
+			defer cancel()
+
+			msg, err := sub.Receive(ctx)
+			if err != nil {
+				if errors.Is(err, context.DeadlineExceeded) {
+					return nil
+				}
+				return err
+			}
+
+			_ = msg
+			return nil
+		}(); err != nil {
 			return err
 		}
-
-		_ = msg
 	}
 
 	return nil

@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"campsite.social/campsite/apiserver/pubsub"
@@ -60,7 +61,7 @@ func publishUserTopic(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postID u
 	// TODO: Consider running this outside a transaction/aggregating publishes.
 	tx.OnCommit(func(ctx context.Context) {
 		for _, userID := range userIDs {
-			if err := pbsb.Publish(ctx, "user:"+types.EncodeID(userID), ""); err != nil {
+			if err := pbsb.Publish(ctx, "user:"+types.EncodeID(userID), []byte{}); err != nil {
 				log.Err(err).Msg("publishUserTopic: failed to publish")
 			}
 		}
@@ -118,12 +119,25 @@ func WaitForFeed(ctx context.Context, db *DB, pbsb *pubsub.PubSub, userID uuid.U
 		if hasNewer {
 			break
 		}
-		msg, err := sub.Receive(ctx)
-		if err != nil {
+
+		if err := func() error {
+			// Wake up every 10 seconds to check for new posts, in case we missed them.
+			ctx, cancel := context.WithTimeout(ctx, waitTimeout)
+			defer cancel()
+
+			msg, err := sub.Receive(ctx)
+			if err != nil {
+				if errors.Is(err, context.DeadlineExceeded) {
+					return nil
+				}
+				return err
+			}
+
+			_ = msg
+			return nil
+		}(); err != nil {
 			return err
 		}
-
-		_ = msg
 	}
 
 	return nil
