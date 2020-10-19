@@ -24,14 +24,7 @@ function formatDuration(t: TFunction, i18n: i18n, left: Date, right: Date): stri
         if (hours > 0) {
             return t('hours', { hours: hours });
         }
-
-        const minutes = dateFns.differenceInMinutes(left, right);
-        if (minutes > 0) {
-            return t('minutes', { minutes: minutes });
-        }
-
-        const seconds = dateFns.differenceInSeconds(left, right);
-        return t('seconds', { seconds: seconds });
+        return t('minutes', { minutes: dateFns.differenceInMinutes(left, right) });
     }
 
     if (left.getFullYear() === right.getFullYear()) {
