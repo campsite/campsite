@@ -20,6 +20,13 @@ const nextI18next = new NextI18Next({
     otherLanguages: ['ja'],
     localePath: path.resolve('./public/static/locales'),
     use: [icu],
+    detection: {
+        caches: ['cookie'],
+        cookieSameSite: 'strict',
+        lookupQuerystring: 'lang',
+        lookupCookie: 'lang',
+        order: ['querystring', 'cookie', 'header'],
+    }
 });
 
 if (process.env.NODE_ENV !== 'production') {
