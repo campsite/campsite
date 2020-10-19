@@ -17,9 +17,9 @@ type DB struct {
 type OnCommit func(ctx context.Context)
 
 type Tx struct {
-	tx       pgx.Tx
-	onCommit []OnCommit
-	isNested bool
+	tx        pgx.Tx
+	onCommits []OnCommit
+	rootTx    *Tx
 }
 
 type dbtx interface {
@@ -107,7 +107,7 @@ func (t *Tx) commit(ctx context.Context) error {
 		return err
 	}
 
-	for _, oc := range t.onCommit {
+	for _, oc := range t.onCommits {
 		oc(ctx)
 	}
 
@@ -115,10 +115,11 @@ func (t *Tx) commit(ctx context.Context) error {
 }
 
 func (t *Tx) OnCommit(f OnCommit) {
-	if t.isNested {
-		panic("cannot add OnCommit hook to a nested transaction")
+	if t.rootTx != nil {
+		t.rootTx.OnCommit(f)
+		return
 	}
-	t.onCommit = append(t.onCommit, f)
+	t.onCommits = append(t.onCommits, f)
 }
 
 func (t *Tx) Begin(ctx context.Context, f func(ctx context.Context, tx *Tx) error) error {
@@ -134,7 +135,11 @@ func (t *Tx) Begin(ctx context.Context, f func(ctx context.Context, tx *Tx) erro
 		return err
 	}
 
-	subTx := &Tx{tx: tx, isNested: true}
+	rootTx := t
+	if t.rootTx != nil {
+		rootTx = t.rootTx
+	}
+	subTx := &Tx{tx: tx, rootTx: rootTx}
 	if err := f(ctx, subTx); err != nil {
 		span.SetStatus(trace.Status{
 			Code:    int32(codes.Unknown),
