@@ -56,11 +56,11 @@ function Time({ date }: { date: Date }) {
     return <time dateTime={date.toString()} title={formatDateLong(i18n, date)}>{formatDuration(t, i18n, now, date)}</time>;
 }
 
-function PostActions({ postPb }: { postPb: modelsPb.Post }) {
+function PostActions({ post }: { post: modelsPb.Post }) {
     const [t, i18n] = useTranslation('thread');
 
     return <ul className={styles['post-actions']}>
-        <li><a href='/'><i className='las la-comment-alt'></i> {postPb.getNumChildren() !== 0 ? t('action-count', { 'count': postPb.getNumChildren() }) : ''}</a></li>
+        <li><a href='/'><i className='las la-comment-alt'></i> {post.getNumChildren() !== 0 ? t('action-count', { 'count': post.getNumChildren() }) : ''}</a></li>
     </ul>;
 }
 
@@ -68,7 +68,12 @@ function Avatar({ url, size }: { url: string, size: string }) {
     return <img src={url} className='avatar' style={{ height: size, width: size }} />;
 }
 
-function SecondaryPost({ postPb, collapsible }: { postPb: modelsPb.Post, collapsible?: boolean }) {
+export interface PostTree {
+    root: modelsPb.Post,
+    children: PostTree[],
+}
+
+function SecondaryPost({ tree, collapsible }: { tree: PostTree, collapsible?: boolean }) {
     const [t, i18n] = useTranslation('thread');
 
     const contentWrapperRef = useRef(null);
@@ -89,30 +94,30 @@ function SecondaryPost({ postPb, collapsible }: { postPb: modelsPb.Post, collaps
             <div className={styles['post-secondary-main']}>
                 <div className={styles['post-secondary-body']}>
                     <header className={styles['post-info']}>
-                        <a className={styles['post-username']} href=''>{postPb.getAuthor() ? postPb.getAuthor().getName() : ''}</a>
+                        <a className={styles['post-username']} href=''>{tree.root.getAuthor() ? tree.root.getAuthor().getName() : ''}</a>
                         <span className={styles['post-time']}>{' · '}
-                            <Link href={`/posts/${postPb.getId()}`}><a><Time date={postPb.getCreatedAt().toDate()}></Time></a></Link>
+                            <Link href={`/posts/${tree.root.getId()}`}><a><Time date={tree.root.getCreatedAt().toDate()}></Time></a></Link>
                         </span>
                     </header>
 
                     <div className={styles['post-content-wrapper']} ref={contentWrapperRef}>
-                        <div className={styles['post-content']}><p>{postPb.getContent() ? postPb.getContent().getValue() : ''}</p></div>
+                        <div className={styles['post-content']}><p>{tree.root.getContent() ? tree.root.getContent().getValue() : ''}</p></div>
                         <div className={styles['post-show-more-overlay']} />
                     </div>
 
                     <div className={styles['post-show-more']}>
-                        <Link href={`/posts/${postPb.getId()}`}><a className='placeholder-link' onClick={(e) => {
+                        <Link href={`/posts/${tree.root.getId()}`}><a className='placeholder-link' onClick={(e) => {
                             e.preventDefault();
                             setCollapsed(false);
                         }}>{t('show-more')}</a></Link>
                     </div>
 
-                    <PostActions postPb={postPb}></PostActions>
+                    <PostActions post={tree.root}></PostActions>
                 </div>
 
-                {postPb.getChildrenList().length > 0 ?
+                {tree.children.length > 0 ?
                     <div className={styles['post-replies']}>
-                        {postPb.getChildrenList().map(child => <SecondaryPost postPb={child} key={child.getId()} />)}
+                        {tree.children.map(child => <SecondaryPost tree={child} key={child.root.getId()} />)}
                         <div className={styles['post-placeholder']}>
                             <a href='/' className='placeholder-link'>{t('show-more-children')}</a>
                         </div>
@@ -123,21 +128,21 @@ function SecondaryPost({ postPb, collapsible }: { postPb: modelsPb.Post, collaps
     </article>;
 }
 
-export default function Thread({ postPb, collapsible }: { postPb: modelsPb.Post, collapsible?: boolean }) {
+export default function Thread({ tree, collapsible }: { tree: PostTree, collapsible?: boolean }) {
     const [t, i18n] = useTranslation('thread');
 
-    const parents = [];
+    const parents: modelsPb.Post[] = [];
 
-    let currentParent = postPb.getParentPost();
+    let currentParent = tree.root.getParentPost();
     while (currentParent) {
         parents.push(currentParent);
         currentParent = currentParent.getParentPost();
     }
 
     parents.reverse();
-    const hasMoreContext = parents.length > 0 && parents[0].parentPostID;
+    const hasMoreContext = parents.length > 0 && parents[0].getParentPostId();
 
-    const createdAtDate = postPb.getCreatedAt().toDate();
+    const createdAtDate = tree.root.getCreatedAt().toDate();
 
     return <section className={styles['thread']}>
         <div className={styles['post-parents']}>
@@ -156,16 +161,19 @@ export default function Thread({ postPb, collapsible }: { postPb: modelsPb.Post,
                 </div> :
                 null}
 
-            {parents.map(parent => <SecondaryPost postPb={parent} collapsible={collapsible} key={parent.getId()} />)}
+            {parents.map(parent => <SecondaryPost tree={{
+                root: parent,
+                children: [],
+            }} collapsible={collapsible} key={parent.getId()} />)}
         </div>
 
         <div className={styles['post-primary']}>
             <div className={styles['post-primary-info']}>
                 <a className={styles['post-avatar']} href=''><Avatar url='https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png' size={'2.5rem'} /></a>
                 <header className={styles['post-info']}>
-                    <a className={styles['post-username']} href=''>{postPb.getAuthor() ? postPb.getAuthor().getName() : ''}</a><br />
+                    <a className={styles['post-username']} href=''>{tree.root.getAuthor() ? tree.root.getAuthor().getName() : ''}</a><br />
                     <span className={styles['post-time']}>
-                        <Link href={`/posts/${postPb.getId()}`}><a>
+                        <Link href={`/posts/${tree.root.getId()}`}><a>
                             <time dateTime={createdAtDate.toString()}>{formatDateLong(i18n, createdAtDate)}</time></a>
                         </Link>
                     </span>
@@ -173,15 +181,15 @@ export default function Thread({ postPb, collapsible }: { postPb: modelsPb.Post,
             </div>
 
             <div className={styles['post-content-wrapper']}>
-                <div className={styles['post-content']}>{postPb.getContent() ? postPb.getContent().getValue() : ''}</div>
+                <div className={styles['post-content']}>{tree.root.getContent() ? tree.root.getContent().getValue() : ''}</div>
             </div>
 
-            <PostActions postPb={postPb}></PostActions>
+            <PostActions post={tree.root}></PostActions>
         </div >
 
-        {postPb.getChildrenList().length > 0 ?
+        {tree.children.length > 0 ?
             <div className={styles['post-replies']}>
-                {postPb.getChildrenList().map(child => <SecondaryPost postPb={child} key={child.getId()} />)}
+                {tree.children.map(child => <SecondaryPost tree={child} key={child.root.getId()} />)}
             </div> :
             null}
     </section >;

@@ -25,9 +25,8 @@ type Post struct {
 	ParentPostID *uuid.UUID
 	ParentPost   *Post
 
-	Children              []*Post
-	ChildrenPageTokenPair types.PageTokenPair
-	NumChildren           int
+	ParentNextPageToken types.PageToken
+	NumChildren         int
 }
 
 type deferredLoadsForPost struct {
@@ -52,8 +51,8 @@ func basePostsByID(ctx context.Context, tx *Tx, ids []uuid.UUID, parentDepth int
 			content,
 			warning,
 			author_user_id,
-			parent_post_id,
-			(select count(1) from posts p where p.parent_post_id = posts.id)
+			(select p.ancestor_post_id from post_ancestors p where p.descendant_post_id = posts.id and distance = 1),
+			(select count(1) from post_ancestors p where p.ancestor_post_id = posts.id and distance = 1)
 		from
 			posts
 		where
@@ -64,6 +63,12 @@ func basePostsByID(ctx context.Context, tx *Tx, ids []uuid.UUID, parentDepth int
 		var authorUserID *uuid.UUID
 		if err := rows.Scan(&p.ID, &p.CreatedAt, &p.EditedAt, &p.DeletedAt, &p.Content, &p.Warning, &authorUserID, &p.ParentPostID, &p.NumChildren); err != nil {
 			return err
+		}
+
+		p.ParentNextPageToken = types.PageToken{
+			ID:        p.ID,
+			CreatedAt: p.CreatedAt,
+			Direction: types.PageDirectionOlder,
 		}
 
 		if authorUserID != nil {
@@ -86,36 +91,14 @@ func basePostsByID(ctx context.Context, tx *Tx, ids []uuid.UUID, parentDepth int
 
 		if err := tx.Query(ctx, `
 			select
-				id,
-				(
-					with recursive parents (post_id, path) as
-					(
-						select
-							posts.id,
-							array[]::uuid[]
-						union all
-						select
-							p.parent_post_id,
-							parents.path || array[p.parent_post_id]
-						from
-							parents,
-							posts p
-						where
-							p.id = parents.post_id and
-							p.parent_post_id is not null and
-							coalesce(array_length(parents.path, 1), 0) < $2
-					)
-					select
-						-- TODO: pgx driver workaround: https://github.com/jackc/pgtype/issues/68
-						case when path = array[]::uuid[] then null else path end
-					from
-						parents
-					order by
-						coalesce(array_length(path, 1), 0) desc
-					limit 1
-				)
-			from posts
-			where id = any($1)
+				descendant_post_id,
+				array_agg(ancestor_post_id order by distance)
+			from post_ancestors
+			where
+				descendant_post_id = any($1) and
+				distance > 0 and
+				distance <= $2
+			group by descendant_post_id
 		`, ids, parentDepth).Rows(func(rows pgx.Rows) error {
 			var postID uuid.UUID
 			var path []uuid.UUID
@@ -179,10 +162,8 @@ func PostsByID(ctx context.Context, tx *Tx, ids []uuid.UUID, parentDepth int) (m
 	return posts, nil
 }
 
-func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth int, pageToken types.PageToken, limit int) ([]*Post, types.PageTokenPair, error) {
-	var rootPosts []*Post
-
-	childPostsByID := map[uuid.UUID]*Post{}
+func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth int, pageToken types.PageToken, limit int) ([]*Post, types.PageToken, error) {
+	var childPosts []*Post
 	var childPostIDs []uuid.UUID
 
 	if err := tx.Query(ctx, `
@@ -195,8 +176,12 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 					array[]::uuid[]
 				from
 					posts
+				inner join
+					post_ancestors on post_ancestors.descendant_post_id = posts.id
 				where
-					parent_post_id = $1 and (
+					post_ancestors.ancestor_post_id = $1 and
+					post_ancestors.distance = 1 and
+					(
 						case
 							when $4 = -1 then (
 								(created_at < $2) or
@@ -216,25 +201,27 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 			union all
 			(
 				select
-					p.id,
-					p.created_at,
-					children.path || array[p.parent_post_id]
+					posts.id,
+					posts.created_at,
+					children.path || array[children.post_id]
 				from
 					children,
-					posts p
+					posts
+				inner join
+					post_ancestors on post_ancestors.descendant_post_id = posts.id
 				where
-					p.parent_post_id = children.post_id and
+					post_ancestors.ancestor_post_id = children.post_id and
+					post_ancestors.distance = 1 and
 					coalesce(array_length(children.path, 1), 0) < $5
 				order by
-					p.created_at desc, p.id
+					posts.created_at desc, posts.id
 				limit $6
 			)
 		)
 		select
 			post_id,
-			created_at,
+			created_at
 			-- TODO: pgx driver workaround: https://github.com/jackc/pgtype/issues/68
-			case when path = array[]::uuid[] then null else path end
 		from
 			children
 		order by
@@ -244,104 +231,65 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 			post_id
 	`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, childDepth, limit).Rows(func(rows pgx.Rows) error {
 		child := &Post{}
-		var path []uuid.UUID
-
-		if err := rows.Scan(&child.ID, &child.CreatedAt, &path); err != nil {
+		if err := rows.Scan(&child.ID, &child.CreatedAt); err != nil {
 			return err
 		}
-
 		childPostIDs = append(childPostIDs, child.ID)
-		childPostsByID[child.ID] = child
-
-		if len(path) == 0 {
-			rootPosts = append(rootPosts, child)
-		} else {
-			// Rows are retrieved in level-order traversal, so we can materialize the tree in the order we receive the nodes.
-			parentNode := childPostsByID[path[len(path)-1]]
-			parentNode.Children = append(parentNode.Children, child)
-		}
 		return nil
 	}); err != nil {
-		return nil, types.PageTokenPair{}, err
+		return nil, types.PageToken{}, err
 	}
 
 	posts, err := PostsByID(ctx, tx, childPostIDs, 0)
 	if err != nil {
-		return nil, types.PageTokenPair{}, err
+		return nil, types.PageToken{}, err
 	}
 
-	// Fill in the post tree.
-	for _, child := range childPostsByID {
-		// We have to preserve the children because otherwise they will be overridden by copying the fetched post in.
-		children := child.Children
-		*child = *posts[child.ID]
-		child.Children = children
-
-		var nextPageToken *types.PageToken
-		if len(children) >= limit {
-			nextPageToken = &types.PageToken{
-				CreatedAt: children[len(children)-1].CreatedAt,
-				ID:        children[len(children)-1].ID,
-				Direction: types.PageDirectionOlder,
-			}
-		}
-
-		var prevPageToken *types.PageToken
-		if len(children) > 0 {
-			prevPageToken = &types.PageToken{
-				CreatedAt: children[0].CreatedAt,
-				ID:        children[0].ID,
-				Direction: types.PageDirectionNewer,
-			}
-		}
-
-		child.ChildrenPageTokenPair = types.PageTokenPair{
-			Next: nextPageToken,
-			Prev: prevPageToken,
-		}
+	// Fill in the posts, in the order they were retrieved (level order).
+	for _, childPostID := range childPostIDs {
+		childPosts = append(childPosts, posts[childPostID])
 	}
 
-	childPosts := make([]*Post, len(rootPosts))
-	for i, rootPost := range rootPosts {
-		childPosts[i] = rootPost
+	// Find the absolute last descendant so we can start paginating from there.
+	descendantsPrevPageToken := types.PageToken{
+		Direction: types.PageDirectionNewer,
 	}
-
-	var ptp types.PageTokenPair
-	if len(rootPosts) > 0 {
-		if len(rootPosts) >= limit || pageToken.Direction == types.PageDirectionNewer {
-			ptp.Next = &types.PageToken{
-				CreatedAt: rootPosts[len(rootPosts)-1].CreatedAt,
-				ID:        rootPosts[len(rootPosts)-1].ID,
-				Direction: types.PageDirectionOlder,
-			}
-		}
-
-		ptp.Prev = &types.PageToken{
-			CreatedAt: rootPosts[0].CreatedAt,
-			ID:        rootPosts[0].ID,
-			Direction: types.PageDirectionNewer,
-		}
-	} else {
-		ptp.Prev = &types.PageToken{
-			CreatedAt: pageToken.CreatedAt,
-			ID:        pageToken.ID,
-			Direction: types.PageDirectionNewer,
+	if err := tx.Query(ctx, `
+		select
+			posts.id,
+			posts.created_at
+		from
+			post_ancestors
+		inner join
+			posts on posts.id = post_ancestors.descendant_post_id
+		where
+			post_ancestors.ancestor_post_id = $1 and
+			post_ancestors.distance > 0
+		order by
+			posts.created_at desc, posts.id asc
+		limit 1
+	`, postID).Row(&descendantsPrevPageToken.ID, &descendantsPrevPageToken.CreatedAt); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			descendantsPrevPageToken.ID = pageToken.ID
+			descendantsPrevPageToken.CreatedAt = pageToken.CreatedAt
+		} else {
+			return nil, types.PageToken{}, err
 		}
 	}
 
-	return childPosts, ptp, nil
+	return childPosts, descendantsPrevPageToken, nil
 }
 
-func notifyParentPost(ctx context.Context, pbsb *pubsub.PubSub, parentPostID uuid.UUID) error {
-	if err := pbsb.Publish(ctx, "postchildren:"+types.EncodeID(parentPostID), []byte{}); err != nil {
+func notifyPostDescendants(ctx context.Context, pbsb *pubsub.PubSub, ancestorPostID uuid.UUID) error {
+	if err := pbsb.Publish(ctx, "descendants:"+types.EncodeID(ancestorPostID), []byte{}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func WaitForPostChildren(ctx context.Context, db *DB, pbsb *pubsub.PubSub, postID uuid.UUID, pageToken types.PageToken) error {
+func WaitForPostDescendants(ctx context.Context, db *DB, pbsb *pubsub.PubSub, postID uuid.UUID, pageToken types.PageToken) error {
 	// We must subscribe before we check hasNewer, otherwise we have a race condition.
-	sub, err := pbsb.Subscribe(ctx, "postchildren:"+types.EncodeID(postID))
+	sub, err := pbsb.Subscribe(ctx, "descendants:"+types.EncodeID(postID))
 	if err != nil {
 		return err
 	}
@@ -352,17 +300,18 @@ func WaitForPostChildren(ctx context.Context, db *DB, pbsb *pubsub.PubSub, postI
 		if err := db.Query(ctx, `
 			select exists(
 				select 1
-				from posts
+				from post_ancestors
+				inner join posts on posts.id = post_ancestors.descendant_post_id
 				where
-					parent_post_id = $1 and (
+					ancestor_post_id = $1 and (
 						case
 							when $4 = -1 then (
-								(created_at < $2) or
-								(created_at = $2 and id > $3)
+								(posts.created_at < $2) or
+								(posts.created_at = $2 and posts.id > $3)
 							)
 							when $4 = 1 then (
-								(created_at > $2) or
-								(created_at = $2 and id < $3)
+								(posts.created_at > $2) or
+								(posts.created_at = $2 and posts.id < $3)
 							)
 							else false
 						end
@@ -399,6 +348,77 @@ func WaitForPostChildren(ctx context.Context, db *DB, pbsb *pubsub.PubSub, postI
 	return nil
 }
 
+func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, pageToken types.PageToken, limit int) ([]*Post, types.PageTokenPair, error) {
+	var postIDs []uuid.UUID
+
+	if err := tx.Query(ctx, `
+			select posts.id
+			from post_ancestors
+			inner join
+				posts on posts.id = post_ancestors.descendant_post_id
+			where
+				ancestor_post_id = $1 and (
+					case
+						when $4 = -1 then (
+							(posts.created_at < $2) or
+							(posts.created_at = $2 and posts.id > $3)
+						)
+						when $4 = 1 then (
+							(posts.created_at > $2) or
+							(posts.created_at = $2 and posts.id < $3)
+						)
+						else false
+					end
+				)
+			limit $5
+		`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, limit).Rows(func(rows pgx.Rows) error {
+		var postID uuid.UUID
+		if err := rows.Scan(&postID); err != nil {
+			return err
+		}
+
+		postIDs = append(postIDs, postID)
+		return nil
+	}); err != nil {
+		return nil, types.PageTokenPair{}, err
+	}
+
+	postsMap, err := PostsByID(ctx, tx, postIDs, 0)
+	if err != nil {
+		return nil, types.PageTokenPair{}, err
+	}
+
+	posts := make([]*Post, 0, len(postIDs))
+	for _, postID := range postIDs {
+		posts = append(posts, postsMap[postID])
+	}
+
+	var ptp types.PageTokenPair
+	if len(posts) > 0 {
+		if len(posts) >= limit || pageToken.Direction == types.PageDirectionNewer {
+			ptp.Next = &types.PageToken{
+				CreatedAt: posts[len(posts)-1].CreatedAt,
+				ID:        posts[len(posts)-1].ID,
+				Direction: types.PageDirectionOlder,
+			}
+		}
+
+		ptp.Prev = &types.PageToken{
+			CreatedAt: posts[0].CreatedAt,
+			ID:        posts[0].ID,
+			Direction: types.PageDirectionNewer,
+		}
+	} else {
+		ptp.Prev = &types.PageToken{
+			CreatedAt: pageToken.CreatedAt,
+			ID:        pageToken.ID,
+			Direction: types.PageDirectionNewer,
+		}
+	}
+
+	return posts, ptp, nil
+}
+
 type PostSkeleton struct {
 	AuthorUserID uuid.UUID
 	Content      string
@@ -420,27 +440,72 @@ func CreatePost(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postSkeleton *
 	if err := tx.Query(ctx, `
 		insert into posts (
 			author_user_id,
-			parent_post_id,
 			content,
 			warning
 		)
 		values (
 			$1,
 			$2,
-			$3,
-			$4
+			$3
 		)
 		returning id, created_at
 	`,
 		postSkeleton.AuthorUserID,
-		postSkeleton.ParentPostID,
 		postSkeleton.Content,
 		postSkeleton.Warning,
 	).Row(&postID, &createdAt); err != nil {
 		return nil, err
 	}
 
-	if postSkeleton.ParentPostID == nil {
+	// Materialize the path.
+	var path []uuid.UUID
+	if err := tx.Query(ctx, `
+		with ancestors as (
+			insert into post_ancestors (
+				descendant_post_id,
+				ancestor_post_id,
+				distance
+			)
+			(
+				select $1::uuid, ancestor_post_id, distance + 1
+				from post_ancestors
+				where descendant_post_id = $2
+			) union all (
+				select $1, $1, 0
+			)
+			returning ancestor_post_id, distance
+		)
+		select ancestor_post_id
+		from ancestors
+		where distance > 0
+		order by distance
+	`, postID, postSkeleton.ParentPostID).Rows(func(rows pgx.Rows) error {
+		var parentID uuid.UUID
+		if err := rows.Scan(&parentID); err != nil {
+			return err
+		}
+		path = append(path, parentID)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	// Update the last_active_at of all posts along the path.
+	if _, err := tx.Query(ctx, `
+		update posts
+		set last_active_at = now()
+		where id = any(
+			select ancestor_post_id
+			from post_ancestors
+			where
+				descendant_post_id = $1
+				and distance > 0
+		)
+	`, postID).Exec(); err != nil {
+		return nil, err
+	}
+
+	if len(path) == 0 {
 		// If there is no parent post, we will publish to the user's topic by default, publicly.
 		if err := publishUserTopic(ctx, tx, pbsb, postID, author.ID, author.ID, publishOpts{Private: false}); err != nil {
 			return nil, err
@@ -450,14 +515,10 @@ func CreatePost(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postSkeleton *
 		var parentAuthorUserID *uuid.UUID
 
 		if err := tx.Query(ctx, `
-			select posts.author_user_id
+			select author_user_id
 			from posts
-			where posts.id = (
-				select p2.parent_post_id
-				from posts p2
-				where p2.id = $1
-			)
-		`, postID).Row(&parentAuthorUserID); err != nil {
+			where id = $1
+		`, postSkeleton.ParentPostID).Row(&parentAuthorUserID); err != nil {
 			return nil, err
 		}
 
@@ -467,9 +528,12 @@ func CreatePost(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postSkeleton *
 			}
 		}
 
+		// Publish updates to all posts along the path.
 		tx.OnCommit(func(ctx context.Context) {
-			if err := notifyParentPost(ctx, pbsb, *postSkeleton.ParentPostID); err != nil {
-				log.Err(err).Msg("notifyParentPost: failed to publish")
+			for _, postID := range path {
+				if err := notifyPostDescendants(ctx, pbsb, postID); err != nil {
+					log.Err(err).Msg("notifyPostDescendants: failed to publish")
+				}
 			}
 		})
 	}
@@ -481,6 +545,11 @@ func CreatePost(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postSkeleton *
 		Warning:      postSkeleton.Warning,
 		Content:      &postSkeleton.Content,
 		ParentPostID: postSkeleton.ParentPostID,
+		ParentNextPageToken: types.PageToken{
+			ID:        postID,
+			CreatedAt: createdAt,
+			Direction: types.PageDirectionOlder,
+		},
 	}, nil
 }
 

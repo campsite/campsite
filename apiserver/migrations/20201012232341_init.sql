@@ -14,24 +14,43 @@ create table users (
 
 create unique index on users(private_topic_id);
 
+create table sessions (
+    id uuid primary key default gen_random_uuid(),
+    created_at timestamptz not null default now(),
+    last_active_at timestamptz not null default now(),
+    user_id uuid not null references users(id) on delete cascade,
+    identifier text not null default '',
+    scopes text[] not null default '{}'
+);
+
 create table posts (
     id uuid primary key default uuid_generate_v1mc(),
 
     created_at timestamptz not null default now(),
     edited_at timestamptz,
     deleted_at timestamptz,
+    last_active_at timestamptz not null default now(),
 
     -- If content is null, the post has been deleted.
     content text,
     warning text,
     tags text[] not null default '{}',
 
-    author_user_id uuid references users(id) on delete set null,
-    parent_post_id uuid references posts(id) on delete set null
+    author_user_id uuid references users(id) on delete set null
 );
 
 create index on posts(created_at asc, id desc);
 create index on posts(created_at desc, id asc);
+
+create table post_ancestors (
+    descendant_post_id uuid not null references posts(id) on delete cascade,
+    ancestor_post_id uuid not null references posts(id) on delete cascade,
+    distance int not null,
+    primary key (descendant_post_id, ancestor_post_id, distance)
+);
+
+create index on post_ancestors(descendant_post_id, distance);
+create index on post_ancestors(ancestor_post_id, distance);
 
 create type media_type as enum (
     'raw',
@@ -52,15 +71,6 @@ create table post_media_items (
     media_item_id uuid not null references media_items(id) on delete cascade,
     position integer not null,
     primary key (post_id, media_item_id)
-);
-
-create table sessions (
-    id uuid primary key default gen_random_uuid(),
-    created_at timestamptz not null default now(),
-    last_active_at timestamptz not null default now(),
-    user_id uuid not null references users(id) on delete cascade,
-    identifier text not null default '',
-    scopes text[] not null default '{}'
 );
 
 create table publications (

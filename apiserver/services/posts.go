@@ -133,18 +133,11 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 		}
 	}
 
-	if in.Wait && pageToken.Direction == types.PageDirectionNewer {
-		if err := db.WaitForPostChildren(ctx, ps.DB, ps.PubSub, postID, pageToken); err != nil {
-			return nil, err
-		}
-	}
-
 	var children []*db.Post
-	var pageTokenPair types.PageTokenPair
-
+	var descendantsPrevPageToken types.PageToken
 	if err := ps.DB.Begin(ctx, pgx.TxOptions{}, func(ctx context.Context, tx *db.Tx) error {
 		var err error
-		children, pageTokenPair, err = db.PostChildrenByID(ctx, tx, postID, int(in.ChildDepth), pageToken, int(in.Limit))
+		children, descendantsPrevPageToken, err = db.PostChildrenByID(ctx, tx, postID, int(in.ChildDepth), pageToken, int(in.Limit))
 		return err
 	}); err != nil {
 		return nil, err
@@ -160,6 +153,64 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 	}
 
 	resp := &campsitev1.GetPostChildrenResponse{
+		Posts: posts,
+	}
+
+	{
+		var err error
+		resp.DescendantsPrevPageToken, err = types.EncodePageToken(descendantsPrevPageToken)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return resp, nil
+}
+
+func (ps *postsServer) GetPostDescendants(ctx context.Context, in *campsitev1.GetPostDescendantsRequest) (*campsitev1.GetPostDescendantsResponse, error) {
+	postID, err := types.DecodeID(in.PostId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "post_id")
+	}
+
+	pageToken := types.PageToken{
+		CreatedAt: time.Now(),
+		Direction: types.PageDirectionOlder,
+	}
+	if in.PageToken != "" {
+		var err error
+		pageToken, err = types.DecodePageToken(in.PageToken)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, "page_token")
+		}
+	}
+
+	if in.Wait && pageToken.Direction == types.PageDirectionNewer {
+		if err := db.WaitForPostDescendants(ctx, ps.DB, ps.PubSub, postID, pageToken); err != nil {
+			return nil, err
+		}
+	}
+
+	var children []*db.Post
+	var pageTokenPair types.PageTokenPair
+	if err := ps.DB.Begin(ctx, pgx.TxOptions{}, func(ctx context.Context, tx *db.Tx) error {
+		var err error
+		children, pageTokenPair, err = db.PostDescendantsByID(ctx, tx, postID, pageToken, int(in.Limit))
+		return err
+	}); err != nil {
+		return nil, err
+	}
+
+	posts := make([]*campsitev1.Post, len(children))
+	for i, child := range children {
+		var err error
+		posts[i], err = dbtopb.PostToProto(child)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	resp := &campsitev1.GetPostDescendantsResponse{
 		Posts: posts,
 	}
 

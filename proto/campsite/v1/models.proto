@@ -51,9 +51,7 @@ message Post {
     // This may be unset if the post was not retrieved.
     Post parent_post = 21;
 
-    // Ordered lists of children, from newest to oldest.
-    repeated Post children = 22;
-    PageTokenPair children_page_tokens = 23;
+    string parent_next_page_token = 24;
     int32 num_children = 25;
 }
 

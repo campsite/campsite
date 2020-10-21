@@ -25,6 +25,6 @@ export default function Index() {
     }, [prevPageToken]);
 
     return <div style={{ width: '600px', margin: '0 auto' }}>
-        {pubs.map(pub => <Thread postPb={pub.getPost()} collapsible={true} key={pub.getPost().getId()}></Thread>)}
+        {pubs.map(pub => <Thread tree={{ root: pub.getPost(), children: [] }} collapsible={true} key={pub.getPost().getId()}></Thread>)}
     </div>;
 }

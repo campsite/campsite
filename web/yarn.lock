@@ -3016,6 +3016,11 @@ iferr@^0.1.5:
   resolved "https://registry.yarnpkg.com/iferr/-/iferr-0.1.5.tgz#c60eed69e6d8fdb6b3104a1fcbca1c192dc5b501"
   integrity sha1-xg7taebY/bazEEofy8ocGS3FtQE=
 
+immutable@^4.0.0-rc.12:
+  version "4.0.0-rc.12"
+  resolved "https://registry.yarnpkg.com/immutable/-/immutable-4.0.0-rc.12.tgz#ca59a7e4c19ae8d9bf74a97bdf0f6e2f2a5d0217"
+  integrity sha512-0M2XxkZLx/mi3t8NVwIm1g8nHoEmM9p9UBl/G9k4+hm0kBgOVdMV/B3CY5dQ8qG8qc80NN4gDV4HQv6FTJ5q7A==
+
 imurmurhash@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/imurmurhash/-/imurmurhash-0.1.4.tgz#9218b9b2b928a238b13dc4fb6b6d576f231453ea"
@@ -5091,11 +5096,6 @@ use-subscription@1.4.1:
   integrity sha512-7+IIwDG/4JICrWHL/Q/ZPK5yozEnvRm6vHImu0LKwQlmWGKeiF7mbAenLlK/cTNXrTtXHU/SFASQHzB6+oSJMQ==
   dependencies:
     object-assign "^4.1.1"
-
-use-window-focus@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/use-window-focus/-/use-window-focus-1.2.0.tgz#e60f29865642575b0cd7861d24397b3f8b790a2f"
-  integrity sha512-PZXDqoNZZYz47C9rCv4geeD5PZRJ9uhaEqYij3KNQQ6KA6Cqg7qYi0JLppeMD7lr0g7hF8sAt8lSNbELdM+6FA==
 
 use@^3.1.0:
   version "3.1.1"
