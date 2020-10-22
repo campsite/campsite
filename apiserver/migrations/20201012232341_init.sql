@@ -12,8 +12,6 @@ create table users (
     name text not null
 );
 
-create unique index on users(private_topic_id);
-
 create table sessions (
     id uuid primary key default gen_random_uuid(),
     created_at timestamptz not null default now(),
@@ -39,8 +37,10 @@ create table posts (
     author_user_id uuid references users(id) on delete set null
 );
 
-create index on posts(created_at asc, id desc);
-create index on posts(created_at desc, id asc);
+create unique index on posts(created_at asc, id desc);
+create unique index on posts(created_at desc, id asc);
+create unique index on posts(last_active_at desc, created_at asc, id desc);
+create unique index on posts(last_active_at asc, created_at asc, id desc);
 
 create table post_ancestors (
     descendant_post_id uuid not null references posts(id) on delete cascade,
@@ -49,7 +49,7 @@ create table post_ancestors (
     primary key (descendant_post_id, ancestor_post_id, distance)
 );
 
-create index on post_ancestors(descendant_post_id, distance);
+create unique index on post_ancestors(descendant_post_id, distance);
 create index on post_ancestors(ancestor_post_id, distance);
 
 create type media_type as enum (
@@ -85,8 +85,8 @@ create table publications (
     primary key (post_id, topic_id, publisher_user_id)
 );
 
-create index on publications(published_at asc, post_id desc);
-create index on publications(published_at desc, post_id asc);
+create unique index on publications(published_at asc, post_id desc);
+create unique index on publications(published_at desc, post_id asc);
 
 create table subscriptions (
     user_id uuid not null references users(id) on delete cascade,

@@ -70,7 +70,18 @@ func publishUserTopic(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postID u
 	return nil
 }
 
-func WaitForFeed(ctx context.Context, db *DB, pbsb *pubsub.PubSub, userID uuid.UUID, pageToken types.PageToken) error {
+type FeedPageTokenPair struct {
+	Next *FeedPageToken
+	Prev *FeedPageToken
+}
+
+type FeedPageToken struct {
+	PublishedAt time.Time
+	ID          uuid.UUID
+	Direction   PageDirection
+}
+
+func WaitForFeed(ctx context.Context, db *DB, pbsb *pubsub.PubSub, userID uuid.UUID, pageToken FeedPageToken) error {
 	// We must subscribe before we check hasNewer, otherwise we have a race condition.
 	sub, err := pbsb.Subscribe(ctx, "user:"+types.EncodeID(userID))
 	if err != nil {
@@ -112,7 +123,7 @@ func WaitForFeed(ctx context.Context, db *DB, pbsb *pubsub.PubSub, userID uuid.U
 						end
 					)
 			)
-		`, userID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction).Row(&hasNewer); err != nil {
+		`, userID, pageToken.PublishedAt, pageToken.ID, pageToken.Direction).Row(&hasNewer); err != nil {
 			return err
 		}
 
@@ -143,7 +154,7 @@ func WaitForFeed(ctx context.Context, db *DB, pbsb *pubsub.PubSub, userID uuid.U
 	return nil
 }
 
-func Feed(ctx context.Context, tx *Tx, userID uuid.UUID, parentDepth int, pageToken types.PageToken, limit int) ([]*Publication, types.PageTokenPair, error) {
+func Feed(ctx context.Context, tx *Tx, userID uuid.UUID, parentDepth int, pageToken FeedPageToken, limit int) ([]*Publication, FeedPageTokenPair, error) {
 	var pubs []*Publication
 	var postIDs []uuid.UUID
 	var publisherIDs []uuid.UUID
@@ -184,7 +195,7 @@ func Feed(ctx context.Context, tx *Tx, userID uuid.UUID, parentDepth int, pageTo
 		order by
 			published_at desc, post_id
 		limit $5
-	`, userID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, limit).Rows(func(rows pgx.Rows) error {
+	`, userID, pageToken.PublishedAt, pageToken.ID, pageToken.Direction, limit).Rows(func(rows pgx.Rows) error {
 		pub := &Publication{
 			Post:      &Post{},
 			Publisher: &User{},
@@ -199,12 +210,12 @@ func Feed(ctx context.Context, tx *Tx, userID uuid.UUID, parentDepth int, pageTo
 		postsByID[pub.Post.ID] = pub.Post
 		return nil
 	}); err != nil {
-		return nil, types.PageTokenPair{}, err
+		return nil, FeedPageTokenPair{}, err
 	}
 
 	posts, err := PostsByID(ctx, tx, postIDs, parentDepth)
 	if err != nil {
-		return nil, types.PageTokenPair{}, err
+		return nil, FeedPageTokenPair{}, err
 	}
 
 	for _, postID := range postIDs {
@@ -213,33 +224,33 @@ func Feed(ctx context.Context, tx *Tx, userID uuid.UUID, parentDepth int, pageTo
 
 	publishers, err := UsersByID(ctx, tx, publisherIDs)
 	if err != nil {
-		return nil, types.PageTokenPair{}, err
+		return nil, FeedPageTokenPair{}, err
 	}
 
 	for _, pub := range pubs {
 		*pub.Publisher = *publishers[pub.Publisher.ID]
 	}
 
-	var ptp types.PageTokenPair
+	var ptp FeedPageTokenPair
 	if len(pubs) > 0 {
-		if len(pubs) >= limit || pageToken.Direction == types.PageDirectionNewer {
-			ptp.Next = &types.PageToken{
-				CreatedAt: pubs[len(pubs)-1].PublishedAt,
-				ID:        pubs[len(pubs)-1].Post.ID,
-				Direction: types.PageDirectionOlder,
+		if len(pubs) >= limit || pageToken.Direction == PageDirectionNewer {
+			ptp.Next = &FeedPageToken{
+				PublishedAt: pubs[len(pubs)-1].PublishedAt,
+				ID:          pubs[len(pubs)-1].Post.ID,
+				Direction:   PageDirectionOlder,
 			}
 		}
 
-		ptp.Prev = &types.PageToken{
-			CreatedAt: pubs[0].PublishedAt,
-			ID:        pubs[0].Post.ID,
-			Direction: types.PageDirectionNewer,
+		ptp.Prev = &FeedPageToken{
+			PublishedAt: pubs[0].PublishedAt,
+			ID:          pubs[0].Post.ID,
+			Direction:   PageDirectionNewer,
 		}
 	} else {
-		ptp.Prev = &types.PageToken{
-			CreatedAt: pageToken.CreatedAt,
-			ID:        pageToken.ID,
-			Direction: types.PageDirectionNewer,
+		ptp.Prev = &FeedPageToken{
+			PublishedAt: pageToken.PublishedAt,
+			ID:          pageToken.ID,
+			Direction:   PageDirectionNewer,
 		}
 	}
 

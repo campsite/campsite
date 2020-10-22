@@ -121,23 +121,23 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 		return nil, status.Error(codes.NotFound, "post_id")
 	}
 
-	pageToken := types.PageToken{
-		CreatedAt: time.Now(),
-		Direction: types.PageDirectionOlder,
+	pageToken := db.PostChildrenNextPageToken{
+		LastActiveAt: time.Now(),
+		CreatedAt:    time.Now(),
 	}
 	if in.PageToken != "" {
 		var err error
-		pageToken, err = types.DecodePageToken(in.PageToken)
+		pageToken, err = dbtopb.DecodePostChildrenNextPageToken(in.PageToken)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, "page_token")
 		}
 	}
 
 	var children []*db.Post
-	var descendantsPrevPageToken types.PageToken
+	var descendantsWaitToken db.DescendantsWaitToken
 	if err := ps.DB.Begin(ctx, pgx.TxOptions{}, func(ctx context.Context, tx *db.Tx) error {
 		var err error
-		children, descendantsPrevPageToken, err = db.PostChildrenByID(ctx, tx, postID, int(in.ChildDepth), pageToken, int(in.Limit))
+		children, descendantsWaitToken, err = db.PostChildrenByID(ctx, tx, postID, int(in.ChildDepth), pageToken, int(in.Limit))
 		return err
 	}); err != nil {
 		return nil, err
@@ -158,7 +158,7 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 
 	{
 		var err error
-		resp.DescendantsPrevPageToken, err = types.EncodePageToken(descendantsPrevPageToken)
+		resp.DescendantsWaitToken, err = dbtopb.EncodeDescendantsWaitToken(descendantsWaitToken)
 		if err != nil {
 			return nil, err
 		}
@@ -173,29 +173,29 @@ func (ps *postsServer) GetPostDescendants(ctx context.Context, in *campsitev1.Ge
 		return nil, status.Error(codes.NotFound, "post_id")
 	}
 
-	pageToken := types.PageToken{
-		CreatedAt: time.Now(),
-		Direction: types.PageDirectionOlder,
+	waitToken := db.DescendantsWaitToken{
+		LastActiveAt: time.Now(),
+		CreatedAt:    time.Now(),
 	}
-	if in.PageToken != "" {
+	if in.WaitToken != "" {
 		var err error
-		pageToken, err = types.DecodePageToken(in.PageToken)
+		waitToken, err = dbtopb.DecodeDescendantsWaitToken(in.WaitToken)
 		if err != nil {
-			return nil, status.Error(codes.InvalidArgument, "page_token")
+			return nil, status.Error(codes.InvalidArgument, "wait_token")
 		}
 	}
 
-	if in.Wait && pageToken.Direction == types.PageDirectionNewer {
-		if err := db.WaitForPostDescendants(ctx, ps.DB, ps.PubSub, postID, int(in.ChildDepth), pageToken); err != nil {
+	if in.Wait {
+		if err := db.WaitForPostDescendants(ctx, ps.DB, ps.PubSub, postID, int(in.ChildDepth), waitToken); err != nil {
 			return nil, err
 		}
 	}
 
 	var children []*db.Post
-	var pageTokenPair types.PageTokenPair
+	var nextWaitToken db.DescendantsWaitToken
 	if err := ps.DB.Begin(ctx, pgx.TxOptions{}, func(ctx context.Context, tx *db.Tx) error {
 		var err error
-		children, pageTokenPair, err = db.PostDescendantsByID(ctx, tx, postID, int(in.ChildDepth), pageToken, int(in.Limit))
+		children, nextWaitToken, err = db.PostDescendantsByID(ctx, tx, postID, int(in.ChildDepth), waitToken, int(in.Limit))
 		return err
 	}); err != nil {
 		return nil, err
@@ -214,11 +214,13 @@ func (ps *postsServer) GetPostDescendants(ctx context.Context, in *campsitev1.Ge
 		Posts: posts,
 	}
 
-	protoPageTokenPair, err := types.PageTokenPairToProto(pageTokenPair)
-	if err != nil {
-		return nil, err
+	{
+		var err error
+		resp.NextWaitToken, err = dbtopb.EncodeDescendantsWaitToken(nextWaitToken)
+		if err != nil {
+			return nil, err
+		}
 	}
-	resp.PageTokens = protoPageTokenPair
 
 	return resp, nil
 }

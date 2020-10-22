@@ -13,19 +13,20 @@ import (
 )
 
 type Post struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	EditedAt  *time.Time
-	DeletedAt *time.Time
-	Content   *string
-	Warning   *string
+	ID           uuid.UUID
+	CreatedAt    time.Time
+	EditedAt     *time.Time
+	DeletedAt    *time.Time
+	LastActiveAt time.Time
+	Content      *string
+	Warning      *string
 
 	Author *User
 
 	ParentPostID *uuid.UUID
 	ParentPost   *Post
 
-	ParentNextPageToken types.PageToken
+	ParentNextPageToken PostChildrenNextPageToken
 	NumChildren         int
 }
 
@@ -48,6 +49,7 @@ func basePostsByID(ctx context.Context, tx *Tx, ids []uuid.UUID, parentDepth int
 			created_at,
 			edited_at,
 			deleted_at,
+			last_active_at,
 			content,
 			warning,
 			author_user_id,
@@ -61,14 +63,14 @@ func basePostsByID(ctx context.Context, tx *Tx, ids []uuid.UUID, parentDepth int
 		p := &Post{}
 
 		var authorUserID *uuid.UUID
-		if err := rows.Scan(&p.ID, &p.CreatedAt, &p.EditedAt, &p.DeletedAt, &p.Content, &p.Warning, &authorUserID, &p.ParentPostID, &p.NumChildren); err != nil {
+		if err := rows.Scan(&p.ID, &p.CreatedAt, &p.EditedAt, &p.DeletedAt, &p.LastActiveAt, &p.Content, &p.Warning, &authorUserID, &p.ParentPostID, &p.NumChildren); err != nil {
 			return err
 		}
 
-		p.ParentNextPageToken = types.PageToken{
-			ID:        p.ID,
-			CreatedAt: p.CreatedAt,
-			Direction: types.PageDirectionOlder,
+		p.ParentNextPageToken = PostChildrenNextPageToken{
+			LastActiveAt: p.LastActiveAt,
+			CreatedAt:    p.CreatedAt,
+			ID:           p.ID,
 		}
 
 		if authorUserID != nil {
@@ -162,18 +164,31 @@ func PostsByID(ctx context.Context, tx *Tx, ids []uuid.UUID, parentDepth int) (m
 	return posts, nil
 }
 
-func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth int, pageToken types.PageToken, limit int) ([]*Post, types.PageToken, error) {
+type PostChildrenNextPageToken struct {
+	LastActiveAt time.Time
+	CreatedAt    time.Time
+	ID           uuid.UUID
+}
+
+type DescendantsWaitToken struct {
+	LastActiveAt time.Time
+	CreatedAt    time.Time
+	ID           uuid.UUID
+}
+
+func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth int, pageToken PostChildrenNextPageToken, limit int) ([]*Post, DescendantsWaitToken, error) {
 	var childPosts []*Post
 	var childPostIDs []uuid.UUID
 
 	if err := tx.Query(ctx, `
-		with recursive children (post_id, created_at, path) as
+		with recursive children (post_id, last_active_at, created_at, depth) as
 		(
 			(
 				select
 					id,
+					last_active_at,
 					created_at,
-					array[post_ancestors.ancestor_post_id]::uuid[]
+					1
 				from
 					posts
 				inner join
@@ -182,28 +197,21 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 					post_ancestors.ancestor_post_id = $1 and
 					post_ancestors.distance = 1 and
 					(
-						case
-							when $4 = -1 then (
-								(created_at < $2) or
-								(created_at = $2 and id > $3)
-							)
-							when $4 = 1 then (
-								(created_at > $2) or
-								(created_at = $2 and id < $3)
-							)
-							else false
-						end
+						(last_active_at < $2) or
+						(last_active_at = $2 and created_at < $3) or
+						(last_active_at = $2 and created_at = $3 and id > $4)
 					)
 				order by
-					created_at desc, id
+					last_active_at desc, created_at asc, id desc
 				limit $6
 			)
 			union all
 			(
 				select
 					posts.id,
+					posts.last_active_at,
 					posts.created_at,
-					children.path || array[post_ancestors.ancestor_post_id]
+					children.depth + 1
 				from
 					children,
 					posts
@@ -212,35 +220,35 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 				where
 					post_ancestors.ancestor_post_id = children.post_id and
 					post_ancestors.distance = 1 and
-					coalesce(array_length(children.path, 1), 0) < $5
+					children.depth + 1 <= $5
 				order by
-					posts.created_at desc, posts.id
+					posts.last_active_at desc, posts.created_at asc, posts.id desc
 				limit $6
 			)
 		)
 		select
-			post_id,
-			created_at
+			post_id
 		from
 			children
 		order by
-			path,
+			depth,
+			last_active_at desc,
 			created_at desc,
 			post_id
-	`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, childDepth, limit).Rows(func(rows pgx.Rows) error {
+	`, postID, pageToken.LastActiveAt, pageToken.CreatedAt, pageToken.ID, childDepth, limit).Rows(func(rows pgx.Rows) error {
 		child := &Post{}
-		if err := rows.Scan(&child.ID, &child.CreatedAt); err != nil {
+		if err := rows.Scan(&child.ID); err != nil {
 			return err
 		}
 		childPostIDs = append(childPostIDs, child.ID)
 		return nil
 	}); err != nil {
-		return nil, types.PageToken{}, err
+		return nil, DescendantsWaitToken{}, err
 	}
 
 	posts, err := PostsByID(ctx, tx, childPostIDs, 0)
 	if err != nil {
-		return nil, types.PageToken{}, err
+		return nil, DescendantsWaitToken{}, err
 	}
 
 	// Fill in the posts, in the order they were retrieved (level order).
@@ -249,13 +257,12 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 	}
 
 	// Find the absolute last descendant so we can start paginating from there.
-	descendantsPrevPageToken := types.PageToken{
-		Direction: types.PageDirectionNewer,
-	}
+	var descendantsWaitToken DescendantsWaitToken
 	if err := tx.Query(ctx, `
 		select
 			posts.id,
-			posts.created_at
+			posts.created_at,
+			posts.last_active_at
 		from
 			post_ancestors
 		inner join
@@ -265,18 +272,19 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 			post_ancestors.distance > 0 and
 			post_ancestors.distance <= $2
 		order by
-			posts.created_at desc, posts.id asc
+			posts.last_active_at desc, posts.created_at asc, posts.id desc
 		limit 1
-	`, postID, childDepth).Row(&descendantsPrevPageToken.ID, &descendantsPrevPageToken.CreatedAt); err != nil {
+	`, postID, childDepth).Row(&descendantsWaitToken.ID, &descendantsWaitToken.CreatedAt, &descendantsWaitToken.LastActiveAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			descendantsPrevPageToken.ID = pageToken.ID
-			descendantsPrevPageToken.CreatedAt = pageToken.CreatedAt
+			descendantsWaitToken.ID = pageToken.ID
+			descendantsWaitToken.LastActiveAt = pageToken.LastActiveAt
+			descendantsWaitToken.CreatedAt = pageToken.CreatedAt
 		} else {
-			return nil, types.PageToken{}, err
+			return nil, DescendantsWaitToken{}, err
 		}
 	}
 
-	return childPosts, descendantsPrevPageToken, nil
+	return childPosts, descendantsWaitToken, nil
 }
 
 func notifyPostDescendants(ctx context.Context, pbsb *pubsub.PubSub, ancestorPostID uuid.UUID) error {
@@ -286,7 +294,7 @@ func notifyPostDescendants(ctx context.Context, pbsb *pubsub.PubSub, ancestorPos
 	return nil
 }
 
-func WaitForPostDescendants(ctx context.Context, db *DB, pbsb *pubsub.PubSub, postID uuid.UUID, childDepth int, pageToken types.PageToken) error {
+func WaitForPostDescendants(ctx context.Context, db *DB, pbsb *pubsub.PubSub, postID uuid.UUID, childDepth int, waitToken DescendantsWaitToken) error {
 	// We must subscribe before we check hasNewer, otherwise we have a race condition.
 	sub, err := pbsb.Subscribe(ctx, "descendants:"+types.EncodeID(postID))
 	if err != nil {
@@ -303,21 +311,13 @@ func WaitForPostDescendants(ctx context.Context, db *DB, pbsb *pubsub.PubSub, po
 				inner join posts on posts.id = post_ancestors.descendant_post_id
 				where
 					ancestor_post_id = $1 and (
-						case
-							when $4 = -1 then (
-								(posts.created_at < $2) or
-								(posts.created_at = $2 and posts.id > $3)
-							)
-							when $4 = 1 then (
-								(posts.created_at > $2) or
-								(posts.created_at = $2 and posts.id < $3)
-							)
-							else false
-						end
+						(posts.last_active_at > $2) or
+						(posts.last_active_at = $2 and posts.created_at < $3) or
+						(posts.last_active_at = $2 and posts.created_at = $3 and posts.id > $4)
 					) and
 					distance <= $5
 			)
-		`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, childDepth).Row(&hasNewer); err != nil {
+		`, postID, waitToken.LastActiveAt, waitToken.CreatedAt, waitToken.ID, childDepth).Row(&hasNewer); err != nil {
 			return err
 		}
 
@@ -348,7 +348,7 @@ func WaitForPostDescendants(ctx context.Context, db *DB, pbsb *pubsub.PubSub, po
 	return nil
 }
 
-func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth int, pageToken types.PageToken, limit int) ([]*Post, types.PageTokenPair, error) {
+func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth int, waitToken DescendantsWaitToken, limit int) ([]*Post, DescendantsWaitToken, error) {
 	var postIDs []uuid.UUID
 
 	if err := tx.Query(ctx, `
@@ -358,21 +358,15 @@ func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDep
 				posts on posts.id = post_ancestors.descendant_post_id
 			where
 				ancestor_post_id = $1 and (
-					case
-						when $4 = -1 then (
-							(posts.created_at < $2) or
-							(posts.created_at = $2 and posts.id > $3)
-						)
-						when $4 = 1 then (
-							(posts.created_at > $2) or
-							(posts.created_at = $2 and posts.id < $3)
-						)
-						else false
-					end
+					(posts.last_active_at > $2) or
+					(posts.last_active_at = $2 and posts.created_at < $3) or
+					(posts.last_active_at = $2 and posts.created_at = $3 and posts.id > $4)
 				) and
 				distance <= $5
+			order by
+				posts.last_active_at desc, posts.created_at asc, posts.id desc
 			limit $6
-		`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, childDepth, limit).Rows(func(rows pgx.Rows) error {
+		`, postID, waitToken.LastActiveAt, waitToken.CreatedAt, waitToken.ID, childDepth, limit).Rows(func(rows pgx.Rows) error {
 		var postID uuid.UUID
 		if err := rows.Scan(&postID); err != nil {
 			return err
@@ -381,12 +375,12 @@ func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDep
 		postIDs = append(postIDs, postID)
 		return nil
 	}); err != nil {
-		return nil, types.PageTokenPair{}, err
+		return nil, DescendantsWaitToken{}, err
 	}
 
 	postsMap, err := PostsByID(ctx, tx, postIDs, 0)
 	if err != nil {
-		return nil, types.PageTokenPair{}, err
+		return nil, DescendantsWaitToken{}, err
 	}
 
 	posts := make([]*Post, 0, len(postIDs))
@@ -394,30 +388,22 @@ func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDep
 		posts = append(posts, postsMap[postID])
 	}
 
-	var ptp types.PageTokenPair
+	var nextWaitToken DescendantsWaitToken
 	if len(posts) > 0 {
-		if len(posts) >= limit || pageToken.Direction == types.PageDirectionNewer {
-			ptp.Next = &types.PageToken{
-				CreatedAt: posts[len(posts)-1].CreatedAt,
-				ID:        posts[len(posts)-1].ID,
-				Direction: types.PageDirectionOlder,
-			}
-		}
-
-		ptp.Prev = &types.PageToken{
-			CreatedAt: posts[0].CreatedAt,
-			ID:        posts[0].ID,
-			Direction: types.PageDirectionNewer,
+		nextWaitToken = DescendantsWaitToken{
+			LastActiveAt: posts[0].LastActiveAt,
+			CreatedAt:    posts[0].CreatedAt,
+			ID:           posts[0].ID,
 		}
 	} else {
-		ptp.Prev = &types.PageToken{
-			CreatedAt: pageToken.CreatedAt,
-			ID:        pageToken.ID,
-			Direction: types.PageDirectionNewer,
+		nextWaitToken = DescendantsWaitToken{
+			LastActiveAt: waitToken.LastActiveAt,
+			CreatedAt:    waitToken.CreatedAt,
+			ID:           waitToken.ID,
 		}
 	}
 
-	return posts, ptp, nil
+	return posts, nextWaitToken, nil
 }
 
 type PostSkeleton struct {
@@ -430,6 +416,7 @@ type PostSkeleton struct {
 func CreatePost(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postSkeleton *PostSkeleton) (*Post, error) {
 	var postID uuid.UUID
 	var createdAt time.Time
+	var lastActiveAt time.Time
 
 	// Retrieve the author.
 	author, err := UserByID(ctx, tx, postSkeleton.AuthorUserID)
@@ -449,12 +436,12 @@ func CreatePost(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postSkeleton *
 			$2,
 			$3
 		)
-		returning id, created_at
+		returning id, created_at, last_active_at
 	`,
 		postSkeleton.AuthorUserID,
 		postSkeleton.Content,
 		postSkeleton.Warning,
-	).Row(&postID, &createdAt); err != nil {
+	).Row(&postID, &createdAt, &lastActiveAt); err != nil {
 		return nil, err
 	}
 
@@ -542,14 +529,15 @@ func CreatePost(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postSkeleton *
 	return &Post{
 		ID:           postID,
 		CreatedAt:    createdAt,
+		LastActiveAt: lastActiveAt,
 		Author:       author,
 		Warning:      postSkeleton.Warning,
 		Content:      &postSkeleton.Content,
 		ParentPostID: postSkeleton.ParentPostID,
-		ParentNextPageToken: types.PageToken{
-			ID:        postID,
-			CreatedAt: createdAt,
-			Direction: types.PageDirectionOlder,
+		ParentNextPageToken: PostChildrenNextPageToken{
+			LastActiveAt: lastActiveAt,
+			CreatedAt:    createdAt,
+			ID:           postID,
 		},
 	}, nil
 }

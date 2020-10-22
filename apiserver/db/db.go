@@ -228,3 +228,10 @@ func (d *DB) Begin(ctx context.Context, txOptions pgx.TxOptions, f func(ctx cont
 func Wrap(pool *pgxpool.Pool) *DB {
 	return &DB{pool: pool}
 }
+
+type PageDirection int
+
+var (
+	PageDirectionOlder PageDirection = -1
+	PageDirectionNewer PageDirection = 1
+)

@@ -7,7 +7,6 @@ import (
 	"campsite.social/campsite/apiserver/db"
 	"campsite.social/campsite/apiserver/env"
 	"campsite.social/campsite/apiserver/security"
-	"campsite.social/campsite/apiserver/types"
 	"campsite.social/campsite/apiserver/types/dbtopb"
 	campsitev1 "campsite.social/campsite/gen/proto/campsite/v1"
 	"github.com/jackc/pgx/v4"
@@ -26,26 +25,26 @@ func (ts *topicsServer) GetFeed(ctx context.Context, in *campsitev1.GetFeedReque
 		return nil, status.Error(codes.Unauthenticated, "")
 	}
 
-	pageToken := types.PageToken{
-		CreatedAt: time.Now(),
-		Direction: types.PageDirectionOlder,
+	pageToken := db.FeedPageToken{
+		PublishedAt: time.Now(),
+		Direction:   db.PageDirectionOlder,
 	}
 	if in.PageToken != "" {
 		var err error
-		pageToken, err = types.DecodePageToken(in.PageToken)
+		pageToken, err = dbtopb.DecodeFeedPageToken(in.PageToken)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, "page_token")
 		}
 	}
 
-	if in.Wait && pageToken.Direction == types.PageDirectionNewer {
+	if in.Wait && pageToken.Direction == db.PageDirectionNewer {
 		if err := db.WaitForFeed(ctx, ts.DB, ts.PubSub, principal.UserID, pageToken); err != nil {
 			return nil, err
 		}
 	}
 
 	var pubs []*db.Publication
-	var pageTokenPair types.PageTokenPair
+	var pageTokenPair db.FeedPageTokenPair
 	if err := ts.DB.Begin(ctx, pgx.TxOptions{
 		AccessMode: pgx.ReadOnly,
 	}, func(ctx context.Context, tx *db.Tx) error {
@@ -72,7 +71,7 @@ func (ts *topicsServer) GetFeed(ctx context.Context, in *campsitev1.GetFeedReque
 		Publications: pubPbs,
 	}
 
-	protoPageTokenPair, err := types.PageTokenPairToProto(pageTokenPair)
+	protoPageTokenPair, err := dbtopb.EncodeFeedPageTokenPair(pageTokenPair)
 	if err != nil {
 		return nil, err
 	}
