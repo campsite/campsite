@@ -349,33 +349,33 @@ func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDep
 	var postIDsToFetch []uuid.UUID
 
 	if err := tx.Query(ctx, `
-			select
-				(
-					select
-						array_agg(ancestor_post_id order by distance)
-					from post_ancestors
-					where
-						descendant_post_id = posts.id and
-						distance <= (
-							select
-								distance
-							from post_ancestors
-							where
-								ancestor_post_id = $1 and
-								descendant_post_id = posts.id))
-			from post_ancestors
-			inner join
-				posts on posts.id = post_ancestors.descendant_post_id
-			where
-				ancestor_post_id = $1 and (
-					(posts.created_at > $2) or
-					(posts.created_at = $2 and posts.id < $3)
-				) and
-					distance <= $4
-			order by
-				posts.created_at desc, posts.id asc
-			limit $5
-		`, postID, waitToken.CreatedAt, waitToken.ID, childDepth, limit).Rows(func(rows pgx.Rows) error {
+		select
+			(
+				select
+					array_agg(ancestor_post_id order by distance)
+				from post_ancestors
+				where
+					descendant_post_id = posts.id and
+					distance <= (
+						select
+							distance
+						from post_ancestors
+						where
+							ancestor_post_id = $1 and
+							descendant_post_id = posts.id))
+		from post_ancestors
+		inner join
+			posts on posts.id = post_ancestors.descendant_post_id
+		where
+			ancestor_post_id = $1 and (
+				(posts.created_at > $2) or
+				(posts.created_at = $2 and posts.id < $3)
+			) and
+				distance <= $4
+		order by
+			posts.created_at desc, posts.id asc
+		limit $5
+	`, postID, waitToken.CreatedAt, waitToken.ID, childDepth, limit).Rows(func(rows pgx.Rows) error {
 		var path []uuid.UUID
 		if err := rows.Scan(&path); err != nil {
 			return err
