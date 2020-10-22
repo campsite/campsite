@@ -370,8 +370,8 @@ func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDep
 				ancestor_post_id = $1 and (
 					(posts.created_at > $2) or
 					(posts.created_at = $2 and posts.id < $3)
-			) and
-				distance <= $4
+				) and
+					distance <= $4
 			order by
 				posts.created_at desc, posts.id asc
 			limit $5
