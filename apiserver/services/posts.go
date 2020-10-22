@@ -186,7 +186,7 @@ func (ps *postsServer) GetPostDescendants(ctx context.Context, in *campsitev1.Ge
 	}
 
 	if in.Wait && pageToken.Direction == types.PageDirectionNewer {
-		if err := db.WaitForPostDescendants(ctx, ps.DB, ps.PubSub, postID, pageToken); err != nil {
+		if err := db.WaitForPostDescendants(ctx, ps.DB, ps.PubSub, postID, int(in.ChildDepth), pageToken); err != nil {
 			return nil, err
 		}
 	}
@@ -195,7 +195,7 @@ func (ps *postsServer) GetPostDescendants(ctx context.Context, in *campsitev1.Ge
 	var pageTokenPair types.PageTokenPair
 	if err := ps.DB.Begin(ctx, pgx.TxOptions{}, func(ctx context.Context, tx *db.Tx) error {
 		var err error
-		children, pageTokenPair, err = db.PostDescendantsByID(ctx, tx, postID, pageToken, int(in.Limit))
+		children, pageTokenPair, err = db.PostDescendantsByID(ctx, tx, postID, int(in.ChildDepth), pageToken, int(in.Limit))
 		return err
 	}); err != nil {
 		return nil, err

@@ -173,7 +173,7 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 				select
 					id,
 					created_at,
-					array[]::uuid[]
+					array[post_ancestors.ancestor_post_id]::uuid[]
 				from
 					posts
 				inner join
@@ -203,7 +203,7 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 				select
 					posts.id,
 					posts.created_at,
-					children.path || array[children.post_id]
+					children.path || array[post_ancestors.ancestor_post_id]
 				from
 					children,
 					posts
@@ -221,12 +221,10 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 		select
 			post_id,
 			created_at
-			-- TODO: pgx driver workaround: https://github.com/jackc/pgtype/issues/68
 		from
 			children
 		order by
-			-- TODO: pgx driver workaround: https://github.com/jackc/pgtype/issues/68
-			coalesce(path, '{}'),
+			path,
 			created_at desc,
 			post_id
 	`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, childDepth, limit).Rows(func(rows pgx.Rows) error {
@@ -264,11 +262,12 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 			posts on posts.id = post_ancestors.descendant_post_id
 		where
 			post_ancestors.ancestor_post_id = $1 and
-			post_ancestors.distance > 0
+			post_ancestors.distance > 0 and
+			post_ancestors.distance <= $2
 		order by
 			posts.created_at desc, posts.id asc
 		limit 1
-	`, postID).Row(&descendantsPrevPageToken.ID, &descendantsPrevPageToken.CreatedAt); err != nil {
+	`, postID, childDepth).Row(&descendantsPrevPageToken.ID, &descendantsPrevPageToken.CreatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			descendantsPrevPageToken.ID = pageToken.ID
 			descendantsPrevPageToken.CreatedAt = pageToken.CreatedAt
@@ -287,7 +286,7 @@ func notifyPostDescendants(ctx context.Context, pbsb *pubsub.PubSub, ancestorPos
 	return nil
 }
 
-func WaitForPostDescendants(ctx context.Context, db *DB, pbsb *pubsub.PubSub, postID uuid.UUID, pageToken types.PageToken) error {
+func WaitForPostDescendants(ctx context.Context, db *DB, pbsb *pubsub.PubSub, postID uuid.UUID, childDepth int, pageToken types.PageToken) error {
 	// We must subscribe before we check hasNewer, otherwise we have a race condition.
 	sub, err := pbsb.Subscribe(ctx, "descendants:"+types.EncodeID(postID))
 	if err != nil {
@@ -315,9 +314,10 @@ func WaitForPostDescendants(ctx context.Context, db *DB, pbsb *pubsub.PubSub, po
 							)
 							else false
 						end
-					)
+					) and
+					distance <= $5
 			)
-		`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction).Row(&hasNewer); err != nil {
+		`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, childDepth).Row(&hasNewer); err != nil {
 			return err
 		}
 
@@ -348,7 +348,7 @@ func WaitForPostDescendants(ctx context.Context, db *DB, pbsb *pubsub.PubSub, po
 	return nil
 }
 
-func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, pageToken types.PageToken, limit int) ([]*Post, types.PageTokenPair, error) {
+func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth int, pageToken types.PageToken, limit int) ([]*Post, types.PageTokenPair, error) {
 	var postIDs []uuid.UUID
 
 	if err := tx.Query(ctx, `
@@ -369,9 +369,10 @@ func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, pageToke
 						)
 						else false
 					end
-				)
-			limit $5
-		`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, limit).Rows(func(rows pgx.Rows) error {
+				) and
+				distance <= $5
+			limit $6
+		`, postID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, childDepth, limit).Rows(func(rows pgx.Rows) error {
 		var postID uuid.UUID
 		if err := rows.Scan(&postID); err != nil {
 			return err

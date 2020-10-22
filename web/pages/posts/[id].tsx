@@ -34,7 +34,7 @@ export default function Post() {
         const req = new postsPb.GetPostChildrenRequest();
         req.setPostId(id as string);
         req.setLimit(10);
-        req.setChildDepth(5);
+        req.setChildDepth(4);
         const call = postsClient.getPostChildren(req, {
             authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
         }, (err, resp) => {
@@ -52,6 +52,7 @@ export default function Post() {
         const req = new postsPb.GetPostDescendantsRequest();
         req.setPostId(id as string);
         req.setLimit(10);
+        req.setChildDepth(4);
         req.setPageToken(descendantsPrevPageToken);
         req.setWait(true);
         const call = postsClient.getPostDescendants(req, {
