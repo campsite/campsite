@@ -39,8 +39,7 @@ create table posts (
 
 create unique index on posts(created_at asc, id desc);
 create unique index on posts(created_at desc, id asc);
-create unique index on posts(last_active_at desc, created_at asc, id desc);
-create unique index on posts(last_active_at asc, created_at asc, id desc);
+create unique index on posts(last_active_at desc, created_at desc, id asc);
 
 create table post_ancestors (
     descendant_post_id uuid not null references posts(id) on delete cascade,

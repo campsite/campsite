@@ -201,7 +201,7 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 						(last_active_at = $2 and created_at = $3 and id > $4)
 					)
 				order by
-					last_active_at desc, created_at asc, id desc
+					last_active_at desc, created_at desc, id asc
 				limit $6
 			)
 			union all
@@ -221,7 +221,7 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 					post_ancestors.distance = 1 and
 					children.depth + 1 <= $5
 				order by
-					posts.last_active_at desc, posts.created_at asc, posts.id desc
+					posts.last_active_at desc, posts.created_at desc, posts.id asc
 				limit $6
 			)
 		)
@@ -260,8 +260,7 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 	if err := tx.Query(ctx, `
 		select
 			posts.id,
-			posts.created_at,
-			posts.last_active_at
+			posts.created_at
 		from
 			post_ancestors
 		inner join
@@ -271,7 +270,7 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 			post_ancestors.distance > 0 and
 			post_ancestors.distance <= $2
 		order by
-			posts.created_at asc, posts.id desc
+			posts.created_at desc, posts.id asc
 		limit 1
 	`, postID, childDepth).Row(&descendantsWaitToken.ID, &descendantsWaitToken.CreatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -309,8 +308,8 @@ func WaitForPostDescendants(ctx context.Context, db *DB, pbsb *pubsub.PubSub, po
 				inner join posts on posts.id = post_ancestors.descendant_post_id
 				where
 					ancestor_post_id = $1 and (
-						(posts.created_at < $2) or
-						(posts.created_at = $2 and posts.id > $3)
+						(posts.created_at > $2) or
+						(posts.created_at = $2 and posts.id < $3)
 					) and
 					distance <= $4
 			)
@@ -347,41 +346,64 @@ func WaitForPostDescendants(ctx context.Context, db *DB, pbsb *pubsub.PubSub, po
 
 func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth int, waitToken DescendantsWaitToken, limit int) ([]*Post, DescendantsWaitToken, error) {
 	var postIDs []uuid.UUID
+	var postIDsToFetch []uuid.UUID
 
 	if err := tx.Query(ctx, `
-			select posts.id
+			select
+				(
+					select
+						array_agg(ancestor_post_id order by distance)
+					from post_ancestors
+					where
+						descendant_post_id = posts.id and
+						distance <= (
+							select
+								distance
+							from post_ancestors
+							where
+								ancestor_post_id = $1 and
+								descendant_post_id = posts.id))
 			from post_ancestors
 			inner join
 				posts on posts.id = post_ancestors.descendant_post_id
 			where
 				ancestor_post_id = $1 and (
-					(posts.created_at < $2) or
-					(posts.created_at = $2 and posts.id > $3)
+					(posts.created_at > $2) or
+					(posts.created_at = $2 and posts.id < $3)
 			) and
 				distance <= $4
 			order by
-				posts.last_active_at desc, posts.created_at asc, posts.id desc
+				posts.created_at desc, posts.id asc
 			limit $5
 		`, postID, waitToken.CreatedAt, waitToken.ID, childDepth, limit).Rows(func(rows pgx.Rows) error {
-		var postID uuid.UUID
-		if err := rows.Scan(&postID); err != nil {
+		var path []uuid.UUID
+		if err := rows.Scan(&path); err != nil {
 			return err
 		}
 
-		postIDs = append(postIDs, postID)
+		// 0th item on the path is the current post, last item is the root post.
+		postIDs = append(postIDs, path[0])
+		postIDsToFetch = append(postIDsToFetch, path[:len(path)-1]...)
 		return nil
 	}); err != nil {
 		return nil, DescendantsWaitToken{}, err
 	}
 
-	postsMap, err := PostsByID(ctx, tx, postIDs, 0)
+	postsMap, err := PostsByID(ctx, tx, postIDsToFetch, 0)
 	if err != nil {
 		return nil, DescendantsWaitToken{}, err
 	}
 
 	posts := make([]*Post, 0, len(postIDs))
-	for _, postID := range postIDs {
-		posts = append(posts, postsMap[postID])
+	for _, descendantPostID := range postIDs {
+		post := postsMap[descendantPostID]
+		posts = append(posts, post)
+
+		// Fill in the parents.
+		for post.ParentPostID != nil && *post.ParentPostID != postID {
+			post.ParentPost = postsMap[*post.ParentPostID]
+			post = post.ParentPost
+		}
 	}
 
 	var nextWaitToken DescendantsWaitToken

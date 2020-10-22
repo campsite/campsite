@@ -67,11 +67,6 @@ func DecodeDescendantsWaitToken(s string) (db.DescendantsWaitToken, error) {
 
 	r := bytes.NewBuffer(b)
 
-	var lastActiveAtNanos int64
-	if err := binary.Read(r, binary.LittleEndian, &lastActiveAtNanos); err != nil {
-		return db.DescendantsWaitToken{}, err
-	}
-
 	var createdAtNanos int64
 	if err := binary.Read(r, binary.LittleEndian, &createdAtNanos); err != nil {
 		return db.DescendantsWaitToken{}, err
