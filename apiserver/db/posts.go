@@ -171,9 +171,8 @@ type PostChildrenNextPageToken struct {
 }
 
 type DescendantsWaitToken struct {
-	LastActiveAt time.Time
-	CreatedAt    time.Time
-	ID           uuid.UUID
+	CreatedAt time.Time
+	ID        uuid.UUID
 }
 
 func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth int, pageToken PostChildrenNextPageToken, limit int) ([]*Post, DescendantsWaitToken, error) {
@@ -272,12 +271,11 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 			post_ancestors.distance > 0 and
 			post_ancestors.distance <= $2
 		order by
-			posts.last_active_at desc, posts.created_at asc, posts.id desc
+			posts.created_at asc, posts.id desc
 		limit 1
-	`, postID, childDepth).Row(&descendantsWaitToken.ID, &descendantsWaitToken.CreatedAt, &descendantsWaitToken.LastActiveAt); err != nil {
+	`, postID, childDepth).Row(&descendantsWaitToken.ID, &descendantsWaitToken.CreatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			descendantsWaitToken.ID = pageToken.ID
-			descendantsWaitToken.LastActiveAt = pageToken.LastActiveAt
 			descendantsWaitToken.CreatedAt = pageToken.CreatedAt
 		} else {
 			return nil, DescendantsWaitToken{}, err
@@ -311,13 +309,12 @@ func WaitForPostDescendants(ctx context.Context, db *DB, pbsb *pubsub.PubSub, po
 				inner join posts on posts.id = post_ancestors.descendant_post_id
 				where
 					ancestor_post_id = $1 and (
-						(posts.last_active_at > $2) or
-						(posts.last_active_at = $2 and posts.created_at < $3) or
-						(posts.last_active_at = $2 and posts.created_at = $3 and posts.id > $4)
+						(posts.created_at < $2) or
+						(posts.created_at = $2 and posts.id > $3)
 					) and
-					distance <= $5
+					distance <= $4
 			)
-		`, postID, waitToken.LastActiveAt, waitToken.CreatedAt, waitToken.ID, childDepth).Row(&hasNewer); err != nil {
+		`, postID, waitToken.CreatedAt, waitToken.ID, childDepth).Row(&hasNewer); err != nil {
 			return err
 		}
 
@@ -358,15 +355,14 @@ func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDep
 				posts on posts.id = post_ancestors.descendant_post_id
 			where
 				ancestor_post_id = $1 and (
-					(posts.last_active_at > $2) or
-					(posts.last_active_at = $2 and posts.created_at < $3) or
-					(posts.last_active_at = $2 and posts.created_at = $3 and posts.id > $4)
-				) and
-				distance <= $5
+					(posts.created_at < $2) or
+					(posts.created_at = $2 and posts.id > $3)
+			) and
+				distance <= $4
 			order by
 				posts.last_active_at desc, posts.created_at asc, posts.id desc
-			limit $6
-		`, postID, waitToken.LastActiveAt, waitToken.CreatedAt, waitToken.ID, childDepth, limit).Rows(func(rows pgx.Rows) error {
+			limit $5
+		`, postID, waitToken.CreatedAt, waitToken.ID, childDepth, limit).Rows(func(rows pgx.Rows) error {
 		var postID uuid.UUID
 		if err := rows.Scan(&postID); err != nil {
 			return err
@@ -391,15 +387,13 @@ func PostDescendantsByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDep
 	var nextWaitToken DescendantsWaitToken
 	if len(posts) > 0 {
 		nextWaitToken = DescendantsWaitToken{
-			LastActiveAt: posts[0].LastActiveAt,
-			CreatedAt:    posts[0].CreatedAt,
-			ID:           posts[0].ID,
+			CreatedAt: posts[0].CreatedAt,
+			ID:        posts[0].ID,
 		}
 	} else {
 		nextWaitToken = DescendantsWaitToken{
-			LastActiveAt: waitToken.LastActiveAt,
-			CreatedAt:    waitToken.CreatedAt,
-			ID:           waitToken.ID,
+			CreatedAt: waitToken.CreatedAt,
+			ID:        waitToken.ID,
 		}
 	}
 

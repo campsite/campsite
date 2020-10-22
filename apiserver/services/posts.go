@@ -174,8 +174,7 @@ func (ps *postsServer) GetPostDescendants(ctx context.Context, in *campsitev1.Ge
 	}
 
 	waitToken := db.DescendantsWaitToken{
-		LastActiveAt: time.Now(),
-		CreatedAt:    time.Now(),
+		CreatedAt: time.Now(),
 	}
 	if in.WaitToken != "" {
 		var err error

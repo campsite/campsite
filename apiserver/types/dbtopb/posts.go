@@ -83,17 +83,13 @@ func DecodeDescendantsWaitToken(s string) (db.DescendantsWaitToken, error) {
 	}
 
 	return db.DescendantsWaitToken{
-		LastActiveAt: time.Unix(0, lastActiveAtNanos),
-		CreatedAt:    time.Unix(0, createdAtNanos),
-		ID:           id,
+		CreatedAt: time.Unix(0, createdAtNanos),
+		ID:        id,
 	}, nil
 }
 
 func EncodeDescendantsWaitToken(token db.DescendantsWaitToken) (string, error) {
 	var buf bytes.Buffer
-	if err := binary.Write(&buf, binary.LittleEndian, token.LastActiveAt.UnixNano()); err != nil {
-		return "", err
-	}
 	if err := binary.Write(&buf, binary.LittleEndian, token.CreatedAt.UnixNano()); err != nil {
 		return "", err
 	}
