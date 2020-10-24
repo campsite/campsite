@@ -37,7 +37,7 @@ func (ts *topicsServer) GetFeed(ctx context.Context, in *campsitev1.GetFeedReque
 		}
 	}
 
-	if in.Wait && pageToken.Direction == db.PageDirectionNewer {
+	if in.Wait {
 		if err := db.WaitForFeed(ctx, ts.DB, ts.PubSub, principal.UserID, pageToken); err != nil {
 			return nil, err
 		}

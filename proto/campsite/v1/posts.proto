@@ -55,12 +55,12 @@ message GetPostChildrenRequest {
 
 message GetPostChildrenResponse {
     repeated Post posts = 1;
-    string descendants_wait_token = 2;
+    string descendants_page_token = 2;
 }
 
 message GetPostDescendantsRequest {
     string post_id = 1;
-    string wait_token = 2;
+    string page_token = 2;
     int32 child_depth = 3;
     int32 limit = 4;
     bool wait = 5;
@@ -68,7 +68,7 @@ message GetPostDescendantsRequest {
 
 message GetPostDescendantsResponse {
     repeated Post posts = 1;
-    string next_wait_token = 2;
+    PageTokenPair page_tokens = 2;
 }
 
 service Posts {

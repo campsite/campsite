@@ -59,31 +59,36 @@ func EncodePostChildrenNextPageToken(token db.PostChildrenNextPageToken) (string
 	return base64.RawURLEncoding.EncodeToString(buf.Bytes()), nil
 }
 
-func DecodeDescendantsWaitToken(s string) (db.DescendantsWaitToken, error) {
+func DecodeDescendantsPageToken(s string) (db.DescendantsPageToken, error) {
 	b, err := base64.RawURLEncoding.DecodeString(s)
 	if err != nil {
-		return db.DescendantsWaitToken{}, err
+		return db.DescendantsPageToken{}, err
 	}
 
 	r := bytes.NewBuffer(b)
 
 	var createdAtNanos int64
 	if err := binary.Read(r, binary.LittleEndian, &createdAtNanos); err != nil {
-		return db.DescendantsWaitToken{}, err
+		return db.DescendantsPageToken{}, err
 	}
 
 	var id uuid.UUID
 	if err := binary.Read(r, binary.LittleEndian, &id); err != nil {
-		return db.DescendantsWaitToken{}, err
+		return db.DescendantsPageToken{}, err
 	}
 
-	return db.DescendantsWaitToken{
+	var dirByte byte
+	if err := binary.Read(r, binary.LittleEndian, &dirByte); err != nil {
+		return db.DescendantsPageToken{}, err
+	}
+	return db.DescendantsPageToken{
 		CreatedAt: time.Unix(0, createdAtNanos),
 		ID:        id,
+		Direction: byteToDirection(dirByte),
 	}, nil
 }
 
-func EncodeDescendantsWaitToken(token db.DescendantsWaitToken) (string, error) {
+func EncodeDescendantsPageToken(token db.DescendantsPageToken) (string, error) {
 	var buf bytes.Buffer
 	if err := binary.Write(&buf, binary.LittleEndian, token.CreatedAt.UnixNano()); err != nil {
 		return "", err
@@ -91,7 +96,29 @@ func EncodeDescendantsWaitToken(token db.DescendantsWaitToken) (string, error) {
 	if err := binary.Write(&buf, binary.LittleEndian, token.ID); err != nil {
 		return "", err
 	}
+	if err := binary.Write(&buf, binary.LittleEndian, directionToByte(token.Direction)); err != nil {
+		return "", err
+	}
 	return base64.RawURLEncoding.EncodeToString(buf.Bytes()), nil
+}
+
+func EncodeDescendantsPageTokenPair(pair db.DescendantsPageTokenPair) (*campsitev1.PageTokenPair, error) {
+	ptp := &campsitev1.PageTokenPair{}
+	if pair.Next != nil {
+		var err error
+		ptp.Next, err = EncodeDescendantsPageToken(*pair.Next)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if pair.Prev != nil {
+		var err error
+		ptp.Prev, err = EncodeDescendantsPageToken(*pair.Prev)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return ptp, nil
 }
 
 func PostToProto(post *db.Post) (*campsitev1.Post, error) {

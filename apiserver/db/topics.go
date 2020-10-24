@@ -82,6 +82,10 @@ type FeedPageToken struct {
 }
 
 func WaitForFeed(ctx context.Context, db *DB, pbsb *pubsub.PubSub, userID uuid.UUID, pageToken FeedPageToken) error {
+	if pageToken.Direction != PageDirectionNewer {
+		return nil
+	}
+
 	// We must subscribe before we check hasNewer, otherwise we have a race condition.
 	sub, err := pbsb.Subscribe(ctx, "user:"+types.EncodeID(userID))
 	if err != nil {
