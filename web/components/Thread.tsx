@@ -113,7 +113,6 @@ function SecondaryPost({ tree, collapsible }: { tree: PostTree, collapsible?: bo
         <div className={styles['post-secondary-container']}>
             <div className={styles['post-secondary-rail']}>
                 <a className={styles['post-avatar']} href='/'><Avatar url='https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png' size='2.5rem' /></a>
-                <div className={styles['post-secondary-gutter']}><div className={styles['post-gutter-line']} /></div>
             </div>
             <div className={styles['post-secondary-main']}>
                 <div className={styles['post-secondary-body']}>
@@ -139,17 +138,17 @@ function SecondaryPost({ tree, collapsible }: { tree: PostTree, collapsible?: bo
                     <PostActions post={tree.post}></PostActions>
                 </div>
 
-                {tree.children.order.size > 0 ?
-                    <div className={styles['post-replies']}>
-                        {tree.children.order.map(id => {
-                            const child = tree.children.items.get(id);
-                            return <SecondaryPost tree={child} key={child.post.getId()} />;
-                        })}
+                <div className={styles['post-replies']}>
+                    {tree.children.order.map(id => {
+                        const child = tree.children.items.get(id);
+                        return <SecondaryPost tree={child} key={child.post.getId()} />;
+                    })}
+                    {tree.children.order.size < tree.post.getNumChildren() ?
                         <div className={styles['post-placeholder']}>
                             <a href='/' className='placeholder-link'>{t('show-more-children')}</a>
-                        </div>
-                    </div> :
-                    null}
+                        </div> :
+                        null}
+                </div>
             </div>
         </div>
     </article>;
@@ -220,9 +219,6 @@ export default function Thread({ tree, collapsible }: { tree: PostTree, collapsi
                     const child = tree.children.items.get(id);
                     return <SecondaryPost tree={child} key={child.post.getId()} />;
                 })}
-                <div className={styles['post-placeholder']}>
-                    <a href='/' className='placeholder-link'>{t('show-more-children')}</a>
-                </div>
             </div> :
             null}
     </section >;

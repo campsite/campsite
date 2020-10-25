@@ -18,6 +18,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     const resp = await postsClient.getPost(req, {
         authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
     });
+
     return {
         props: {
             raw: resp.getPost().toArray(),
@@ -115,7 +116,7 @@ export default function Post(props: { raw: Message.MessageArray }) {
         const req = new postsPb.GetPostChildrenRequest();
         req.setPostId(id as string);
         req.setChildDepth(5);
-        req.setLimit(10);
+        req.setLimit(5);
 
         const call = postsClient.getPostChildren(req, {
             authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
