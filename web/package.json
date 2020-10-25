@@ -9,7 +9,6 @@
         "start": "next start"
     },
     "dependencies": {
-        "base64-arraybuffer": "^0.2.0",
         "date-fns": "^2.16.1",
         "google-protobuf": "^3.13.0",
         "grpc-web": "^1.2.1",

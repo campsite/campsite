@@ -1,4 +1,4 @@
-import * as base64 from 'base64-arraybuffer';
+import { Message } from 'google-protobuf';
 import { List as ImmList, Map as ImmMap } from 'immutable';
 import { GetServerSideProps } from 'next';
 import Head from 'next/head';
@@ -20,7 +20,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     });
     return {
         props: {
-            raw: base64.encode(resp.getPost().serializeBinary().buffer),
+            raw: resp.getPost().toArray(),
         }
     };
 };
@@ -87,11 +87,11 @@ function postToTree(post: modelsPb.Post): PostTree {
     return root;
 }
 
-export default function Post(props: { raw: string }) {
+export default function Post(props: { raw: Message.MessageArray }) {
     const router = useRouter();
     const { id } = router.query;
 
-    const [post, setPost]: [modelsPb.Post, Dispatch<SetStateAction<modelsPb.Post>>] = useState(modelsPb.Post.deserializeBinary(new Uint8Array(base64.decode(props.raw))));
+    const [post, setPost]: [modelsPb.Post, Dispatch<SetStateAction<modelsPb.Post>>] = useState(new (modelsPb.Post as any)(props.raw));
     const [children, setChildren]: [PostChildren, Dispatch<SetStateAction<PostChildren>>] = useState(PostChildren());
     const [descendantsToken, setDescendantsToken]: [string, Dispatch<SetStateAction<string>>] = useState("");
 
