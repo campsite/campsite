@@ -18,7 +18,6 @@ import (
 	"github.com/BurntSushi/toml"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/nats-io/nats.go"
 	openzipkin "github.com/openzipkin/zipkin-go"
@@ -44,7 +43,6 @@ var (
 type config struct {
 	LogLevel                 string
 	ListenAddr               string
-	WebListenAddr            string
 	GatewayListenAddr        string
 	DatabaseConnectionString string
 	NatsURL                  string
@@ -193,28 +191,6 @@ func main() {
 			trace.RegisterExporter(zipkin.NewExporter(zipkinhttp.NewReporter(c.ZipkinReporterURL), localEndpoint))
 			log.Info().Msgf("Zipkin tracing enabled: %+v", c.ZipkinReporterURL)
 		}
-	}
-
-	if c.WebListenAddr != "" {
-		lis, err := net.Listen("tcp", c.WebListenAddr)
-		if err != nil {
-			log.Panic().Err(err).Msg("Failed to listen")
-		}
-
-		wrappedGrpc := grpcweb.WrapServer(grpcServer)
-		g.Go(func() error {
-			return http.Serve(lis, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Access-Control-Allow-Origin", "*")
-				w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-				w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-User-Agent, X-Grpc-Web")
-				w.Header().Set("grpc-status", "")
-				w.Header().Set("grpc-message", "")
-				if wrappedGrpc.IsGrpcWebRequest(r) {
-					wrappedGrpc.ServeHTTP(w, r)
-				}
-			}))
-		})
-		log.Info().Msgf("gRPC-Web listening on: %s", lis.Addr())
 	}
 
 	if c.GatewayListenAddr != "" {
