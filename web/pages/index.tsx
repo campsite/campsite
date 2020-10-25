@@ -1,6 +1,7 @@
 import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
 import * as topicsPb from '../gen/proto/campsite/v1/topics_pb';
 import { topicsClient } from '../lib/rpc';
+import { PostChildren } from '../components/Thread';
 import Thread from '../components/Thread';
 import { useEffect, useState, Dispatch, SetStateAction } from 'react';
 
@@ -25,6 +26,6 @@ export default function Index() {
     }, [prevPageToken]);
 
     return <div style={{ width: '600px', margin: '0 auto' }}>
-        {pubs.map(pub => <Thread tree={{ post: pub.getPost(), children: { order: [], items: new Map() } }} collapsible={true} key={pub.getPost().getId()}></Thread>)}
+        {pubs.map(pub => <Thread tree={{ post: pub.getPost(), children: PostChildren() }} collapsible={true} key={pub.getPost().getId()}></Thread>)}
     </div>;
 }

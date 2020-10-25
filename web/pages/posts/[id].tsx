@@ -6,32 +6,36 @@ import { postsClient } from '../../lib/rpc';
 import Thread from '../../components/Thread';
 import { PostChildren, PostTree } from '../../components/Thread';
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import { Map as ImmMap, List as ImmList } from 'immutable';
 
 function mergeChildren(newer: PostChildren, older: PostChildren): PostChildren {
-    const existing = new Set(older.order);
-    const newIDs = newer.order.filter(id => !existing.has(id));
+    const olderOrder = older.order.toArray();
 
-    const order = [...newIDs, ...older.order];
-    const items = new Map();
+    const existing = new Set(olderOrder);
+    const newIDs = newer.order.toArray().filter(id => !existing.has(id));
+
+    const order = newIDs.concat(olderOrder);
+
+    let items: ImmMap<string, PostTree> = ImmMap();
     for (const id of newIDs) {
-        items.set(id, newer.items.get(id));
+        items = items.set(id, newer.items.get(id));
     }
 
-    for (const id of older.order) {
+    for (const id of olderOrder) {
         const olderChild = older.items.get(id);
         if (newer.items.has(id)) {
             const newerChild = newer.items.get(id);
-            items.set(id, {
+            items = items.set(id, {
                 post: newerChild.post,
                 children: mergeChildren(newerChild.children, olderChild.children),
             });
         } else {
-            items.set(id, olderChild);
+            items = items.set(id, olderChild);
         }
     }
 
     return {
-        order: order,
+        order: ImmList(order),
         items: items,
     };
 }
@@ -42,23 +46,21 @@ function postToTree(post: modelsPb.Post): PostTree {
         p.clearParentPost();
 
         const parent = postToTree(post.getParentPost());
-        parent.children.order.push(post.getId());
-        parent.children.items.set(post.getId(), {
-            post: p,
+        return {
+            post: parent.post,
             children: {
-                order: [],
-                items: new Map(),
+                order: parent.children.order.push(p.getId()),
+                items: parent.children.items.set(p.getId(), {
+                    post: p,
+                    children: PostChildren(),
+                })
             },
-        });
-        return parent;
+        };
     }
 
     return {
         post: post,
-        children: {
-            order: [],
-            items: new Map(),
-        }
+        children: PostChildren(),
     };
 }
 
@@ -67,13 +69,14 @@ export default function Post() {
     const { id } = router.query;
 
     const [post, setPost]: [modelsPb.Post, Dispatch<SetStateAction<modelsPb.Post>>] = useState(null);
-    const [children, setChildren]: [PostChildren, Dispatch<SetStateAction<PostChildren>>] = useState({
-        order: [],
-        items: new Map(),
-    });
+    const [children, setChildren]: [PostChildren, Dispatch<SetStateAction<PostChildren>>] = useState(PostChildren());
     const [descendantsToken, setDescendantsToken]: [string, Dispatch<SetStateAction<string>>] = useState("");
 
     useEffect(() => {
+        setChildren(PostChildren());
+        setDescendantsToken('');
+        setPost(null);
+
         const req = new postsPb.GetPostRequest();
         req.setPostId(id as string);
         req.setParentDepth(5);
@@ -94,10 +97,7 @@ export default function Post() {
         const call = postsClient.getPostChildren(req, {
             authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
         }, (err, resp) => {
-            let newChildren: PostChildren = {
-                order: [],
-                items: new Map(),
-            };
+            let newChildren: PostChildren = PostChildren();
             const nodes = new Map();
 
             for (const post of resp.getPostsList()) {
@@ -107,13 +107,15 @@ export default function Post() {
                 const parentID = post.getParentPostId().getValue();
                 if (parentID === id) {
                     // Attach to root.
-                    newChildren.order.push(post.getId());
-                    newChildren.items.set(post.getId(), node);
+                    newChildren = {
+                        order: newChildren.order.push(post.getId()),
+                        items: newChildren.items.set(post.getId(), node),
+                    };
                 } else if (nodes.has(parentID)) {
                     // Attach to child.
                     const parent = nodes.get(parentID);
-                    parent.children.order.push(post.getId());
-                    parent.children.items.set(post.getId(), node);
+                    parent.children.order = parent.children.order.push(post.getId());
+                    parent.children.items = parent.children.items.set(post.getId(), node);
                 }
             }
 
@@ -124,7 +126,7 @@ export default function Post() {
     }, [post]);
 
     useEffect(() => {
-        if (descendantsToken === "") {
+        if (descendantsToken === '') {
             return;
         }
 
@@ -138,18 +140,10 @@ export default function Post() {
         const call = postsClient.getPostDescendants(req, {
             authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
         }, (err, resp) => {
-            let newChildren: PostChildren = {
-                order: [],
-                items: new Map(),
-            };
+            let newChildren: PostChildren = PostChildren();
             for (const post of resp.getPostsList()) {
                 const childTree = postToTree(post);
-                const items: Map<string, PostTree> = new Map();
-                items.set(childTree.post.getId(), childTree);
-                newChildren = mergeChildren(newChildren, {
-                    order: [childTree.post.getId()],
-                    items: items,
-                });
+                newChildren = mergeChildren(newChildren, PostChildren([childTree]));
             }
             setChildren(mergeChildren(newChildren, children));
             setDescendantsToken(resp.getPageTokens().getPrev());

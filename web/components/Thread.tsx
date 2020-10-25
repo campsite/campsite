@@ -4,6 +4,7 @@ import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
 import { useRef, useState, useEffect } from 'react';
 import { useTranslation } from '../i18n';
 import { TFunction, i18n } from 'i18next';
+import { Map, List } from 'immutable';
 import * as dateFns from 'date-fns';
 
 function formatDateLong(i18n: i18n, date: Date): string {
@@ -69,8 +70,25 @@ function Avatar({ url, size }: { url: string, size: string }) {
 }
 
 export interface PostChildren {
-    order: string[],
+    order: List<string>,
     items: Map<string, PostTree>,
+}
+
+export function PostChildren(posts?: PostTree[]): PostChildren {
+    let order = List();
+    let items: Map<string, PostTree> = Map();
+
+    if (posts) {
+        for (const post of posts) {
+            order = order.push(post.post.getId());
+            items = items.set(post.post.getId(), post);
+        }
+    }
+
+    return {
+        order: order,
+        items: items,
+    };
 }
 
 export interface PostTree {
@@ -120,7 +138,7 @@ function SecondaryPost({ tree, collapsible }: { tree: PostTree, collapsible?: bo
                     <PostActions post={tree.post}></PostActions>
                 </div>
 
-                {tree.children.order.length > 0 ?
+                {tree.children.order.size > 0 ?
                     <div className={styles['post-replies']}>
                         {tree.children.order.map(id => {
                             const child = tree.children.items.get(id);
@@ -171,10 +189,7 @@ export default function Thread({ tree, collapsible }: { tree: PostTree, collapsi
 
             {parents.map(parent => <SecondaryPost tree={{
                 post: parent,
-                children: {
-                    order: [],
-                    items: new Map(),
-                },
+                children: PostChildren(),
             }} collapsible={collapsible} key={parent.getId()} />)}
         </div>
 
@@ -198,7 +213,7 @@ export default function Thread({ tree, collapsible }: { tree: PostTree, collapsi
             <PostActions post={tree.post}></PostActions>
         </div >
 
-        {tree.children.order.length > 0 ?
+        {tree.children.order.size > 0 ?
             <div className={styles['post-replies']}>
                 {tree.children.order.map(id => {
                     const child = tree.children.items.get(id);
