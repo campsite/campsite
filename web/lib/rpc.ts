@@ -1,6 +1,6 @@
 import { PostsClient } from '../gen/proto/campsite/v1/PostsServiceClientPb';
-import { UsersClient } from '../gen/proto/campsite/v1/UsersServiceClientPb';
 import { TopicsClient } from '../gen/proto/campsite/v1/TopicsServiceClientPb';
+import { UsersClient } from '../gen/proto/campsite/v1/UsersServiceClientPb';
 
 const host = 'http://localhost:8888'
 

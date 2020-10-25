@@ -1,7 +1,8 @@
-import NextI18Next from 'next-i18next';
+import * as path from 'path';
+
 import ICU from "i18next-icu";
 import en from "i18next-icu/locale-data/en";
-import * as path from 'path';
+import NextI18Next from 'next-i18next';
 
 const icu = new ICU({
     formats: {

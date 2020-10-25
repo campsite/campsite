@@ -1,6 +1,7 @@
 import '../styles/globals.css'
 
 import {AppProps} from 'next/app';
+
 import { appWithTranslation } from '../i18n'
 
 global.XMLHttpRequest = require('xhr2');

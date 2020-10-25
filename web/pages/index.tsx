@@ -1,5 +1,6 @@
 import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
 import * as topicsPb from '../gen/proto/campsite/v1/topics_pb';
+import Head from 'next/head';
 import { topicsClient } from '../lib/rpc';
 import { PostChildren } from '../components/Thread';
 import Thread from '../components/Thread';
@@ -26,6 +27,9 @@ export default function Index() {
     }, [prevPageToken]);
 
     return <div style={{ width: '600px', margin: '0 auto' }}>
+        <Head>
+            <title>Campsite</title>
+        </Head>
         {pubs.map(pub => <Thread tree={{ post: pub.getPost(), children: PostChildren() }} collapsible={true} key={pub.getPost().getId()}></Thread>)}
     </div>;
 }

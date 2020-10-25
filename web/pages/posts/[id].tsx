@@ -1,12 +1,30 @@
+import * as base64 from 'base64-arraybuffer';
+import { List as ImmList, Map as ImmMap } from 'immutable';
+import { GetServerSideProps } from 'next';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+
+import { PostChildren, PostTree } from '../../components/Thread';
+import Thread from '../../components/Thread';
 import * as modelsPb from '../../gen/proto/campsite/v1/models_pb';
 import * as postsPb from '../../gen/proto/campsite/v1/posts_pb';
-import { useRouter } from 'next/router';
 import { postsClient } from '../../lib/rpc';
 
-import Thread from '../../components/Thread';
-import { PostChildren, PostTree } from '../../components/Thread';
-import { useState, useEffect, Dispatch, SetStateAction } from 'react';
-import { Map as ImmMap, List as ImmList } from 'immutable';
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const req = new postsPb.GetPostRequest();
+    req.setPostId(context.params.id as string);
+    req.setParentDepth(5);
+    const resp = await postsClient.getPost(req, {
+        authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
+    });
+    return {
+        props: {
+            raw: base64.encode(resp.getPost().serializeBinary().buffer),
+        }
+    };
+};
+
 
 function mergeChildren(newer: PostChildren, older: PostChildren): PostChildren {
     const olderOrder = older.order.toArray();
@@ -69,11 +87,11 @@ function postToTree(post: modelsPb.Post): PostTree {
     return root;
 }
 
-export default function Post() {
+export default function Post(props: { raw: string }) {
     const router = useRouter();
     const { id } = router.query;
 
-    const [post, setPost]: [modelsPb.Post, Dispatch<SetStateAction<modelsPb.Post>>] = useState(null);
+    const [post, setPost]: [modelsPb.Post, Dispatch<SetStateAction<modelsPb.Post>>] = useState(modelsPb.Post.deserializeBinary(new Uint8Array(base64.decode(props.raw))));
     const [children, setChildren]: [PostChildren, Dispatch<SetStateAction<PostChildren>>] = useState(PostChildren());
     const [descendantsToken, setDescendantsToken]: [string, Dispatch<SetStateAction<string>>] = useState("");
 
@@ -161,6 +179,9 @@ export default function Post() {
     }
 
     return <div style={{ width: '600px', margin: '0 auto' }}>
+        <Head>
+            <title>{post.getAuthor().getName()}: {post.getContent().getValue()}</title>
+        </Head>
         <Thread tree={{
             post: post,
             children: children,

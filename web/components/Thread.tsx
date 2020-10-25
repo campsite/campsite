@@ -1,11 +1,12 @@
-import styles from './Thread.module.css';
-import Link from 'next/link'
-import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
-import { useRef, useState, useEffect } from 'react';
-import { useTranslation } from '../i18n';
-import { TFunction, i18n } from 'i18next';
-import { Map, List } from 'immutable';
 import * as dateFns from 'date-fns';
+import { TFunction, i18n } from 'i18next';
+import { List, Map } from 'immutable';
+import Link from 'next/link'
+import { useEffect, useRef, useState } from 'react';
+
+import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
+import { useTranslation } from '../i18n';
+import styles from './Thread.module.css';
 
 function formatDateLong(i18n: i18n, date: Date): string {
     return `${(new Intl.DateTimeFormat(i18n.language, {
