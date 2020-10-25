@@ -18,6 +18,7 @@ import (
 	"github.com/BurntSushi/toml"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/nats-io/nats.go"
 	openzipkin "github.com/openzipkin/zipkin-go"
@@ -162,6 +163,7 @@ func main() {
 			security.MakeUnaryServerInterceptor(env),
 		),
 	)
+	wrappedGrpc := grpcweb.WrapServer(grpcServer)
 
 	var g errgroup.Group
 
@@ -178,6 +180,20 @@ func main() {
 			log.Panic().Err(err).Msg("Failed to listen")
 		}
 		g.Go(func() error {
+			http.Serve(lis, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.ProtoMajor == 2 {
+					wrappedGrpc.ServeHTTP(w, r)
+				} else {
+					w.Header().Set("Access-Control-Allow-Origin", "*")
+					w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+					w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-User-Agent, X-Grpc-Web")
+					w.Header().Set("grpc-status", "")
+					w.Header().Set("grpc-message", "")
+					if wrappedGrpc.IsGrpcWebRequest(r) {
+						wrappedGrpc.ServeHTTP(w, r)
+					}
+				}
+			}))
 			return grpcServer.Serve(lis)
 		})
 		log.Info().Msgf("gRPC server running on: %s", lis.Addr())
