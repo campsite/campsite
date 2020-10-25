@@ -41,27 +41,32 @@ function mergeChildren(newer: PostChildren, older: PostChildren): PostChildren {
 }
 
 function postToTree(post: modelsPb.Post): PostTree {
-    if (post.getParentPost()) {
-        const p = post.clone();
-        p.clearParentPost();
-
-        const parent = postToTree(post.getParentPost());
-        return {
-            post: parent.post,
-            children: {
-                order: parent.children.order.push(p.getId()),
-                items: parent.children.items.set(p.getId(), {
-                    post: p,
-                    children: PostChildren(),
-                })
-            },
-        };
+    const posts: modelsPb.Post[] = [post];
+    while (posts[posts.length - 1].getParentPost()) {
+        posts.push(posts[posts.length - 1].getParentPost());
     }
 
-    return {
-        post: post,
+    const p = posts.pop();
+    const root: PostTree = {
+        post: p,
         children: PostChildren(),
     };
+    let current = root;
+
+    while (posts.length > 0) {
+        const p = posts.pop();
+        p.clearParentPost();
+
+        let nextCurrent: PostTree = {
+            post: p,
+            children: PostChildren(),
+        };
+        current.children.items = current.children.items.set(p.getId(), nextCurrent);
+        current.children.order = current.children.order.push(p.getId());
+        current = nextCurrent;
+    }
+
+    return root;
 }
 
 export default function Post() {
