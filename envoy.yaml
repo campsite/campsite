@@ -27,8 +27,11 @@ static_resources:
                   allow_headers: content-type,origin,authorization,keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,x-accept-content-transfer-encoding,x-accept-response-streaming,x-user-agent,x-grpc-web
                   expose_headers: grpc-status,grpc-message,x-envoy-upstream-service-time
                 routes:
-                - match: { prefix: / }
-                  route: { cluster: campsite-apiserver }
+                - match:
+                    prefix: /
+                  route:
+                    timeout: 0s
+                    cluster: campsite-apiserver
             http_filters:
             - name: envoy.grpc_web
             - name: envoy.cors
