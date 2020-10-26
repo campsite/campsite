@@ -186,9 +186,13 @@ export default function Post(props: { raw: Message.MessageArray }) {
         <Head>
             <title>{post.getAuthor().getName()}: {post.getContent().getValue()}</title>
         </Head>
-        <Thread tree={{
-            post: post,
-            children: children,
-        }}></Thread>
+        <Thread
+            tree={{
+                post: post,
+                children: children,
+            }}
+            onShowMoreChildren={(path) => {
+                console.log(path);
+            }}></Thread>
     </div>;
 }

@@ -147,7 +147,7 @@ function ParentPost({ tree, collapsible }: { tree: PostTree, collapsible?: boole
     </article>;
 }
 
-function Children({ children, numChildren }: { children: PostChildren, numChildren: number }) {
+function Children({ children, numChildren, onShowMoreChildren }: { children: PostChildren, numChildren: number, onShowMoreChildren: (suffix: string[]) => void }) {
     const [t, i18n] = useTranslation('thread');
 
     return <div className={styles['post-replies']}>
@@ -156,17 +156,20 @@ function Children({ children, numChildren }: { children: PostChildren, numChildr
         </div>
         {children.order.map(id => {
             const child = children.items.get(id);
-            return <ChildPost tree={child} key={child.post.getId()} />;
+            return <ChildPost tree={child} key={child.post.getId()} onShowMoreChildren={onShowMoreChildren} />;
         })}
         {children.order.size < numChildren ?
             <div className={styles['post-placeholder']}>
-                <a href='/' className='placeholder-link'>{t('show-more-children')}</a>
+                <a href='/' className='placeholder-link' onClick={(e) => {
+                    e.preventDefault();
+                    onShowMoreChildren([]);
+                }}>{t('show-more-children')}</a>
             </div> :
             null}
     </div>;
 }
 
-function ChildPost({ tree }: { tree: PostTree }) {
+function ChildPost({ tree, onShowMoreChildren }: { tree: PostTree, onShowMoreChildren: (suffix: string[]) => void }) {
     const [t, i18n] = useTranslation('thread');
 
     return <article className={styles['post-reply']}>
@@ -180,13 +183,15 @@ function ChildPost({ tree }: { tree: PostTree }) {
                 <PostBody tree={tree} collapsible={true} />
             </div>
             {tree.post.getNumChildren() > 0 ?
-                <Children children={tree.children} numChildren={tree.post.getNumChildren()} /> :
+                <Children children={tree.children} numChildren={tree.post.getNumChildren()} onShowMoreChildren={(suffix) => {
+                    onShowMoreChildren([tree.post.getId(), ...suffix]);
+                }} /> :
                 null}
         </div>
     </article>;
 }
 
-export default function Thread({ tree, collapsible }: { tree: PostTree, collapsible?: boolean }) {
+export default function Thread({ tree, collapsible, onShowMoreChildren }: { tree: PostTree, collapsible?: boolean, onShowMoreChildren: (path: string[]) => void }) {
     const [t, i18n] = useTranslation('thread');
 
     const parents: modelsPb.Post[] = [];
@@ -247,7 +252,9 @@ export default function Thread({ tree, collapsible }: { tree: PostTree, collapsi
 
         {tree.children.order.size > 0 ?
             <div className={styles['thread-replies']}>
-                <Children children={tree.children} numChildren={tree.post.getNumChildren()} />
+                <Children children={tree.children} numChildren={tree.post.getNumChildren()} onShowMoreChildren={(suffix) => {
+                    onShowMoreChildren([tree.post.getId(), ...suffix]);
+                }} />
             </div> :
             null}
     </section >;

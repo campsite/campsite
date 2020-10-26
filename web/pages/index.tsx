@@ -1,10 +1,11 @@
-import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
-import * as topicsPb from '../gen/proto/campsite/v1/topics_pb';
 import Head from 'next/head';
-import { topicsClient } from '../lib/rpc';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+
 import { PostChildren } from '../components/Thread';
 import Thread from '../components/Thread';
-import { useEffect, useState, Dispatch, SetStateAction } from 'react';
+import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
+import * as topicsPb from '../gen/proto/campsite/v1/topics_pb';
+import { topicsClient } from '../lib/rpc';
 
 export default function Index() {
     const [pubs, setPubs]: [modelsPb.Publication[], Dispatch<SetStateAction<modelsPb.Publication[]>>] = useState([]);
@@ -26,10 +27,10 @@ export default function Index() {
         return () => call.cancel();
     }, [prevPageToken]);
 
-    return <div style={{ width: '600px', margin: '0 auto' }}>
+    return <div style={{ width: '800px', margin: '0 auto' }}>
         <Head>
             <title>Campsite</title>
         </Head>
-        {pubs.map(pub => <Thread tree={{ post: pub.getPost(), children: PostChildren() }} collapsible={true} key={pub.getPost().getId()}></Thread>)}
+        {pubs.map(pub => <Thread tree={{ post: pub.getPost(), children: PostChildren() }} collapsible={true} onShowMoreChildren={() => {}} key={pub.getPost().getId()}></Thread>)}
     </div>;
 }
