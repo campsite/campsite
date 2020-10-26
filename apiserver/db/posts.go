@@ -218,11 +218,12 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 					posts.created_at,
 					children.depth + 1
 				from
-					children,
-					posts
+					children
 				inner join lateral (
-					select *
+					select posts.*
 					from post_ancestors
+					inner join
+						posts on posts.id = post_ancestors.descendant_post_id
 					where
 						post_ancestors.ancestor_post_id = children.post_id and
 						post_ancestors.distance = 1 and
@@ -230,8 +231,7 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 					order by
 						posts.last_active_at desc, posts.created_at desc, posts.id asc
 					limit $6
-				)
-				pa on pa.descendant_post_id = posts.id
+				) posts on true
 			)
 		)
 		select
