@@ -30,7 +30,7 @@
     display: block;
 }
 
-.post-secondary-gutter {
+.post-parent-gutter {
     flex-grow: 1;
     width: 100%;
     display: flex;
@@ -39,57 +39,87 @@
     padding: 0.5rem 0;
 }
 
-.post-gutter-line {
+.post-parent-line {
     flex-grow: 1;
-    border: 1.5px solid var(--gutter-line-color);
+    margin-bottom: 0.5rem;
+    border-left: 2px solid var(--gutter-line-color);
 }
 
-.post-gutter-line-dashed {
+.post-parent-line-dashed {
     border-style: dashed;
 }
 
 .post-placeholder {
-    padding-left: 2em;
+    padding-left: 1.5em;
+    padding-top: 0.5rem;
     padding-bottom: 0.5rem;
     flex-grow: 1;
 }
 
-.post-context-placeholder {
+.post-parent-placeholder {
     padding: 0.5rem 0;
 }
 
-.post-secondary-rail {
+.post-parent-rail {
     padding-left: 1rem;
     padding-right: 0.5rem;
     display: flex;
     width: 4rem;
+    align-items: center;
     flex-direction: column;
 }
 
-.post-secondary-rail>.post-avatar {
+.post-child-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-right: 0.5rem;
+}
+
+.post-parent-rail>.post-avatar,
+.post-child-rail>.post-avatar {
     margin-right: 0;
+}
+
+.post-reply {
+    display: flex;
+    align-items: stretch;
+}
+
+.post-replies {
+    padding-left: 1.5rem;
+    margin-left: -1px;
+}
+
+.post-replies-pre-post {
+    display: flex;
+    align-items: stretch;
+    height: 1rem;
+    margin-top: -0.5rem;
+}
+
+.post-reply:last-child>.post-reply-line {
+    border: transparent;
+}
+
+.post-reply-line {
+    margin-top: 0.5rem;
+    margin-bottom: -1.25rem;
+    width: 1rem;
+    flex-shrink: 0;
+    border-left: 2px solid var(--gutter-line-color);
+    border-bottom: 2px solid var(--gutter-line-color);
+    border-bottom-left-radius: 0.5rem;
+}
+
+.post-child-gutter {
+    border-left: 2px solid #ddd;
+    flex-grow: 1;
+    margin-top: 0.5rem;
 }
 
 .post-secondary-body {
     padding-right: 1rem;
-}
-
-.thread>.post-replies {
-    margin-left: 0;
-    padding: 1rem 0;
-    padding-bottom: 0;
-}
-
-.post-replies {
-    margin-left: -2rem;
-}
-
-.post-replies>.post-secondary:last-child>.post-secondary-container>.post-secondary-rail>.post-secondary-gutter .post-gutter-line {
-    border-color: transparent;
-}
-
-.post-secondary-main {
-    flex-grow: 1;
 }
 
 .post-primary {
@@ -102,17 +132,17 @@
     margin-bottom: 0.5rem;
 }
 
-.post-secondary.collapsed .post-content-wrapper {
+.post-secondary-body.collapsed>.post-content-wrapper {
     max-height: 3rem;
     overflow: hidden;
 }
 
-.post-secondary .post-show-more,
-.post-secondary .post-show-more-overlay {
+.post-show-more,
+.post-show-more-overlay {
     display: none;
 }
 
-.post-secondary.collapsed .post-show-more {
+.post-secondary-body.collapsed>.post-show-more {
     display: block;
     bottom: 0;
     left: 0;
@@ -121,7 +151,7 @@
     display: block;
 }
 
-.post-secondary.collapsed .post-show-more-overlay {
+.post-secondary-body.collapsed>.post-content-wrapper>.post-show-more-overlay {
     display: block;
     position: absolute;
     bottom: 0;
@@ -135,8 +165,13 @@
     font-size: 1.3em;
 }
 
-.post-secondary-container {
+.post-parent-container {
     display: flex;
+}
+
+.post-child-container {
+    display: flex;
+    padding-left: 0.25rem;
 }
 
 .post-primary-info {
@@ -199,4 +234,8 @@
 
 .post-actions>li>a:hover>i {
     background-color: rgba(69, 163, 146, 0.2);
+}
+
+.thread-replies {
+    padding-left: 0.5rem;
 }

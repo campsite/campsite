@@ -97,7 +97,7 @@ export interface PostTree {
     children: PostChildren,
 }
 
-function SecondaryPost({ tree, collapsible }: { tree: PostTree, collapsible?: boolean }) {
+function PostBody({ tree, collapsible }: { tree: PostTree, collapsible?: boolean }) {
     const [t, i18n] = useTranslation('thread');
 
     const contentWrapperRef = useRef(null);
@@ -109,47 +109,79 @@ function SecondaryPost({ tree, collapsible }: { tree: PostTree, collapsible?: bo
         setCanCollapse(contentWrapperRef.current.offsetHeight < contentWrapperRef.current.scrollHeight);
     });
 
-    return <article className={`${styles['post-secondary']} ${canCollapse && collapsed ? styles['collapsed'] : ''}`}>
-        <div className={styles['post-secondary-container']}>
-            <div className={styles['post-secondary-rail']}>
+    return <div className={`${styles['post-secondary-body']} ${canCollapse && collapsed ? styles['collapsed'] : ''}`}>
+        <header className={styles['post-info']}>
+            <a className={styles['post-username']} href=''>{tree.post.getAuthor() ? tree.post.getAuthor().getName() : ''}</a>
+            <span className={styles['post-time']}>{' · '}
+                <Link href={`/posts/${tree.post.getId()}`}><a><Time date={tree.post.getCreatedAt().toDate()}></Time></a></Link>
+            </span>
+        </header>
+
+        <div className={styles['post-content-wrapper']} ref={contentWrapperRef}>
+            <div className={styles['post-content']}><p>{tree.post.getContent() ? tree.post.getContent().getValue() : ''}</p></div>
+            <div className={styles['post-show-more-overlay']} />
+        </div>
+
+        <div className={styles['post-show-more']}>
+            <Link href={`/posts/${tree.post.getId()}`}><a className='placeholder-link' onClick={(e) => {
+                e.preventDefault();
+                setCollapsed(false);
+            }}>{t('show-more')}</a></Link>
+        </div>
+
+        <PostActions post={tree.post}></PostActions>
+    </div>;
+}
+
+function ParentPost({ tree, collapsible }: { tree: PostTree, collapsible?: boolean }) {
+    const [t, i18n] = useTranslation('thread');
+
+    return <article className={styles['post-parent']}>
+        <div className={styles['post-parent-container']}>
+            <div className={styles['post-parent-rail']}>
                 <a className={styles['post-avatar']} href='/'><Avatar url='https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png' size='2.5rem' /></a>
+                <div className={styles['post-parent-line']}></div>
             </div>
-            <div className={styles['post-secondary-main']}>
-                <div className={styles['post-secondary-body']}>
-                    <header className={styles['post-info']}>
-                        <a className={styles['post-username']} href=''>{tree.post.getAuthor() ? tree.post.getAuthor().getName() : ''}</a>
-                        <span className={styles['post-time']}>{' · '}
-                            <Link href={`/posts/${tree.post.getId()}`}><a><Time date={tree.post.getCreatedAt().toDate()}></Time></a></Link>
-                        </span>
-                    </header>
+            <PostBody tree={tree} collapsible={collapsible} />
+        </div>
+    </article>;
+}
 
-                    <div className={styles['post-content-wrapper']} ref={contentWrapperRef}>
-                        <div className={styles['post-content']}><p>{tree.post.getContent() ? tree.post.getContent().getValue() : ''}</p></div>
-                        <div className={styles['post-show-more-overlay']} />
-                    </div>
+function Children({ children, numChildren }: { children: PostChildren, numChildren: number }) {
+    const [t, i18n] = useTranslation('thread');
 
-                    <div className={styles['post-show-more']}>
-                        <Link href={`/posts/${tree.post.getId()}`}><a className='placeholder-link' onClick={(e) => {
-                            e.preventDefault();
-                            setCollapsed(false);
-                        }}>{t('show-more')}</a></Link>
-                    </div>
+    return <div className={styles['post-replies']}>
+        <div className={styles['post-replies-pre-post']}>
+            <div className={styles['post-reply-line']}></div>
+        </div>
+        {children.order.map(id => {
+            const child = children.items.get(id);
+            return <ChildPost tree={child} key={child.post.getId()} />;
+        })}
+        {children.order.size < numChildren ?
+            <div className={styles['post-placeholder']}>
+                <a href='/' className='placeholder-link'>{t('show-more-children')}</a>
+            </div> :
+            null}
+    </div>;
+}
 
-                    <PostActions post={tree.post}></PostActions>
+function ChildPost({ tree }: { tree: PostTree }) {
+    const [t, i18n] = useTranslation('thread');
+
+    return <article className={styles['post-reply']}>
+        <div className={styles['post-reply-line']}></div>
+        <div className={styles['post-secondary-body']}>
+            <div className={styles['post-child-container']}>
+                <div className={styles['post-child-rail']}>
+                    <a className={styles['post-avatar']} href='/'><Avatar url='https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png' size='2.5rem' /></a>
+                    {tree.post.getNumChildren() > 0 ? <div className={styles['post-child-gutter']}><div className={styles['post-gutter-line']}></div></div> : null}
                 </div>
-
-                <div className={styles['post-replies']}>
-                    {tree.children.order.map(id => {
-                        const child = tree.children.items.get(id);
-                        return <SecondaryPost tree={child} key={child.post.getId()} />;
-                    })}
-                    {tree.children.order.size < tree.post.getNumChildren() ?
-                        <div className={styles['post-placeholder']}>
-                            <a href='/' className='placeholder-link'>{t('show-more-children')}</a>
-                        </div> :
-                        null}
-                </div>
+                <PostBody tree={tree} collapsible={true} />
             </div>
+            {tree.post.getNumChildren() > 0 ?
+                <Children children={tree.children} numChildren={tree.post.getNumChildren()} /> :
+                null}
         </div>
     </article>;
 }
@@ -171,12 +203,12 @@ export default function Thread({ tree, collapsible }: { tree: PostTree, collapsi
     const createdAtDate = tree.post.getCreatedAt().toDate();
 
     return <section className={styles['thread']}>
-        <div className={styles['post-parents']}>
+        <div className={styles['thread-parents']}>
             {hasMoreContext ?
-                <div className={styles['post-secondary']}>
-                    <div className={styles['post-secondary-container']}>
+                <div className={styles['post-parent']}>
+                    <div className={styles['post-parent-container']}>
                         <div className={styles['post-secondary-rail']}>
-                            <div className={styles['post-secondary-gutter']}><div className={`${styles['post-gutter-line']} ${styles['post-gutter-line-dashed']}`}></div></div>
+                            <div className={styles['post-parent-gutter']}><div className={`${styles['post-gutter-line']} ${styles['post-gutter-line-dashed']}`}></div></div>
                         </div>
                         <div className={styles['post-secondary-main']}>
                             <div className={styles['post-context-placeholder']}>
@@ -187,7 +219,7 @@ export default function Thread({ tree, collapsible }: { tree: PostTree, collapsi
                 </div> :
                 null}
 
-            {parents.map(parent => <SecondaryPost tree={{
+            {parents.map(parent => <ParentPost tree={{
                 post: parent,
                 children: PostChildren(),
             }} collapsible={collapsible} key={parent.getId()} />)}
@@ -214,11 +246,8 @@ export default function Thread({ tree, collapsible }: { tree: PostTree, collapsi
         </div >
 
         {tree.children.order.size > 0 ?
-            <div className={styles['post-replies']}>
-                {tree.children.order.map(id => {
-                    const child = tree.children.items.get(id);
-                    return <SecondaryPost tree={child} key={child.post.getId()} />;
-                })}
+            <div className={styles['thread-replies']}>
+                <Children children={tree.children} numChildren={tree.post.getNumChildren()} />
             </div> :
             null}
     </section >;

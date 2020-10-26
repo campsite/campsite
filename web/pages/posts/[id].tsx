@@ -26,7 +26,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
 };
 
-
 function mergeChildren(newer: PostChildren, older: PostChildren): PostChildren {
     const olderOrder = older.order.toArray();
 
@@ -94,11 +93,15 @@ export default function Post(props: { raw: Message.MessageArray }) {
 
     const [post, setPost]: [modelsPb.Post, Dispatch<SetStateAction<modelsPb.Post>>] = useState(new (modelsPb.Post as any)(props.raw));
     const [children, setChildren]: [PostChildren, Dispatch<SetStateAction<PostChildren>>] = useState(PostChildren());
-    const [descendantsToken, setDescendantsToken]: [string, Dispatch<SetStateAction<string>>] = useState("");
+    const [descendantsToken, setDescendantsToken]: [string, Dispatch<SetStateAction<string>>] = useState(null);
 
     useEffect(() => {
+        if (post !== null && post.getId() === id) {
+            return;
+        }
+
         setChildren(PostChildren());
-        setDescendantsToken('');
+        setDescendantsToken(null);
         setPost(null);
 
         const req = new postsPb.GetPostRequest();
@@ -115,8 +118,8 @@ export default function Post(props: { raw: Message.MessageArray }) {
     useEffect(() => {
         const req = new postsPb.GetPostChildrenRequest();
         req.setPostId(id as string);
-        req.setChildDepth(5);
-        req.setLimit(5);
+        req.setChildDepth(3);
+        req.setLimit(3);
 
         const call = postsClient.getPostChildren(req, {
             authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
@@ -150,13 +153,13 @@ export default function Post(props: { raw: Message.MessageArray }) {
     }, [post]);
 
     useEffect(() => {
-        if (descendantsToken === '') {
+        if (descendantsToken === null) {
             return;
         }
 
         const req = new postsPb.GetPostDescendantsRequest();
         req.setPostId(id as string);
-        req.setChildDepth(5);
+        req.setChildDepth(3);
         req.setLimit(10);
         req.setWait(true);
         req.setPageToken(descendantsToken);
