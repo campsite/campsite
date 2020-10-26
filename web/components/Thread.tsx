@@ -171,7 +171,7 @@ function ChildPost({ tree }: { tree: PostTree }) {
 
     return <article className={styles['post-reply']}>
         <div className={styles['post-reply-line']}></div>
-        <div className={styles['post-secondary-body']}>
+        <div className={styles['post-child-body']}>
             <div className={styles['post-child-container']}>
                 <div className={styles['post-child-rail']}>
                     <a className={styles['post-avatar']} href='/'><Avatar url='https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png' size='2.5rem' /></a>
