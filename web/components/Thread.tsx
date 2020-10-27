@@ -1,12 +1,15 @@
 import * as dateFns from 'date-fns';
 import { TFunction, i18n } from 'i18next';
 import { List, Map } from 'immutable';
+import MarkdownIt from 'markdown-it';
 import Link from 'next/link'
 import { memo, useEffect, useRef, useState } from 'react';
 
 import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
 import { useTranslation } from '../i18n';
 import styles from './Thread.module.css';
+
+const md = MarkdownIt();
 
 function formatDateLong(i18n: i18n, date: Date): string {
     return `${(new Intl.DateTimeFormat(i18n.language, {
@@ -117,10 +120,12 @@ const PostBody = memo(({ tree, collapsible }: { tree: PostTree, collapsible?: bo
             </span>
         </header>
 
-        <div className={styles['post-content-wrapper']} ref={contentWrapperRef}>
-            <div className={styles['post-content']}><p>{tree.post.getContent() ? tree.post.getContent().getValue() : ''}</p></div>
-            <div className={styles['post-show-more-overlay']} />
-        </div>
+        {tree.post.getContent() ?
+            <div className={styles['post-content-wrapper']} ref={contentWrapperRef}>
+                <div className={styles['post-content']} dangerouslySetInnerHTML={{ __html: md.render(tree.post.getContent().getValue()) }} />
+                <div className={styles['post-show-more-overlay']} />
+            </div> :
+            null}
 
         <div className={styles['post-show-more']}>
             <Link href={`/posts/${tree.post.getId()}`}><a className='placeholder-link' onClick={(e) => {
@@ -247,9 +252,11 @@ const Thread = memo(({ tree, collapsible, maxChildDepth, onShowMoreChildren }: {
                 </header>
             </div>
 
-            <div className={styles['post-content-wrapper']}>
-                <div className={styles['post-content']}>{tree.post.getContent() ? tree.post.getContent().getValue() : ''}</div>
-            </div>
+            {tree.post.getContent() ?
+                <div className={styles['post-content-wrapper']}>
+                    <div className={styles['post-content']} dangerouslySetInnerHTML={{ __html: md.render(tree.post.getContent().getValue()) }} />
+                </div> :
+                null}
 
             <PostActions post={tree.post}></PostActions>
         </div >

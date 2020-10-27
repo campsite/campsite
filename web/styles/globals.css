@@ -34,7 +34,7 @@ a:link:hover {
 }
 
 p {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75em;
 }
 
 p:last-child {
@@ -43,4 +43,12 @@ p:last-child {
 
 .avatar {
     border-radius: 50%;
+}
+
+strong {
+    font-weight: bold;
+}
+
+em {
+    font-style: italic;
 }

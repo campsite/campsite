@@ -122,6 +122,7 @@ export default function Post(props: { raw: Message.MessageArray }) {
     const [descendantsToken, setDescendantsToken]: [string, Dispatch<SetStateAction<string>>] = useState(null);
 
     const maxChildDepth = 3;
+    const toplevelLimit = 50;
 
     useEffect(() => {
         if (post !== null && post.getId() === id) {
@@ -148,7 +149,7 @@ export default function Post(props: { raw: Message.MessageArray }) {
         req.setPostId(id as string);
         req.setChildDepth(maxChildDepth);
         req.setChildLimit(3);
-        req.setToplevelLimit(10);
+        req.setToplevelLimit(toplevelLimit);
 
         const call = postsClient.getPostChildren(req, {
             authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
@@ -189,7 +190,7 @@ export default function Post(props: { raw: Message.MessageArray }) {
         return <div>Loading</div>;
     }
 
-    return <div style={{ width: '600px', margin: '0 auto' }}>
+    return <div style={{ width: '1000px', margin: '0 auto' }}>
         <Head>
             <title>{post.getAuthor().getName()}: {post.getContent().getValue()}</title>
         </Head>
@@ -214,7 +215,7 @@ export default function Post(props: { raw: Message.MessageArray }) {
                 req.setPostId(parentID);
                 req.setChildDepth(maxChildDepth - path.length);
                 req.setChildLimit(3);
-                req.setToplevelLimit(3);
+                req.setToplevelLimit(toplevelLimit);
                 req.setPageToken(
                     current.children.order.size > 0 ?
                     current.children.items.get(current.children.order.last()).post.getParentNextPageToken() :
