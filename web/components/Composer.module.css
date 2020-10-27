@@ -1,0 +1,46 @@
+.composer {
+    padding-top: 1rem;
+    background: var(--card-bg-color);
+    color: var(--card-fg-color);
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    margin-bottom: 1rem;
+    padding-right: 1rem;
+}
+
+.rail {
+    padding-left: 1rem;
+    padding-right: 0.5rem;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.avatar {
+    display: block;
+    text-decoration: none !important;
+    margin-right: 0.5rem;
+}
+
+.body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.content {
+    font: inherit;
+    font-size: 1.3rem;
+    border: none;
+    outline: 0;
+    resize: none;
+}
+
+.controls {
+    text-align: right;
+}

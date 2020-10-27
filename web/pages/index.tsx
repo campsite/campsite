@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
+import Composer from '../components/Composer';
 import { PostChildren } from '../components/Thread';
 import Thread from '../components/Thread';
 import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
@@ -27,10 +28,13 @@ export default function Index() {
         return () => call.cancel();
     }, [prevPageToken]);
 
-    return <div style={{ width: '800px', margin: '0 auto' }}>
+    return <div>
         <Head>
             <title>Campsite</title>
         </Head>
-        {pubs.map(pub => <Thread tree={{ post: pub.getPost(), children: PostChildren() }} maxChildDepth={0} collapsible={true} onShowMoreChildren={() => {}} key={pub.getPost().getId()}></Thread>)}
+        <div>
+            <Composer />
+            {pubs.map(pub => <Thread tree={{ post: pub.getPost(), children: PostChildren() }} maxChildDepth={0} collapsible={true} onShowMoreChildren={() => {}} key={pub.getPost().getId()}></Thread>)}
+        </div>
     </div>;
 }

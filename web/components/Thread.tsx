@@ -7,6 +7,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 
 import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
 import { useTranslation } from '../i18n';
+import Avatar from './Avatar';
 import styles from './Thread.module.css';
 
 const md = MarkdownIt();
@@ -67,10 +68,6 @@ const PostActions = memo(({ post }: { post: modelsPb.Post }) => {
     return <ul className={styles['post-actions']}>
         <li><a href='/'><i className='las la-comment-alt'></i> {post.getNumChildren() !== 0 ? t('action-count', { 'count': post.getNumChildren() }) : ''}</a></li>
     </ul>;
-});
-
-const Avatar = memo(({ url, size }: { url: string, size: string }) => {
-    return <img src={url} className='avatar' style={{ height: size, width: size }} />;
 });
 
 export interface PostChildren {

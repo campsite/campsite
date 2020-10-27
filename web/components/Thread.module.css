@@ -1,10 +1,8 @@
 .thread {
-    --bg-color: #fff;
-    --fg-color: #000;
     --gutter-line-color: #ddd;
     padding-top: 1rem;
-    background: var(--bg-color);
-    color: var(--fg-color);
+    background: var(--card-bg-color);
+    color: var(--card-fg-color);
     margin-bottom: 1rem;
     border-radius: 0.5rem;
     overflow: hidden;
@@ -64,7 +62,6 @@
     padding-left: 1rem;
     padding-right: 0.5rem;
     display: flex;
-    width: 4rem;
     align-items: center;
     flex-direction: column;
 }

@@ -190,7 +190,7 @@ export default function Post(props: { raw: Message.MessageArray }) {
         return <div>Loading</div>;
     }
 
-    return <div style={{ width: '1000px', margin: '0 auto' }}>
+    return <div>
         <Head>
             <title>{post.getAuthor().getName()}: {post.getContent().getValue()}</title>
         </Head>

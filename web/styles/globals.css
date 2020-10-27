@@ -3,6 +3,8 @@
 :root {
     --muted-text-color: #888;
     --primary-color: #45A392;
+    --card-bg-color: #fff;
+    --card-fg-color: #000;
 }
 
 html,
@@ -41,14 +43,28 @@ p:last-child {
     margin-bottom: 0;
 }
 
-.avatar {
-    border-radius: 50%;
-}
-
 strong {
     font-weight: bold;
 }
 
 em {
     font-style: italic;
+}
+
+main {
+    padding: 0.5rem 1rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+button {
+    font: inherit;
+    font-weight: bold;
+    color: #fff;
+    background-color: var(--primary-color);
+    padding: 0.5rem 1.5rem;
+    border: none;
+    border-radius: 2rem;
+    cursor: pointer;
+    outline: 0;
 }
