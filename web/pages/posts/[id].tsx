@@ -87,6 +87,32 @@ function postToTree(post: modelsPb.Post): PostTree {
     return root;
 }
 
+function postsToChildren(rootID: string, posts: modelsPb.Post[]): PostChildren {
+    let children: PostChildren = PostChildren();
+    const nodes = new Map();
+
+    for (const post of posts) {
+        const node = postToTree(post);
+        nodes.set(post.getId(), node);
+
+        const parentID = post.getParentPostId().getValue();
+        if (parentID === rootID) {
+            // Attach to root.
+            children = {
+                order: children.order.push(post.getId()),
+                items: children.items.set(post.getId(), node),
+            };
+        } else if (nodes.has(parentID)) {
+            // Attach to child.
+            const parent = nodes.get(parentID);
+            parent.children.order = parent.children.order.push(post.getId());
+            parent.children.items = parent.children.items.set(post.getId(), node);
+        }
+    }
+
+    return children;
+}
+
 export default function Post(props: { raw: Message.MessageArray }) {
     const router = useRouter();
     const { id } = router.query;
@@ -124,29 +150,7 @@ export default function Post(props: { raw: Message.MessageArray }) {
         const call = postsClient.getPostChildren(req, {
             authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
         }, (err, resp) => {
-            let newChildren: PostChildren = PostChildren();
-            const nodes = new Map();
-
-            for (const post of resp.getPostsList()) {
-                const node = postToTree(post);
-                nodes.set(post.getId(), node);
-
-                const parentID = post.getParentPostId().getValue();
-                if (parentID === id) {
-                    // Attach to root.
-                    newChildren = {
-                        order: newChildren.order.push(post.getId()),
-                        items: newChildren.items.set(post.getId(), node),
-                    };
-                } else if (nodes.has(parentID)) {
-                    // Attach to child.
-                    const parent = nodes.get(parentID);
-                    parent.children.order = parent.children.order.push(post.getId());
-                    parent.children.items = parent.children.items.set(post.getId(), node);
-                }
-            }
-
-            setChildren(newChildren);
+            setChildren(postsToChildren(id as string, resp.getPostsList()));
             setDescendantsToken(resp.getDescendantsPageToken());
         });
         return () => call.cancel();
@@ -192,7 +196,43 @@ export default function Post(props: { raw: Message.MessageArray }) {
                 children: children,
             }}
             onShowMoreChildren={(path) => {
-                console.log(path);
+                const parentID = path[path.length - 1];
+
+                let current = {
+                    post: post,
+                    children: children,
+                };
+                for (const part of path) {
+                    current = current.children.items.get(part);
+                }
+
+                const req = new postsPb.GetPostChildrenRequest();
+                req.setPostId(parentID);
+                req.setChildDepth(3);
+                req.setLimit(3);
+                req.setPageToken(
+                    current.children.order.size > 0 ?
+                    current.children.items.get(current.children.order.last()).post.getParentNextPageToken() :
+                    '');
+
+                const call = postsClient.getPostChildren(req, {
+                    authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
+                }, (err, resp) => {
+                    const root = {
+                        post: post,
+                        children: {...children},
+                    };
+                    let current = root;
+                    for (const part of path) {
+                        let next = {...current.children.items.get(part)};
+                        current.children.items = current.children.items.set(part, next);
+                        current = next;
+                    }
+
+                    current.children = mergeChildren(current.children, postsToChildren(parentID, resp.getPostsList()));
+
+                    setChildren(root.children);
+                });
             }}></Thread>
     </div>;
 }

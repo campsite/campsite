@@ -253,7 +253,7 @@ export default function Thread({ tree, collapsible, onShowMoreChildren }: { tree
         {tree.children.order.size > 0 ?
             <div className={styles['thread-replies']}>
                 <Children children={tree.children} numChildren={tree.post.getNumChildren()} onShowMoreChildren={(suffix) => {
-                    onShowMoreChildren([tree.post.getId(), ...suffix]);
+                    onShowMoreChildren(suffix);
                 }} />
             </div> :
             null}
