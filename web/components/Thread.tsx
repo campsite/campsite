@@ -204,12 +204,12 @@ const ChildPost = memo(({ tree, maxChildDepth, onShowMoreChildren }: { tree: Pos
     </article>;
 });
 
-const Thread = memo(({ tree, collapsible, maxChildDepth, onShowMoreChildren }: { tree: PostTree, collapsible?: boolean, maxChildDepth: number, onShowMoreChildren: (path: string[]) => void }) => {
+const PrimaryPost = memo(({post, collapsible}: { post: modelsPb.Post, collapsible?: boolean}) => {
     const [t, i18n] = useTranslation('thread');
 
     const parents: modelsPb.Post[] = [];
 
-    let currentParent = tree.post.getParentPost();
+    let currentParent = post.getParentPost();
     while (currentParent) {
         parents.push(currentParent);
         currentParent = currentParent.getParentPost();
@@ -218,9 +218,9 @@ const Thread = memo(({ tree, collapsible, maxChildDepth, onShowMoreChildren }: {
     parents.reverse();
     const hasMoreContext = parents.length > 0 && parents[0].getParentPostId();
 
-    const createdAtDate = tree.post.getCreatedAt().toDate();
+    const createdAtDate = post.getCreatedAt().toDate();
 
-    return <section className={styles['thread']}>
+    return <div>
         <div className={styles['thread-parents']}>
             {hasMoreContext ?
                 <div className={styles['post-parent']}>
@@ -247,23 +247,44 @@ const Thread = memo(({ tree, collapsible, maxChildDepth, onShowMoreChildren }: {
             <div className={styles['post-primary-info']}>
                 <a className={styles['post-avatar']} href=''><Avatar url='https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png' size={'2.5rem'} /></a>
                 <header className={styles['post-info']}>
-                    <a className={styles['post-username']} href=''>{tree.post.getAuthor() ? tree.post.getAuthor().getName() : ''}</a><br />
+                    <a className={styles['post-username']} href=''>{post.getAuthor() ? post.getAuthor().getName() : ''}</a><br />
                     <span className={styles['post-time']}>
-                        <Link href={`/posts/${tree.post.getId()}`}><a>
+                        <Link href={`/posts/${post.getId()}`}><a>
                             <time dateTime={createdAtDate.toString()}>{formatDateLong(i18n, createdAtDate)}</time></a>
                         </Link>
                     </span>
                 </header>
             </div>
 
-            {tree.post.getContent() ?
+            {post.getContent() ?
                 <div className={styles['post-content-wrapper']}>
-                    <div className={styles['post-content']} dangerouslySetInnerHTML={{ __html: md.render(tree.post.getContent().getValue()) }} />
+                    <div className={styles['post-content']} dangerouslySetInnerHTML={{ __html: md.render(post.getContent().getValue()) }} />
                 </div> :
                 null}
 
-            <PostActions post={tree.post}></PostActions>
+            <PostActions post={post}></PostActions>
         </div >
+    </div>;
+});
+
+const Thread = memo(({ tree, collapsible, maxChildDepth, onShowMoreChildren }: { tree: PostTree, collapsible?: boolean, maxChildDepth: number, onShowMoreChildren: (path: string[]) => void }) => {
+    const [t, i18n] = useTranslation('thread');
+
+    const parents: modelsPb.Post[] = [];
+
+    let currentParent = tree.post.getParentPost();
+    while (currentParent) {
+        parents.push(currentParent);
+        currentParent = currentParent.getParentPost();
+    }
+
+    parents.reverse();
+    const hasMoreContext = parents.length > 0 && parents[0].getParentPostId();
+
+    const createdAtDate = tree.post.getCreatedAt().toDate();
+
+    return <section className={styles['thread']}>
+        <PrimaryPost post={tree.post} collapsible={collapsible} />
 
         {tree.children.order.size > 0 ?
             <div className={styles['thread-replies']}>

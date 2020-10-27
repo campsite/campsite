@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
+import Card from '../components/Card';
 import Composer from '../components/Composer';
 import { PostChildren } from '../components/Thread';
 import Thread from '../components/Thread';
@@ -34,16 +35,22 @@ export default function Index() {
             <title>Campsite</title>
         </Head>
         <div>
-            <Composer onSubmit={(skel) => {
-                const req = new postsPb.CreatePostRequest();
-                req.setContent(skel.content);
-                const call = postsClient.createPost(req, {
-                    authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
-                }, (err, resp) => {
-                    console.log(resp);
-                });
-            }} />
-            {pubs.map(pub => <Thread tree={{ post: pub.getPost(), children: PostChildren() }} maxChildDepth={0} collapsible={true} onShowMoreChildren={() => { }} key={pub.getPost().getId()}></Thread>)}
+            <Card>
+                <Composer onSubmit={(skel) => {
+                    const req = new postsPb.CreatePostRequest();
+                    req.setContent(skel.content);
+                    const call = postsClient.createPost(req, {
+                        authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
+                    }, (err, resp) => {
+                        console.log(resp);
+                    });
+                }} />
+            </Card>
+            {pubs.map(pub =>
+                <Card>
+                    <Thread tree={{ post: pub.getPost(), children: PostChildren() }} maxChildDepth={0} collapsible={true} onShowMoreChildren={() => { }} key={pub.getPost().getId()}></Thread>
+                </Card>
+            )}
         </div>
     </div>;
 }

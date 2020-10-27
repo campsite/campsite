@@ -5,6 +5,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
+import Card from '../../components/Card';
 import { PostChildren, PostTree } from '../../components/Thread';
 import Thread from '../../components/Thread';
 import * as modelsPb from '../../gen/proto/campsite/v1/models_pb';
@@ -194,52 +195,54 @@ export default function Post(props: { raw: Message.MessageArray }) {
         <Head>
             <title>{post.getAuthor().getName()}: {post.getContent().getValue()}</title>
         </Head>
-        <Thread
-            tree={{
-                post: post,
-                children: children,
-            }}
-            maxChildDepth={maxChildDepth}
-            onShowMoreChildren={(path) => {
-                const parentID = path.length > 0 ? path[path.length - 1] : id as string;
-
-                let current = {
+        <Card>
+            <Thread
+                tree={{
                     post: post,
                     children: children,
-                };
-                for (const part of path) {
-                    current = current.children.items.get(part);
-                }
+                }}
+                maxChildDepth={maxChildDepth}
+                onShowMoreChildren={(path) => {
+                    const parentID = path.length > 0 ? path[path.length - 1] : id as string;
 
-                const req = new postsPb.GetPostChildrenRequest();
-                req.setPostId(parentID);
-                req.setChildDepth(maxChildDepth - path.length);
-                req.setChildLimit(3);
-                req.setToplevelLimit(toplevelLimit);
-                req.setPageToken(
-                    current.children.order.size > 0 ?
-                    current.children.items.get(current.children.order.last()).post.getParentNextPageToken() :
-                    '');
-
-                const call = postsClient.getPostChildren(req, {
-                    authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
-                }, (err, resp) => {
-                    const root = {
+                    let current = {
                         post: post,
-                        children: {...children},
+                        children: children,
                     };
-                    let current = root;
                     for (const part of path) {
-                        let next = {...current.children.items.get(part)};
-                        current.children = {
-                            order: current.children.order,
-                            items: current.children.items.set(part, next),
-                        };
-                        current = next;
+                        current = current.children.items.get(part);
                     }
-                    current.children = mergeChildren(current.children, postsToChildren(parentID, resp.getPostsList()));
-                    setChildren(root.children);
-                });
-            }}></Thread>
+
+                    const req = new postsPb.GetPostChildrenRequest();
+                    req.setPostId(parentID);
+                    req.setChildDepth(maxChildDepth - path.length);
+                    req.setChildLimit(3);
+                    req.setToplevelLimit(toplevelLimit);
+                    req.setPageToken(
+                        current.children.order.size > 0 ?
+                        current.children.items.get(current.children.order.last()).post.getParentNextPageToken() :
+                        '');
+
+                    const call = postsClient.getPostChildren(req, {
+                        authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
+                    }, (err, resp) => {
+                        const root = {
+                            post: post,
+                            children: {...children},
+                        };
+                        let current = root;
+                        for (const part of path) {
+                            let next = {...current.children.items.get(part)};
+                            current.children = {
+                                order: current.children.order,
+                                items: current.children.items.set(part, next),
+                            };
+                            current = next;
+                        }
+                        current.children = mergeChildren(current.children, postsToChildren(parentID, resp.getPostsList()));
+                        setChildren(root.children);
+                    });
+                }} />
+        </Card>
     </div>;
 }

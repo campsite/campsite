@@ -1,0 +1,9 @@
+import { ReactNode, memo } from "react";
+
+import styles from './Card.module.css';
+
+const Card = memo(({ children }: { children: ReactNode }) => {
+    return <div className={styles['card']}>{children}</div>;
+});
+
+export default Card;
