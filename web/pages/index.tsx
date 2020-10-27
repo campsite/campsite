@@ -31,6 +31,6 @@ export default function Index() {
         <Head>
             <title>Campsite</title>
         </Head>
-        {pubs.map(pub => <Thread tree={{ post: pub.getPost(), children: PostChildren() }} collapsible={true} onShowMoreChildren={() => {}} key={pub.getPost().getId()}></Thread>)}
+        {pubs.map(pub => <Thread tree={{ post: pub.getPost(), children: PostChildren() }} maxChildDepth={0} collapsible={true} onShowMoreChildren={() => {}} key={pub.getPost().getId()}></Thread>)}
     </div>;
 }
