@@ -156,9 +156,6 @@ const Children = memo(({ parent, children, maxChildDepth, onShowMoreChildren }: 
     const [t, i18n] = useTranslation('thread');
 
     return <div className={styles['post-replies']}>
-        <div className={styles['post-replies-pre-post']}>
-            <div className={styles['post-reply-line']}></div>
-        </div>
         {children.order.map(id => {
             const child = children.items.get(id);
             return <ChildPost tree={child} key={child.post.getId()} maxChildDepth={maxChildDepth} onShowMoreChildren={onShowMoreChildren} />;
@@ -182,12 +179,15 @@ const ChildPost = memo(({ tree, maxChildDepth, onShowMoreChildren }: { tree: Pos
     const [t, i18n] = useTranslation('thread');
 
     return <article className={styles['post-reply']}>
-        <div className={styles['post-reply-line']}></div>
+        <div className={styles['post-reply-gutter']}>
+            <div className={styles['post-reply-line-corner']}></div>
+            <div className={styles['post-reply-line']}></div>
+        </div>
         <div className={styles['post-child-body']}>
             <div className={styles['post-child-container']}>
                 <div className={styles['post-child-rail']}>
                     <a className={styles['post-avatar']} href='/'><Avatar url='https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png' size='2.5rem' /></a>
-                    {tree.post.getNumChildren() > 0 ? <div className={styles['post-child-gutter']}><div className={styles['post-gutter-line']}></div></div> : null}
+                    {tree.post.getNumChildren() > 0 ? <div className={styles['post-child-line']}></div> : null}
                 </div>
                 <PostBody tree={tree} collapsible={true} />
             </div>
@@ -263,6 +263,9 @@ const Thread = memo(({ tree, collapsible, maxChildDepth, onShowMoreChildren }: {
 
         {tree.children.order.size > 0 ?
             <div className={styles['thread-replies']}>
+                <div className={styles['thread-replies-start']}>
+                    <div className={styles['thread-replies-start-line']}></div>
+                </div>
                 <Children parent={tree.post} children={tree.children} maxChildDepth={maxChildDepth} onShowMoreChildren={(suffix) => {
                     onShowMoreChildren(suffix);
                 }} />
