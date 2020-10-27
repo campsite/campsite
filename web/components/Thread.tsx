@@ -161,15 +161,22 @@ const Children = memo(({ parent, children, maxChildDepth, onShowMoreChildren }: 
             return <ChildPost tree={child} key={child.post.getId()} maxChildDepth={maxChildDepth} onShowMoreChildren={onShowMoreChildren} />;
         })}
         {children.order.size < parent.getNumChildren() ?
-            <div className={styles['post-placeholder']}>
-                <Link href={`/posts/${parent.getId()}`}>
-                    <a className='placeholder-link' onClick={maxChildDepth > 0 ?
-                        (e) => {
-                            e.preventDefault();
-                            onShowMoreChildren([]);
-                        } :
-                        null}>{maxChildDepth > 0 ? t('show-more-children') : t('show-thread')}</a>
-                </Link>
+            <div className={styles['post-reply']}>
+                <div className={styles['post-reply-gutter']}>
+                    <div className={styles['post-reply-line-corner']}></div>
+                    <div className={styles['post-reply-line']}></div>
+                </div>
+
+                <div className={styles['post-placeholder']}>
+                    <Link href={`/posts/${parent.getId()}`}>
+                        <a className='placeholder-link' onClick={maxChildDepth > 0 ?
+                            (e) => {
+                                e.preventDefault();
+                                onShowMoreChildren([]);
+                            } :
+                            null}>{maxChildDepth > 0 ? t('show-more-children') : t('show-thread')}</a>
+                    </Link>
+                </div>
             </div> :
             null}
     </div>;
