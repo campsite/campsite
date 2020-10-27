@@ -121,6 +121,8 @@ export default function Post(props: { raw: Message.MessageArray }) {
     const [children, setChildren]: [PostChildren, Dispatch<SetStateAction<PostChildren>>] = useState(PostChildren());
     const [descendantsToken, setDescendantsToken]: [string, Dispatch<SetStateAction<string>>] = useState(null);
 
+    const maxChildDepth = 3;
+
     useEffect(() => {
         if (post !== null && post.getId() === id) {
             return;
@@ -144,7 +146,7 @@ export default function Post(props: { raw: Message.MessageArray }) {
     useEffect(() => {
         const req = new postsPb.GetPostChildrenRequest();
         req.setPostId(id as string);
-        req.setChildDepth(3);
+        req.setChildDepth(maxChildDepth);
         req.setChildLimit(3);
         req.setToplevelLimit(10);
 
@@ -164,7 +166,7 @@ export default function Post(props: { raw: Message.MessageArray }) {
 
         const req = new postsPb.GetPostDescendantsRequest();
         req.setPostId(id as string);
-        req.setChildDepth(3);
+        req.setChildDepth(maxChildDepth);
         req.setLimit(10);
         req.setWait(true);
         req.setPageToken(descendantsToken);
@@ -196,6 +198,7 @@ export default function Post(props: { raw: Message.MessageArray }) {
                 post: post,
                 children: children,
             }}
+            maxChildDepth={maxChildDepth}
             onShowMoreChildren={(path) => {
                 const parentID = path.length > 0 ? path[path.length - 1] : id as string;
 
@@ -209,8 +212,9 @@ export default function Post(props: { raw: Message.MessageArray }) {
 
                 const req = new postsPb.GetPostChildrenRequest();
                 req.setPostId(parentID);
-                req.setChildDepth(3);
-                req.setLimit(3);
+                req.setChildDepth(maxChildDepth - path.length);
+                req.setChildLimit(3);
+                req.setToplevelLimit(3);
                 req.setPageToken(
                     current.children.order.size > 0 ?
                     current.children.items.get(current.children.order.last()).post.getParentNextPageToken() :

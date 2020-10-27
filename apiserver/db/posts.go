@@ -201,6 +201,7 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 				where
 					post_ancestors.ancestor_post_id = $1 and
 					post_ancestors.distance = 1 and
+					$5 > 0 and
 					(
 						(last_active_at < $2) or
 						(last_active_at = $2 and created_at < $3) or
