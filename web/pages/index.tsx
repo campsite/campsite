@@ -7,21 +7,21 @@ import { PostChildren } from '../components/Thread';
 import Thread from '../components/Thread';
 import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
 import * as postsPb from '../gen/proto/campsite/v1/posts_pb';
-import * as topicsPb from '../gen/proto/campsite/v1/topics_pb';
-import { postsClient, topicsClient } from '../lib/rpc';
+import * as usersPb from '../gen/proto/campsite/v1/users_pb';
+import { postsClient, usersClient } from '../lib/rpc';
 
 export default function Index() {
     const [pubs, setPubs]: [modelsPb.Publication[], Dispatch<SetStateAction<modelsPb.Publication[]>>] = useState([]);
     const [prevPageToken, setPrevPageToken] = useState("");
 
     useEffect(() => {
-        const req = new topicsPb.GetFeedRequest();
+        const req = new usersPb.GetFeedRequest();
         req.setLimit(10);
         req.setParentDepth(5);
         req.setWait(true);
         req.setPageToken(prevPageToken);
 
-        const call = topicsClient.getFeed(req, {
+        const call = usersClient.getFeed(req, {
             authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
         }, (err, resp) => {
             setPubs([...resp.getPublicationsList(), ...pubs]);

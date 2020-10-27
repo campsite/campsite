@@ -66,7 +66,9 @@ const PostActions = memo(({ post }: { post: modelsPb.Post }) => {
     const [t, i18n] = useTranslation('thread');
 
     return <ul className={styles['post-actions']}>
-        <li><a href='/'><i className='las la-comment-alt'></i> {post.getNumChildren() !== 0 ? t('action-count', { 'count': post.getNumChildren() }) : ''}</a></li>
+        <li>
+            <Link href={`posts/${post.getId()}`}><a><i className='las la-comment-alt'></i> {post.getNumChildren() !== 0 ? t('action-count', { 'count': post.getNumChildren() }) : ''}</a></Link>
+        </li>
     </ul>;
 });
 

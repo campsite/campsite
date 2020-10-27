@@ -57,7 +57,6 @@ type config struct {
 func registerServers(grpcServer *grpc.Server, env *env.Env) {
 	campsitev1.RegisterPostsServer(grpcServer, services.NewPostsServer(env))
 	campsitev1.RegisterUsersServer(grpcServer, services.NewUsersServer(env))
-	campsitev1.RegisterTopicsServer(grpcServer, services.NewTopicsServer(env))
 }
 
 func registerGatewayHandlers(ctx context.Context, gatewayMux *runtime.ServeMux, conn *grpc.ClientConn) error {
@@ -65,9 +64,6 @@ func registerGatewayHandlers(ctx context.Context, gatewayMux *runtime.ServeMux, 
 		return err
 	}
 	if err := campsitev1.RegisterUsersHandler(ctx, gatewayMux, conn); err != nil {
-		return err
-	}
-	if err := campsitev1.RegisterTopicsHandler(ctx, gatewayMux, conn); err != nil {
 		return err
 	}
 	return nil

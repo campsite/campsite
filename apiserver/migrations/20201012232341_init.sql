@@ -3,12 +3,12 @@
 create extension if not exists "uuid-ossp";
 create extension if not exists "pgcrypto";
 
-create table topics (
+create table channels (
     id uuid primary key default uuid_generate_v1mc()
 );
 
 create table users (
-    id uuid primary key references topics(id) on delete cascade,
+    id uuid primary key references channels(id) on delete cascade,
     name text not null
 );
 
@@ -74,14 +74,14 @@ create table post_media_items (
 
 create table publications (
     post_id uuid not null references posts(id) on delete cascade,
-    topic_id uuid not null references topics(id) on delete cascade,
+    channel_id uuid not null references channels(id) on delete cascade,
     publisher_user_id uuid references users(id) on delete cascade,
     published_at timestamptz not null default now(),
 
     -- Additional flags.
     private boolean not null default false,
 
-    primary key (post_id, topic_id, publisher_user_id)
+    primary key (post_id, channel_id, publisher_user_id)
 );
 
 create unique index on publications(published_at asc, post_id desc);
@@ -89,8 +89,8 @@ create unique index on publications(published_at desc, post_id asc);
 
 create table subscriptions (
     user_id uuid not null references users(id) on delete cascade,
-    topic_id uuid not null references topics(id) on delete cascade,
-    primary key (user_id, topic_id)
+    channel_id uuid not null references channels(id) on delete cascade,
+    primary key (user_id, channel_id)
 );
 
 -- +goose Down
@@ -104,4 +104,4 @@ drop type media_type;
 drop table posts;
 drop table posts;
 drop table users;
-drop table topics;
+drop table channels;

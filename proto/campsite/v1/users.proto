@@ -22,6 +22,19 @@ message GetUserResponse {
     User user = 1;
 }
 
+message GetFeedRequest {
+    int32 parent_depth = 1;
+    string page_token = 2;
+    int32 limit = 3;
+
+    bool wait = 10;
+}
+
+message GetFeedResponse {
+    repeated Publication publications = 1;
+    PageTokenPair page_tokens = 2;
+}
+
 service Users {
     rpc GetMe(GetMeRequest) returns (GetMeResponse) {
         option (google.api.http) = {
@@ -34,6 +47,12 @@ service Users {
         option (google.api.http) = {
             get: "/v1/users/{user_id}"
             response_body: "user"
+        };
+    }
+
+    rpc GetFeed(GetFeedRequest) returns (GetFeedResponse) {
+        option (google.api.http) = {
+            get: "/v1/feed"
         };
     }
 }
