@@ -2,7 +2,7 @@ import * as dateFns from 'date-fns';
 import { TFunction, i18n } from 'i18next';
 import { List, Map } from 'immutable';
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 
 import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
 import { useTranslation } from '../i18n';
@@ -43,7 +43,7 @@ function formatDuration(t: TFunction, i18n: i18n, left: Date, right: Date): stri
     })).format(right);
 }
 
-function Time({ date }: { date: Date }) {
+const Time = memo(({ date }: { date: Date }) => {
     const [t, i18n] = useTranslation('time');
 
     const [now, setNow] = useState(new Date());
@@ -56,19 +56,19 @@ function Time({ date }: { date: Date }) {
     }, [now]);
 
     return <time dateTime={date.toString()} title={formatDateLong(i18n, date)}>{formatDuration(t, i18n, now, date)}</time>;
-}
+});
 
-function PostActions({ post }: { post: modelsPb.Post }) {
+const PostActions = memo(({ post }: { post: modelsPb.Post }) => {
     const [t, i18n] = useTranslation('thread');
 
     return <ul className={styles['post-actions']}>
         <li><a href='/'><i className='las la-comment-alt'></i> {post.getNumChildren() !== 0 ? t('action-count', { 'count': post.getNumChildren() }) : ''}</a></li>
     </ul>;
-}
+});
 
-function Avatar({ url, size }: { url: string, size: string }) {
+const Avatar = memo(({ url, size }: { url: string, size: string }) => {
     return <img src={url} className='avatar' style={{ height: size, width: size }} />;
-}
+});
 
 export interface PostChildren {
     order: List<string>,
@@ -97,7 +97,7 @@ export interface PostTree {
     children: PostChildren,
 }
 
-function PostBody({ tree, collapsible }: { tree: PostTree, collapsible?: boolean }) {
+const PostBody = memo(({ tree, collapsible }: { tree: PostTree, collapsible?: boolean }) => {
     const [t, i18n] = useTranslation('thread');
 
     const contentWrapperRef = useRef(null);
@@ -131,9 +131,9 @@ function PostBody({ tree, collapsible }: { tree: PostTree, collapsible?: boolean
 
         <PostActions post={tree.post}></PostActions>
     </div>;
-}
+});
 
-function ParentPost({ tree, collapsible }: { tree: PostTree, collapsible?: boolean }) {
+const ParentPost = memo(({ tree, collapsible }: { tree: PostTree, collapsible?: boolean }) => {
     const [t, i18n] = useTranslation('thread');
 
     return <article className={styles['post-parent']}>
@@ -145,9 +145,9 @@ function ParentPost({ tree, collapsible }: { tree: PostTree, collapsible?: boole
             <PostBody tree={tree} collapsible={collapsible} />
         </div>
     </article>;
-}
+});
 
-function Children({ children, numChildren, onShowMoreChildren }: { children: PostChildren, numChildren: number, onShowMoreChildren: (suffix: string[]) => void }) {
+const Children = memo(({ children, numChildren, onShowMoreChildren }: { children: PostChildren, numChildren: number, onShowMoreChildren: (suffix: string[]) => void }) => {
     const [t, i18n] = useTranslation('thread');
 
     return <div className={styles['post-replies']}>
@@ -167,9 +167,9 @@ function Children({ children, numChildren, onShowMoreChildren }: { children: Pos
             </div> :
             null}
     </div>;
-}
+});
 
-function ChildPost({ tree, onShowMoreChildren }: { tree: PostTree, onShowMoreChildren: (suffix: string[]) => void }) {
+const ChildPost = memo(({ tree, onShowMoreChildren }: { tree: PostTree, onShowMoreChildren: (suffix: string[]) => void }) => {
     const [t, i18n] = useTranslation('thread');
 
     return <article className={styles['post-reply']}>
@@ -189,9 +189,9 @@ function ChildPost({ tree, onShowMoreChildren }: { tree: PostTree, onShowMoreChi
                 null}
         </div>
     </article>;
-}
+});
 
-export default function Thread({ tree, collapsible, onShowMoreChildren }: { tree: PostTree, collapsible?: boolean, onShowMoreChildren: (path: string[]) => void }) {
+const Thread = memo(({ tree, collapsible, onShowMoreChildren }: { tree: PostTree, collapsible?: boolean, onShowMoreChildren: (path: string[]) => void }) => {
     const [t, i18n] = useTranslation('thread');
 
     const parents: modelsPb.Post[] = [];
@@ -258,4 +258,6 @@ export default function Thread({ tree, collapsible, onShowMoreChildren }: { tree
             </div> :
             null}
     </section >;
-}
+});
+
+export default Thread;

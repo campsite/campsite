@@ -196,7 +196,7 @@ export default function Post(props: { raw: Message.MessageArray }) {
                 children: children,
             }}
             onShowMoreChildren={(path) => {
-                const parentID = path.length > 0 ? path[path.length - 1] : id;
+                const parentID = path.length > 0 ? path[path.length - 1] : id as string;
 
                 let current = {
                     post: post,
@@ -225,12 +225,13 @@ export default function Post(props: { raw: Message.MessageArray }) {
                     let current = root;
                     for (const part of path) {
                         let next = {...current.children.items.get(part)};
-                        current.children.items = current.children.items.set(part, next);
+                        current.children = {
+                            order: current.children.order,
+                            items: current.children.items.set(part, next),
+                        };
                         current = next;
                     }
-
                     current.children = mergeChildren(current.children, postsToChildren(parentID, resp.getPostsList()));
-
                     setChildren(root.children);
                 });
             }}></Thread>
