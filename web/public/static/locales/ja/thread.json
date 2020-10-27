@@ -1,6 +1,7 @@
 {
     "show-more-parents": "追加のコンテキスト",
     "show-more": "もっと見る",
-    "show-more-children": "その他の返信",
+    "show-more-children": "返信を表示",
+    "show-thread": "スレッドを表示",
     "action-count": "{count, number, compact}"
 }

@@ -147,7 +147,7 @@ const ParentPost = memo(({ tree, collapsible }: { tree: PostTree, collapsible?: 
     </article>;
 });
 
-const Children = memo(({ children, numChildren, maxChildDepth, onShowMoreChildren }: { children: PostChildren, numChildren: number, maxChildDepth: number, onShowMoreChildren: (suffix: string[]) => void }) => {
+const Children = memo(({ parent, children, maxChildDepth, onShowMoreChildren }: { parent: modelsPb.Post, children: PostChildren, maxChildDepth: number, onShowMoreChildren: (suffix: string[]) => void }) => {
     const [t, i18n] = useTranslation('thread');
 
     return <div className={styles['post-replies']}>
@@ -158,12 +158,16 @@ const Children = memo(({ children, numChildren, maxChildDepth, onShowMoreChildre
             const child = children.items.get(id);
             return <ChildPost tree={child} key={child.post.getId()} maxChildDepth={maxChildDepth} onShowMoreChildren={onShowMoreChildren} />;
         })}
-        {children.order.size < numChildren && maxChildDepth > 0 ?
+        {children.order.size < parent.getNumChildren() ?
             <div className={styles['post-placeholder']}>
-                <a href='/' className='placeholder-link' onClick={(e) => {
-                    e.preventDefault();
-                    onShowMoreChildren([]);
-                }}>{t('show-more-children')}</a>
+                <Link href={`/posts/${parent.getId()}`}>
+                    <a className='placeholder-link' onClick={maxChildDepth > 0 ?
+                        (e) => {
+                            e.preventDefault();
+                            onShowMoreChildren([]);
+                        } :
+                        null}>{maxChildDepth > 0 ? t('show-more-children') : t('show-thread')}</a>
+                </Link>
             </div> :
             null}
     </div>;
@@ -172,20 +176,18 @@ const Children = memo(({ children, numChildren, maxChildDepth, onShowMoreChildre
 const ChildPost = memo(({ tree, maxChildDepth, onShowMoreChildren }: { tree: PostTree, maxChildDepth: number, onShowMoreChildren: (suffix: string[]) => void }) => {
     const [t, i18n] = useTranslation('thread');
 
-    const hasVisibleChildren = tree.post.getNumChildren() > 0 && maxChildDepth > 1;
-
     return <article className={styles['post-reply']}>
         <div className={styles['post-reply-line']}></div>
         <div className={styles['post-child-body']}>
             <div className={styles['post-child-container']}>
                 <div className={styles['post-child-rail']}>
                     <a className={styles['post-avatar']} href='/'><Avatar url='https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png' size='2.5rem' /></a>
-                    {hasVisibleChildren ? <div className={styles['post-child-gutter']}><div className={styles['post-gutter-line']}></div></div> : null}
+                    {tree.post.getNumChildren() > 0 ? <div className={styles['post-child-gutter']}><div className={styles['post-gutter-line']}></div></div> : null}
                 </div>
                 <PostBody tree={tree} collapsible={true} />
             </div>
-            {hasVisibleChildren ?
-                <Children children={tree.children} numChildren={tree.post.getNumChildren()} maxChildDepth={maxChildDepth - 1} onShowMoreChildren={(suffix) => {
+            {tree.post.getNumChildren() > 0 ?
+                <Children parent={tree.post} children={tree.children} maxChildDepth={maxChildDepth - 1} onShowMoreChildren={(suffix) => {
                     onShowMoreChildren([tree.post.getId(), ...suffix]);
                 }} /> :
                 null}
@@ -254,7 +256,7 @@ const Thread = memo(({ tree, collapsible, maxChildDepth, onShowMoreChildren }: {
 
         {tree.children.order.size > 0 ?
             <div className={styles['thread-replies']}>
-                <Children children={tree.children} numChildren={tree.post.getNumChildren()} maxChildDepth={maxChildDepth} onShowMoreChildren={(suffix) => {
+                <Children parent={tree.post} children={tree.children} maxChildDepth={maxChildDepth} onShowMoreChildren={(suffix) => {
                     onShowMoreChildren(suffix);
                 }} />
             </div> :

@@ -41,10 +41,6 @@ p:last-child {
     margin-bottom: 0;
 }
 
-.placeholder-link {
-    color: var(--muted-text-color) !important;
-}
-
 .avatar {
     border-radius: 50%;
 }
