@@ -181,7 +181,7 @@ type DescendantsPageTokenPair struct {
 	Prev *DescendantsPageToken
 }
 
-func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth int, pageToken PostChildrenNextPageToken, limit int) ([]*Post, DescendantsPageToken, error) {
+func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth int, childLimit int, pageToken PostChildrenNextPageToken, toplevelLimit int) ([]*Post, DescendantsPageToken, error) {
 	var childPosts []*Post
 	var childPostIDs []uuid.UUID
 
@@ -208,7 +208,7 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 					)
 				order by
 					last_active_at desc, created_at desc, id asc
-				limit $6
+				limit $7
 			)
 			union all
 			(
@@ -243,7 +243,7 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 			last_active_at desc,
 			created_at desc,
 			post_id
-	`, postID, pageToken.LastActiveAt, pageToken.CreatedAt, pageToken.ID, childDepth, limit).Rows(func(rows pgx.Rows) error {
+	`, postID, pageToken.LastActiveAt, pageToken.CreatedAt, pageToken.ID, childDepth, childLimit, toplevelLimit).Rows(func(rows pgx.Rows) error {
 		child := &Post{}
 		if err := rows.Scan(&child.ID); err != nil {
 			return err

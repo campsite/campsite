@@ -137,7 +137,7 @@ func (ps *postsServer) GetPostChildren(ctx context.Context, in *campsitev1.GetPo
 	var descendantsPageToken db.DescendantsPageToken
 	if err := ps.DB.Begin(ctx, pgx.TxOptions{}, func(ctx context.Context, tx *db.Tx) error {
 		var err error
-		children, descendantsPageToken, err = db.PostChildrenByID(ctx, tx, postID, int(in.ChildDepth), pageToken, int(in.Limit))
+		children, descendantsPageToken, err = db.PostChildrenByID(ctx, tx, postID, int(in.ChildDepth), int(in.ChildLimit), pageToken, int(in.ToplevelLimit))
 		return err
 	}); err != nil {
 		return nil, err

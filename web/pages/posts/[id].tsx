@@ -145,7 +145,8 @@ export default function Post(props: { raw: Message.MessageArray }) {
         const req = new postsPb.GetPostChildrenRequest();
         req.setPostId(id as string);
         req.setChildDepth(3);
-        req.setLimit(3);
+        req.setChildLimit(3);
+        req.setToplevelLimit(10);
 
         const call = postsClient.getPostChildren(req, {
             authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',

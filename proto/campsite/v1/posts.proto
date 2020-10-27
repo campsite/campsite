@@ -49,8 +49,9 @@ message DeletePostResponse {
 message GetPostChildrenRequest {
     string post_id = 1;
     int32 child_depth = 2;
-    string page_token = 3;
-    int32 limit = 4;
+    int32 child_limit = 3;
+    string page_token = 4;
+    int32 toplevel_limit = 5;
 }
 
 message GetPostChildrenResponse {
