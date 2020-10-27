@@ -196,7 +196,7 @@ export default function Post(props: { raw: Message.MessageArray }) {
                 children: children,
             }}
             onShowMoreChildren={(path) => {
-                const parentID = path[path.length - 1];
+                const parentID = path.length > 0 ? path[path.length - 1] : id;
 
                 let current = {
                     post: post,
