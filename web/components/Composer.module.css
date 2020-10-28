@@ -1,20 +1,12 @@
 .composer {
-    padding-top: 1rem;
-    background: var(--card-bg-color);
-    color: var(--card-fg-color);
-    margin-bottom: 1rem;
-    border-radius: 0.5rem;
     overflow: hidden;
 }
 
 .container {
     display: flex;
-    margin-bottom: 1rem;
-    padding-right: 1rem;
 }
 
 .rail {
-    padding-left: 1rem;
     padding-right: 0.5rem;
     display: flex;
     align-items: center;
@@ -39,6 +31,7 @@
     border: none;
     outline: 0;
     resize: none;
+    background: transparent;
 }
 
 .controls {

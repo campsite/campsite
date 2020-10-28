@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
-import Card from '../components/Card';
+import Card, { CardBody } from '../components/Card';
 import Composer from '../components/Composer';
 import { PostChildren } from '../components/Thread';
 import Thread from '../components/Thread';
@@ -36,19 +36,23 @@ export default function Index() {
         </Head>
         <div>
             <Card>
-                <Composer onSubmit={(skel) => {
-                    const req = new postsPb.CreatePostRequest();
-                    req.setContent(skel.content);
-                    const call = postsClient.createPost(req, {
-                        authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
-                    }, (err, resp) => {
-                        console.log(resp);
-                    });
-                }} />
+                <CardBody>
+                    <Composer onSubmit={(skel) => {
+                        const req = new postsPb.CreatePostRequest();
+                        req.setContent(skel.content);
+                        const call = postsClient.createPost(req, {
+                            authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
+                        }, (err, resp) => {
+                            console.log(resp);
+                        });
+                    }} />
+                </CardBody>
             </Card>
             {pubs.map(pub =>
-                <Card>
-                    <Thread tree={{ post: pub.getPost(), children: PostChildren() }} maxChildDepth={0} collapsible={true} onShowMoreChildren={() => { }} key={pub.getPost().getId()}></Thread>
+                <Card key={pub.getPost().getId()}>
+                    <CardBody>
+                        <Thread tree={{ post: pub.getPost(), children: PostChildren() }} maxChildDepth={0} collapsible={true} onShowMoreChildren={() => { }}></Thread>
+                    </CardBody>
                 </Card>
             )}
         </div>

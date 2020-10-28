@@ -1,11 +1,11 @@
-import { memo, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-autosize-textarea';
 
 import { useTranslation } from '../i18n';
 import Avatar from './Avatar';
 import styles from './Composer.module.css';
 
-interface PostSkeleton {
+export interface PostSkeleton {
     content: string;
 }
 
@@ -13,6 +13,11 @@ const Composer = memo(({ onSubmit }: { onSubmit: (skel: PostSkeleton) => void })
     const [t, i18n] = useTranslation('composer');
 
     const [content, setContent] = useState('');
+    const textareaRef = useRef(null);
+
+    useEffect(() => {
+        textareaRef.current.focus();
+    }, []);
 
     return <div className={styles['composer']}>
         <div className={styles['container']}>
@@ -26,7 +31,7 @@ const Composer = memo(({ onSubmit }: { onSubmit: (skel: PostSkeleton) => void })
                 });
                 setContent('');
             }}>
-                <TextareaAutosize className={styles['content']} placeholder={t('write-something')} value={content} onChange={e => setContent((e.target as HTMLTextAreaElement).value)} />
+                <TextareaAutosize ref={textareaRef} className={styles['content']} placeholder={t('write-something')} value={content} onChange={e => setContent((e.target as HTMLTextAreaElement).value)} />
                 <div className={styles['controls']}>
                     <button type="submit">{t('post')}</button>
                 </div>

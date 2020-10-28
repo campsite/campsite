@@ -1,13 +1,20 @@
 import * as dateFns from 'date-fns';
+import { StringValue } from 'google-protobuf/google/protobuf/wrappers_pb';
 import { TFunction, i18n } from 'i18next';
 import { List, Map } from 'immutable';
 import MarkdownIt from 'markdown-it';
 import Link from 'next/link'
+import { useRouter } from 'next/router';
 import { memo, useEffect, useRef, useState } from 'react';
+import ReactModal from 'react-modal';
 
 import * as modelsPb from '../gen/proto/campsite/v1/models_pb';
+import * as postsPb from '../gen/proto/campsite/v1/posts_pb';
 import { useTranslation } from '../i18n';
+import { postsClient } from '../lib/rpc';
 import Avatar from './Avatar';
+import Card, { CardBody } from './Card';
+import Composer from './Composer';
 import styles from './Thread.module.css';
 
 const md = MarkdownIt();
@@ -64,12 +71,39 @@ const Time = memo(({ date }: { date: Date }) => {
 
 const PostActions = memo(({ post }: { post: modelsPb.Post }) => {
     const [t, i18n] = useTranslation('thread');
+    const [isOpen, setIsOpen] = useState(false);
 
-    return <ul className={styles['post-actions']}>
-        <li>
-            <Link href={`posts/${post.getId()}`}><a><i className='las la-comment-alt'></i> {post.getNumChildren() !== 0 ? t('action-count', { 'count': post.getNumChildren() }) : ''}</a></Link>
-        </li>
-    </ul>;
+    const router = useRouter();
+
+    return <div>
+        <ReactModal isOpen={isOpen} onRequestClose={() => {
+            setIsOpen(false);
+        }} portalClassName='modal-portal' overlayClassName='modal-overlay' className={styles['composer-dialog']}>
+            <Card>
+                <CardBody>
+                    <ParentPost tree={{ post: post, children: PostChildren() }} />
+                    <Composer onSubmit={(skel) => {
+                        const req = new postsPb.CreatePostRequest();
+                        req.setParentPostId((new StringValue()).setValue(post.getId()));
+                        req.setContent(skel.content);
+                        const call = postsClient.createPost(req, {
+                            authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
+                        }, (err, resp) => {
+                            router.push(`/posts/${resp.getPost().getId()}`);
+                        });
+                    }} />
+                </CardBody>
+            </Card>
+        </ReactModal>
+        <ul className={styles['post-actions']}>
+            <li>
+                <Link href={`posts/${post.getId()}`}><a onClick={(e) => {
+                    e.preventDefault();
+                    setIsOpen(true);
+                }}><i className='las la-comment-alt'></i> {post.getNumChildren() !== 0 ? t('action-count', { 'count': post.getNumChildren() }) : ''}</a></Link>
+            </li>
+        </ul>
+    </div>;
 });
 
 export interface PostChildren {
@@ -206,7 +240,7 @@ const ChildPost = memo(({ tree, maxChildDepth, onShowMoreChildren }: { tree: Pos
     </article>;
 });
 
-const PrimaryPost = memo(({post, collapsible}: { post: modelsPb.Post, collapsible?: boolean}) => {
+const PrimaryPost = memo(({ post, collapsible }: { post: modelsPb.Post, collapsible?: boolean }) => {
     const [t, i18n] = useTranslation('thread');
 
     const parents: modelsPb.Post[] = [];
