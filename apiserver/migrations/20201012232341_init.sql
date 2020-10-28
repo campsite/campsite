@@ -82,10 +82,6 @@ create table publications (
     channel_id uuid not null references channels(id) on delete cascade,
     publisher_user_id uuid references users(id) on delete cascade,
     published_at timestamptz not null default now(),
-
-    -- Additional flags.
-    private boolean not null default false,
-
     primary key (post_id, channel_id, publisher_user_id)
 );
 

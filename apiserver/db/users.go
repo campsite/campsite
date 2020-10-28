@@ -50,44 +50,36 @@ type Publication struct {
 	Post        *Post
 }
 
-type publishOpts struct {
-	Private bool
-}
-
-func publishUserChannel(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postID uuid.UUID, userChannelID uuid.UUID, publisherUserID uuid.UUID, opts publishOpts) error {
+func publishUserChannel(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postID uuid.UUID, userChannelID uuid.UUID, publisherUserID uuid.UUID) error {
 	if _, err := tx.Query(ctx, `
 		insert into publications (
 			post_id,
 			channel_id,
-			publisher_user_id,
-			private
+			publisher_user_id
 		)
 		select
 			$1,
 			$2,
-			$3,
-			$4
-	`, postID, userChannelID, publisherUserID, opts.Private).Exec(); err != nil {
+			$3
+	`, postID, userChannelID, publisherUserID).Exec(); err != nil {
 		return err
 	}
 
 	userIDs := []uuid.UUID{userChannelID}
-	if !opts.Private {
-		// Non-private posts need to be fanned out to all subscriptions.
-		if err := tx.Query(ctx, `
-			select user_id
-			from subscriptions
-			where channel_id = $1
-		`, userChannelID).Rows(func(rows pgx.Rows) error {
-			var userID uuid.UUID
-			if err := rows.Scan(&userID); err != nil {
-				return err
-			}
-			userIDs = append(userIDs, userID)
-			return nil
-		}); err != nil {
+	// Non-private posts need to be fanned out to all subscriptions.
+	if err := tx.Query(ctx, `
+		select user_id
+		from subscriptions
+		where channel_id = $1
+	`, userChannelID).Rows(func(rows pgx.Rows) error {
+		var userID uuid.UUID
+		if err := rows.Scan(&userID); err != nil {
 			return err
 		}
+		userIDs = append(userIDs, userID)
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	// TODO: Consider running this outside a transaction/aggregating publishes.

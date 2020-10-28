@@ -557,7 +557,7 @@ func CreatePost(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postSkeleton *
 
 	if len(path) == 0 {
 		// If there is no parent post, we will publish to the user's channel by default, publicly.
-		if err := publishUserChannel(ctx, tx, pbsb, postID, author.ID, author.ID, publishOpts{Private: false}); err != nil {
+		if err := publishUserChannel(ctx, tx, pbsb, postID, author.ID, author.ID); err != nil {
 			return nil, err
 		}
 	} else {
@@ -573,9 +573,7 @@ func CreatePost(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postSkeleton *
 		}
 
 		if parentAuthorUserID != nil {
-			if err := publishUserChannel(ctx, tx, pbsb, postID, *parentAuthorUserID, author.ID, publishOpts{Private: true}); err != nil {
-				return nil, err
-			}
+			// TODO: Send a notification.
 		}
 
 		// Publish updates to all posts along the path.
