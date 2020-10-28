@@ -17,7 +17,7 @@ import Card, { CardBody } from './Card';
 import Composer from './Composer';
 import styles from './Thread.module.css';
 
-const md = MarkdownIt();
+const md = new MarkdownIt({breaks: true});
 
 function formatDateLong(i18n: i18n, date: Date): string {
     return `${(new Intl.DateTimeFormat(i18n.language, {

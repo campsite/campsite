@@ -254,3 +254,7 @@
     margin: 0 auto;
     max-width: 800px;
 }
+
+.post-content * {
+    max-width: 100%;
+}
