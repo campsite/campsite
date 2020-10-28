@@ -17,7 +17,7 @@ import Card, { CardBody } from './Card';
 import Composer from './Composer';
 import styles from './Thread.module.css';
 
-const md = new MarkdownIt({breaks: true});
+const md = new MarkdownIt({ breaks: true });
 
 function formatDateLong(i18n: i18n, date: Date): string {
     return `${(new Intl.DateTimeFormat(i18n.language, {
@@ -81,7 +81,7 @@ const PostActions = memo(({ post }: { post: modelsPb.Post }) => {
         }} portalClassName='modal-portal' overlayClassName='modal-overlay' className={styles['composer-dialog']}>
             <Card>
                 <CardBody>
-                    <ParentPost tree={{ post: post, children: PostChildren() }} />
+                    <ParentPost tree={{ post: post, children: PostChildren() }} collapsible={true} showActions={false} />
                     <Composer onSubmit={(skel) => {
                         const req = new postsPb.CreatePostRequest();
                         req.setParentPostId((new StringValue()).setValue(post.getId()));
@@ -133,7 +133,7 @@ export interface PostTree {
     children: PostChildren,
 }
 
-const PostBody = memo(({ tree, collapsible }: { tree: PostTree, collapsible?: boolean }) => {
+const PostBody = memo(({ tree, collapsible, showActions }: { tree: PostTree, collapsible: boolean, showActions: boolean }) => {
     const [t, i18n] = useTranslation('thread');
 
     const contentWrapperRef = useRef(null);
@@ -167,11 +167,11 @@ const PostBody = memo(({ tree, collapsible }: { tree: PostTree, collapsible?: bo
             }}>{t('show-more')}</a></Link>
         </div>
 
-        <PostActions post={tree.post}></PostActions>
+        {showActions ? <PostActions post={tree.post}></PostActions> : null}
     </div>;
 });
 
-const ParentPost = memo(({ tree, collapsible }: { tree: PostTree, collapsible?: boolean }) => {
+const ParentPost = memo(({ tree, collapsible, showActions }: { tree: PostTree, collapsible: boolean, showActions: boolean }) => {
     const [t, i18n] = useTranslation('thread');
 
     return <article className={styles['post-parent']}>
@@ -180,18 +180,18 @@ const ParentPost = memo(({ tree, collapsible }: { tree: PostTree, collapsible?: 
                 <a className={styles['post-avatar']} href='/'><Avatar url='https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png' size='2.5rem' /></a>
                 <div className={styles['post-parent-line']}></div>
             </div>
-            <PostBody tree={tree} collapsible={collapsible} />
+            <PostBody tree={tree} collapsible={collapsible} showActions={showActions} />
         </div>
     </article>;
 });
 
-const Children = memo(({ parent, children, maxChildDepth, onShowMoreChildren }: { parent: modelsPb.Post, children: PostChildren, maxChildDepth: number, onShowMoreChildren: (suffix: string[]) => void }) => {
+const Children = memo(({ parent, children, maxChildDepth, showActions, onShowMoreChildren }: { parent: modelsPb.Post, children: PostChildren, maxChildDepth: number, showActions: boolean, onShowMoreChildren: (suffix: string[]) => void }) => {
     const [t, i18n] = useTranslation('thread');
 
     return <div className={styles['post-replies']}>
         {children.order.map(id => {
             const child = children.items.get(id);
-            return <ChildPost tree={child} key={child.post.getId()} maxChildDepth={maxChildDepth} onShowMoreChildren={onShowMoreChildren} />;
+            return <ChildPost tree={child} key={child.post.getId()} maxChildDepth={maxChildDepth} showActions={showActions} onShowMoreChildren={onShowMoreChildren} />;
         })}
         {children.order.size < parent.getNumChildren() ?
             <div className={styles['post-reply']}>
@@ -215,7 +215,7 @@ const Children = memo(({ parent, children, maxChildDepth, onShowMoreChildren }: 
     </div>;
 });
 
-const ChildPost = memo(({ tree, maxChildDepth, onShowMoreChildren }: { tree: PostTree, maxChildDepth: number, onShowMoreChildren: (suffix: string[]) => void }) => {
+const ChildPost = memo(({ tree, maxChildDepth, showActions, onShowMoreChildren }: { tree: PostTree, maxChildDepth: number, showActions: boolean, onShowMoreChildren: (suffix: string[]) => void }) => {
     const [t, i18n] = useTranslation('thread');
 
     return <article className={styles['post-reply']}>
@@ -229,10 +229,10 @@ const ChildPost = memo(({ tree, maxChildDepth, onShowMoreChildren }: { tree: Pos
                     <a className={styles['post-avatar']} href='/'><Avatar url='https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png' size='2.5rem' /></a>
                     {tree.post.getNumChildren() > 0 ? <div className={styles['post-child-line']}></div> : null}
                 </div>
-                <PostBody tree={tree} collapsible={true} />
+                <PostBody tree={tree} collapsible={true} showActions={showActions} />
             </div>
             {tree.post.getNumChildren() > 0 ?
-                <Children parent={tree.post} children={tree.children} maxChildDepth={maxChildDepth - 1} onShowMoreChildren={(suffix) => {
+                <Children parent={tree.post} children={tree.children} maxChildDepth={maxChildDepth - 1} showActions={showActions} onShowMoreChildren={(suffix) => {
                     onShowMoreChildren([tree.post.getId(), ...suffix]);
                 }} /> :
                 null}
@@ -240,7 +240,7 @@ const ChildPost = memo(({ tree, maxChildDepth, onShowMoreChildren }: { tree: Pos
     </article>;
 });
 
-const PrimaryPost = memo(({ post, collapsible }: { post: modelsPb.Post, collapsible?: boolean }) => {
+const PrimaryPost = memo(({ post, collapsible, showActions }: { post: modelsPb.Post, collapsible: boolean, showActions: boolean }) => {
     const [t, i18n] = useTranslation('thread');
 
     const parents: modelsPb.Post[] = [];
@@ -276,7 +276,7 @@ const PrimaryPost = memo(({ post, collapsible }: { post: modelsPb.Post, collapsi
             {parents.map(parent => <ParentPost tree={{
                 post: parent,
                 children: PostChildren(),
-            }} collapsible={collapsible} key={parent.getId()} />)}
+            }} collapsible={collapsible} showActions={showActions} key={parent.getId()} />)}
         </div>
 
         <div className={styles['post-primary']}>
@@ -298,12 +298,12 @@ const PrimaryPost = memo(({ post, collapsible }: { post: modelsPb.Post, collapsi
                 </div> :
                 null}
 
-            <PostActions post={post}></PostActions>
+            {showActions ? <PostActions post={post}></PostActions> : null}
         </div >
     </div>;
 });
 
-const Thread = memo(({ tree, collapsible, maxChildDepth, onShowMoreChildren }: { tree: PostTree, collapsible?: boolean, maxChildDepth: number, onShowMoreChildren: (path: string[]) => void }) => {
+const Thread = memo(({ tree, collapsible, showActions, maxChildDepth, onShowMoreChildren }: { tree: PostTree, collapsible: boolean, showActions: boolean, maxChildDepth: number, onShowMoreChildren: (path: string[]) => void }) => {
     const [t, i18n] = useTranslation('thread');
 
     const parents: modelsPb.Post[] = [];
@@ -320,14 +320,14 @@ const Thread = memo(({ tree, collapsible, maxChildDepth, onShowMoreChildren }: {
     const createdAtDate = tree.post.getCreatedAt().toDate();
 
     return <section className={styles['thread']}>
-        <PrimaryPost post={tree.post} collapsible={collapsible} />
+        <PrimaryPost post={tree.post} collapsible={collapsible} showActions={showActions} />
 
         {tree.children.order.size > 0 ?
             <div className={styles['thread-replies']}>
                 <div className={styles['thread-replies-start']}>
                     <div className={styles['thread-replies-start-line']}></div>
                 </div>
-                <Children parent={tree.post} children={tree.children} maxChildDepth={maxChildDepth} onShowMoreChildren={(suffix) => {
+                <Children parent={tree.post} children={tree.children} maxChildDepth={maxChildDepth} showActions={showActions} onShowMoreChildren={(suffix) => {
                     onShowMoreChildren(suffix);
                 }} />
             </div> :

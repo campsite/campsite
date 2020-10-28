@@ -202,6 +202,8 @@ export default function Post(props: { raw: Message.MessageArray }) {
                         post: post,
                         children: children,
                     }}
+                    collapsible={true}
+                    showActions={true}
                     maxChildDepth={maxChildDepth}
                     onShowMoreChildren={(path) => {
                         const parentID = path.length > 0 ? path[path.length - 1] : id as string;

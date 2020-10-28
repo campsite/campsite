@@ -51,7 +51,12 @@ export default function Index() {
             {pubs.map(pub =>
                 <Card key={pub.getPost().getId()}>
                     <CardBody>
-                        <Thread tree={{ post: pub.getPost(), children: PostChildren() }} maxChildDepth={0} collapsible={true} onShowMoreChildren={() => { }}></Thread>
+                        <Thread
+                            tree={{ post: pub.getPost(), children: PostChildren() }}
+                            maxChildDepth={0}
+                            collapsible={true}
+                            showActions={true}
+                            onShowMoreChildren={() => { }} />
                     </CardBody>
                 </Card>
             )}
