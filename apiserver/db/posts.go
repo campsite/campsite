@@ -129,7 +129,8 @@ func basePostsByID(ctx context.Context, tx *Tx, ids []uuid.UUID, parentDepth int
 		for postID, path := range paths {
 			current := posts[postID]
 			for _, nextPostID := range path {
-				current.ParentPost = parents[nextPostID]
+				parent := *parents[nextPostID]
+				current.ParentPost = &parent
 				current = current.ParentPost
 			}
 		}

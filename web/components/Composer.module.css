@@ -16,7 +16,10 @@
 .avatar {
     display: block;
     text-decoration: none !important;
-    margin-right: 0.5rem;
+}
+
+.avatar>:global(.avatar) {
+    display: block;
 }
 
 .body {
