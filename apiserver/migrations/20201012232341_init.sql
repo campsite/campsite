@@ -12,6 +12,11 @@ create table users (
     name text not null
 );
 
+create table topics (
+    id uuid primary key references channels(id) on delete cascade,
+    name text not null
+);
+
 create table sessions (
     id uuid primary key default gen_random_uuid(),
     created_at timestamptz not null default now(),
@@ -104,4 +109,5 @@ drop type media_type;
 drop table posts;
 drop table posts;
 drop table users;
+drop table topics;
 drop table channels;
