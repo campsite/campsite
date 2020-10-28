@@ -94,8 +94,25 @@ create table subscriptions (
     primary key (user_id, channel_id)
 );
 
+create type notification_type as enum (
+    'reply'
+);
+
+create table notifications (
+    id uuid primary key default uuid_generate_v1mc(),
+    created_at timestamptz not null default now(),
+    type notification_type not null,
+    user_id uuid not null references users(id) on delete cascade,
+
+    reply_post_id uuid references posts(id) on delete cascade
+);
+
+create index on notifications(user_id, created_at desc);
+
 -- +goose Down
 -- SQL in this section is executed when the migration is rolled back.
+drop table notifications;
+drop type notification_type;
 drop table subscriptions;
 drop table publications;
 drop table sessions;

@@ -133,7 +133,7 @@ func WaitForFeed(ctx context.Context, db *DB, pbsb *pubsub.PubSub, userID uuid.U
 									subscriptions
 								where
 									subscriptions.user_id = $1
-							) and not private
+							)
 						) or (
 							channel_id = $1
 						)
@@ -203,7 +203,7 @@ func Feed(ctx context.Context, tx *Tx, userID uuid.UUID, parentDepth int, pageTo
 							subscriptions
 						where
 							subscriptions.user_id = $1
-					) and not private
+					)
 				) or (
 					channel_id = $1
 				)
@@ -283,4 +283,40 @@ func Feed(ctx context.Context, tx *Tx, userID uuid.UUID, parentDepth int, pageTo
 	}
 
 	return pubs, ptp, nil
+}
+
+func wakeUserNotifications(ctx context.Context, pbsb *pubsub.PubSub, userID uuid.UUID) error {
+	if err := pbsb.Publish(ctx, "notifications:"+types.EncodeID(userID), []byte{}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func CreateReplyNotification(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, targetUserID uuid.UUID, replyPostID uuid.UUID) (uuid.UUID, error) {
+	var id uuid.UUID
+	if err := tx.Query(ctx, `
+		insert into notifications (
+			type,
+			user_id,
+			reply_post_id
+		)
+		values (
+			'reply',
+			$1,
+			$2
+		)
+		returning id
+	`,
+		targetUserID, replyPostID,
+	).Row(&id); err != nil {
+		return uuid.Nil, err
+	}
+
+	tx.OnCommit(func(ctx context.Context) {
+		if err := wakeUserNotifications(ctx, pbsb, targetUserID); err != nil {
+			log.Err(err).Msg("wakeUserNotifications: failed to wake")
+		}
+	})
+
+	return id, nil
 }

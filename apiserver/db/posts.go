@@ -297,7 +297,7 @@ func PostChildrenByID(ctx context.Context, tx *Tx, postID uuid.UUID, childDepth 
 	return childPosts, descendantsPageToken, nil
 }
 
-func notifyPostDescendants(ctx context.Context, pbsb *pubsub.PubSub, ancestorPostID uuid.UUID) error {
+func wakePostDescendants(ctx context.Context, pbsb *pubsub.PubSub, ancestorPostID uuid.UUID) error {
 	if err := pbsb.Publish(ctx, "descendants:"+types.EncodeID(ancestorPostID), []byte{}); err != nil {
 		return err
 	}
@@ -573,14 +573,16 @@ func CreatePost(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, postSkeleton *
 		}
 
 		if parentAuthorUserID != nil {
-			// TODO: Send a notification.
+			if _, err := CreateReplyNotification(ctx, tx, pbsb, *parentAuthorUserID, postID); err != nil {
+				return nil, err
+			}
 		}
 
 		// Publish updates to all posts along the path.
 		tx.OnCommit(func(ctx context.Context) {
 			for _, postID := range path {
-				if err := notifyPostDescendants(ctx, pbsb, postID); err != nil {
-					log.Err(err).Msg("notifyPostDescendants: failed to publish")
+				if err := wakePostDescendants(ctx, pbsb, postID); err != nil {
+					log.Err(err).Msg("wakePostDescendants: failed to wake")
 				}
 			}
 		})
