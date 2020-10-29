@@ -100,9 +100,9 @@ create type notification_type as enum (
 
 create table notifications (
     id uuid primary key default uuid_generate_v1mc(),
+    user_id uuid not null references users(id) on delete cascade,
     created_at timestamptz not null default now(),
     type notification_type not null,
-    user_id uuid not null references users(id) on delete cascade,
 
     reply_post_id uuid references posts(id) on delete cascade
 );
