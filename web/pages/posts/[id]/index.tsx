@@ -173,16 +173,27 @@ export default function Index(props: { raw: Message.MessageArray }) {
         req.setWait(true);
         req.setPageToken(descendantsToken);
 
+        let newRootPostCount = 0;
+
         const call = postsClient.getPostDescendants(req, {
             authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
         }, (err, resp) => {
             let newChildren: PostChildren = PostChildren();
             for (const post of resp.getPostsList()) {
+                if (post.getParentPostId().getValue() === id) {
+                    ++newRootPostCount;
+                }
                 const childTree = postToTree(post);
                 newChildren = mergeChildren(newChildren, PostChildren([childTree]));
             }
             setChildren(mergeChildren(newChildren, children));
             setDescendantsToken(resp.getPageTokens().getPrev());
+
+            if (newRootPostCount > 0) {
+                const rootPost = post.clone();
+                rootPost.setNumChildren(rootPost.getNumChildren() + newRootPostCount);
+                setPost(rootPost);
+            }
         });
         return () => call.cancel();
     }, [descendantsToken]);

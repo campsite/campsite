@@ -1,11 +1,31 @@
 .site-header {
-    padding: 0.5rem 1rem;
+    display: flex;
+    padding: 1rem 1rem;
+    padding-bottom: 0.5rem;
     max-width: 800px;
     margin: 0 auto;
+    align-items: center;
 }
 
 .brand {
     color: white !important;
     font-size: 1.25rem;
     font-weight: bold;
+}
+
+.right-menu {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+}
+
+.notifications {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.7rem;
+    text-align: center;
+    height: 2.5rem;
+    width: 2.5rem;
+    margin-right: 0.5rem;
 }
