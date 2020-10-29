@@ -320,3 +320,158 @@ func CreateReplyNotification(ctx context.Context, tx *Tx, pbsb *pubsub.PubSub, t
 
 	return id, nil
 }
+
+type NotificationBody interface {
+	notificationBody()
+}
+
+type Notification struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	Body      NotificationBody
+}
+
+type ReplyNotificationBody struct {
+	Post Post
+}
+
+func (ReplyNotificationBody) notificationBody() {}
+
+type NotificationsPageTokenPair struct {
+	Next *NotificationsPageToken
+	Prev *NotificationsPageToken
+}
+
+type NotificationsPageToken struct {
+	CreatedAt time.Time
+	ID        uuid.UUID
+	Direction PageDirection
+}
+
+func WaitForNotifications(ctx context.Context, db *DB, pbsb *pubsub.PubSub, userID uuid.UUID, pageToken NotificationsPageToken) error {
+	if pageToken.Direction != PageDirectionNewer {
+		return nil
+	}
+
+	// We must subscribe before we check hasNewer, otherwise we have a race condition.
+	sub, err := pbsb.Subscribe(ctx, "user:"+types.EncodeID(userID))
+	if err != nil {
+		return err
+	}
+	defer sub.Unsubscribe(ctx)
+
+	for {
+		var hasNewer bool
+		if err := db.Query(ctx, `
+			select exists(
+				select 1
+				from
+					notifications
+				where
+					user_id = $1 and (
+						case
+							when $4 = -1 then (
+								(created_at < $2) or
+								(created_at = $2 and id > $3)
+							)
+							when $4 = 1 then (
+								(created_at > $2) or
+								(created_at = $2 and id < $3)
+							)
+							else false
+						end
+					)
+				)
+		`, userID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction).Row(&hasNewer); err != nil {
+			return err
+		}
+
+		if hasNewer {
+			break
+		}
+
+		if err := func() error {
+			// Wake up every 10 seconds to check for new posts, in case we missed them.
+			ctx, cancel := context.WithTimeout(ctx, waitTimeout)
+			defer cancel()
+
+			msg, err := sub.Receive(ctx)
+			if err != nil {
+				if errors.Is(err, context.DeadlineExceeded) {
+					return nil
+				}
+				return err
+			}
+
+			_ = msg
+			return nil
+		}(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func Notifications(ctx context.Context, tx *Tx, userID uuid.UUID, pageToken NotificationsPageToken, limit int) ([]*Notification, NotificationsPageTokenPair, error) {
+	var notifs []*Notification
+
+	if err := tx.Query(ctx, `
+		select
+			id, created_at
+		from
+			notifications
+		where
+			user_id = $1 and (
+				case
+					when $4 = -1 then (
+						(created_at < $2) or
+						(created_at = $2 and id > $3)
+					)
+					when $4 = 1 then (
+						(created_at > $2) or
+						(created_at = $2 and id < $3)
+					)
+					else false
+				end
+			)
+		order by
+			created_at desc, id
+		limit $5
+	`, userID, pageToken.CreatedAt, pageToken.ID, pageToken.Direction, limit).Rows(func(rows pgx.Rows) error {
+		notif := &Notification{}
+		if err := rows.Scan(&notif.ID, &notif.CreatedAt); err != nil {
+			return err
+		}
+
+		notifs = append(notifs, notif)
+		return nil
+	}); err != nil {
+		return nil, NotificationsPageTokenPair{}, err
+	}
+
+	var ptp NotificationsPageTokenPair
+	if len(notifs) > 0 {
+		if len(notifs) >= limit || pageToken.Direction == PageDirectionNewer {
+			ptp.Next = &NotificationsPageToken{
+				CreatedAt: notifs[len(notifs)-1].CreatedAt,
+				ID:        notifs[len(notifs)-1].ID,
+				Direction: PageDirectionOlder,
+			}
+		}
+
+		ptp.Prev = &NotificationsPageToken{
+			CreatedAt: notifs[0].CreatedAt,
+			ID:        notifs[0].ID,
+			Direction: PageDirectionNewer,
+		}
+	} else {
+		ptp.Prev = &NotificationsPageToken{
+			CreatedAt: pageToken.CreatedAt,
+			ID:        pageToken.ID,
+			Direction: PageDirectionNewer,
+		}
+	}
+
+	return notifs, ptp, nil
+}

@@ -60,3 +60,8 @@ message Publication {
     google.protobuf.Timestamp published_at = 2;
     User publisher = 3;
 }
+
+message Notification {
+    string id = 1;
+    google.protobuf.Timestamp created_at = 2;
+}

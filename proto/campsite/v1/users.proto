@@ -35,6 +35,17 @@ message GetFeedResponse {
     PageTokenPair page_tokens = 2;
 }
 
+message GetNotificationsRequest {
+    string page_token = 1;
+    int32 limit = 2;
+    bool wait = 10;
+}
+
+message GetNotificationsResponse {
+    repeated Notification notifications = 1;
+    PageTokenPair page_tokens = 2;
+}
+
 service Users {
     rpc GetMe(GetMeRequest) returns (GetMeResponse) {
         option (google.api.http) = {
@@ -53,6 +64,12 @@ service Users {
     rpc GetFeed(GetFeedRequest) returns (GetFeedResponse) {
         option (google.api.http) = {
             get: "/v1/feed"
+        };
+    }
+
+    rpc GetNotifications(GetNotificationsRequest) returns (GetNotificationsResponse) {
+        option (google.api.http) = {
+            get: "/v1/notifications"
         };
     }
 }

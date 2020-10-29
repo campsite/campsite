@@ -149,6 +149,67 @@ func (s *usersServer) GetFeed(ctx context.Context, in *campsitev1.GetFeedRequest
 	return resp, nil
 }
 
+func (s *usersServer) GetNotifications(ctx context.Context, in *campsitev1.GetNotificationsRequest) (*campsitev1.GetNotificationsResponse, error) {
+	principal := security.PrincipalFromContext(ctx)
+	if principal == nil {
+		return nil, status.Error(codes.Unauthenticated, "")
+	}
+
+	pageToken := db.NotificationsPageToken{
+		CreatedAt: time.Now(),
+		Direction: db.PageDirectionOlder,
+	}
+	if in.PageToken != "" {
+		var err error
+		pageToken, err = dbtopb.DecodeNotificationsPageToken(in.PageToken)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, "page_token")
+		}
+	}
+
+	if in.Wait {
+		if err := db.WaitForNotifications(ctx, s.DB, s.PubSub, principal.UserID, pageToken); err != nil {
+			return nil, err
+		}
+	}
+
+	var notifs []*db.Notification
+	var pageTokenPair db.NotificationsPageTokenPair
+	if err := s.DB.Begin(ctx, pgx.TxOptions{
+		AccessMode: pgx.ReadOnly,
+	}, func(ctx context.Context, tx *db.Tx) error {
+		var err error
+		notifs, pageTokenPair, err = db.Notifications(ctx, tx, principal.UserID, pageToken, int(in.Limit))
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	notifPbs := make([]*campsitev1.Notification, len(notifs))
+	for i, notif := range notifs {
+		var err error
+		notifPbs[i], err = dbtopb.NotificationToProto(notif)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	resp := &campsitev1.GetNotificationsResponse{
+		Notifications: notifPbs,
+	}
+
+	protoPageTokenPair, err := dbtopb.EncodeNotificationsPageTokenPair(pageTokenPair)
+	if err != nil {
+		return nil, err
+	}
+	resp.PageTokens = protoPageTokenPair
+
+	return resp, nil
+}
+
 func NewUsersServer(env *env.Env) campsitev1.UsersServer {
 	return &usersServer{Env: env}
 }
