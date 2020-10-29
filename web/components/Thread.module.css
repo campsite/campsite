@@ -1,3 +1,7 @@
+.thread {
+    margin-bottom: -1rem;
+}
+
 .post-username {
     font-weight: bold;
     color: inherit !important;

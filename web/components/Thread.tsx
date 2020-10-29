@@ -75,35 +75,11 @@ const PostActions = memo(({ post }: { post: modelsPb.Post }) => {
 
     const router = useRouter();
 
-    return <div>
-        <ReactModal isOpen={isOpen} onRequestClose={() => {
-            setIsOpen(false);
-        }} portalClassName='modal-portal' overlayClassName='modal-overlay' className={styles['composer-dialog']}>
-            <Card>
-                <CardBody>
-                    <ParentPost tree={{ post: post, children: PostChildren() }} collapsible={true} showActions={false} />
-                    <Composer onSubmit={(skel) => {
-                        const req = new postsPb.CreatePostRequest();
-                        req.setParentPostId((new StringValue()).setValue(post.getId()));
-                        req.setContent(skel.content);
-                        const call = postsClient.createPost(req, {
-                            authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
-                        }, (err, resp) => {
-                            router.push(`/posts/${resp.getPost().getId()}`);
-                        });
-                    }} />
-                </CardBody>
-            </Card>
-        </ReactModal>
-        <ul className={styles['post-actions']}>
-            <li>
-                <Link href={`posts/${post.getId()}`}><a onClick={(e) => {
-                    e.preventDefault();
-                    setIsOpen(true);
-                }}><i className='las la-comment-alt'></i> {post.getNumChildren() !== 0 ? t('action-count', { 'count': post.getNumChildren() }) : ''}</a></Link>
-            </li>
-        </ul>
-    </div>;
+    return <ul className={styles['post-actions']}>
+        <li>
+            <Link href={`/posts/${post.getId()}/reply`}><a><i className='las la-comment-alt'></i> {post.getNumChildren() !== 0 ? t('action-count', { 'count': post.getNumChildren() }) : ''}</a></Link>
+        </li>
+    </ul>;
 });
 
 export interface PostChildren {
@@ -168,6 +144,32 @@ const PostBody = memo(({ tree, collapsible, showActions }: { tree: PostTree, col
         </div>
 
         {showActions ? <PostActions post={tree.post}></PostActions> : null}
+    </div>;
+});
+
+const Parents = memo(({ parents, collapsible, showActions }: { parents: modelsPb.Post[], collapsible: boolean, showActions: boolean }) => {
+    const [t, i18n] = useTranslation('thread');
+
+    return <div className={styles['thread-parents']}>
+        {parents.length > 0 && parents[0].getParentPostId() ?
+            <div className={styles['post-parent']}>
+                <div className={styles['post-parent-container']}>
+                    <div className={styles['post-secondary-rail']}>
+                        <div className={styles['post-parent-gutter']}><div className={`${styles['post-gutter-line']} ${styles['post-gutter-line-dashed']}`}></div></div>
+                    </div>
+                    <div className={styles['post-secondary-main']}>
+                        <div className={styles['post-context-placeholder']}>
+                            <Link href={`/posts/${parents[0].getId()}`}><a className='placeholder-link'>{t('show-more-parents')}</a></Link>
+                        </div>
+                    </div>
+                </div>
+            </div> :
+            null}
+
+        {parents.map(parent => <ParentPost tree={{
+            post: parent,
+            children: PostChildren(),
+        }} collapsible={collapsible} showActions={showActions} key={parent.getId()} />)}
     </div>;
 });
 
@@ -247,83 +249,49 @@ const ChildPost = memo(({ tree, maxChildDepth, showActions, linear, onShowMoreCh
 const PrimaryPost = memo(({ post, collapsible, showActions }: { post: modelsPb.Post, collapsible: boolean, showActions: boolean }) => {
     const [t, i18n] = useTranslation('thread');
 
-    const parents: modelsPb.Post[] = [];
+    const createdAtDate = post.getCreatedAt().toDate();
 
+    return <div className={styles['post-primary']}>
+        <div className={styles['post-primary-info']}>
+            <a className={styles['post-avatar']} href=''><Avatar url='https://github.com/tolfino.png' size={'2.5rem'} /></a>
+            <header className={styles['post-info']}>
+                <a className={styles['post-username']} href=''>{post.getAuthor() ? post.getAuthor().getName() : ''}</a><br />
+                <span className={styles['post-time']}>
+                    <Link href={`/posts/${post.getId()}`}><a>
+                        <time dateTime={createdAtDate.toString()}>{formatDateLong(i18n, createdAtDate)}</time></a>
+                    </Link>
+                </span>
+            </header>
+        </div>
+
+        {post.getContent() ?
+            <div className={styles['post-content-wrapper']}>
+                <div className={styles['post-content']} dangerouslySetInnerHTML={{ __html: md.render(post.getContent().getValue()) }} />
+            </div> :
+            null}
+
+        {showActions ? <PostActions post={post}></PostActions> : null}
+    </div >;
+});
+
+function parentsFlattened(post: modelsPb.Post): modelsPb.Post[] {
+    const parents: modelsPb.Post[] = [];
     let currentParent = post.getParentPost();
     while (currentParent) {
         parents.push(currentParent);
         currentParent = currentParent.getParentPost();
     }
-
     parents.reverse();
-    const hasMoreContext = parents.length > 0 && parents[0].getParentPostId();
-
-    const createdAtDate = post.getCreatedAt().toDate();
-
-    return <div>
-        <div className={styles['thread-parents']}>
-            {hasMoreContext ?
-                <div className={styles['post-parent']}>
-                    <div className={styles['post-parent-container']}>
-                        <div className={styles['post-secondary-rail']}>
-                            <div className={styles['post-parent-gutter']}><div className={`${styles['post-gutter-line']} ${styles['post-gutter-line-dashed']}`}></div></div>
-                        </div>
-                        <div className={styles['post-secondary-main']}>
-                            <div className={styles['post-context-placeholder']}>
-                                <Link href={`/posts/${parents[0].getId()}`}><a className='placeholder-link'>{t('show-more-parents')}</a></Link>
-                            </div>
-                        </div>
-                    </div>
-                </div> :
-                null}
-
-            {parents.map(parent => <ParentPost tree={{
-                post: parent,
-                children: PostChildren(),
-            }} collapsible={collapsible} showActions={showActions} key={parent.getId()} />)}
-        </div>
-
-        <div className={styles['post-primary']}>
-            <div className={styles['post-primary-info']}>
-                <a className={styles['post-avatar']} href=''><Avatar url='https://github.com/tolfino.png' size={'2.5rem'} /></a>
-                <header className={styles['post-info']}>
-                    <a className={styles['post-username']} href=''>{post.getAuthor() ? post.getAuthor().getName() : ''}</a><br />
-                    <span className={styles['post-time']}>
-                        <Link href={`/posts/${post.getId()}`}><a>
-                            <time dateTime={createdAtDate.toString()}>{formatDateLong(i18n, createdAtDate)}</time></a>
-                        </Link>
-                    </span>
-                </header>
-            </div>
-
-            {post.getContent() ?
-                <div className={styles['post-content-wrapper']}>
-                    <div className={styles['post-content']} dangerouslySetInnerHTML={{ __html: md.render(post.getContent().getValue()) }} />
-                </div> :
-                null}
-
-            {showActions ? <PostActions post={post}></PostActions> : null}
-        </div >
-    </div>;
-});
+    return parents;
+}
 
 const Thread = memo(({ tree, collapsible, showActions, maxChildDepth, onShowMoreChildren }: { tree: PostTree, collapsible: boolean, showActions: boolean, maxChildDepth: number, onShowMoreChildren: (path: string[]) => void }) => {
     const [t, i18n] = useTranslation('thread');
 
-    const parents: modelsPb.Post[] = [];
-
-    let currentParent = tree.post.getParentPost();
-    while (currentParent) {
-        parents.push(currentParent);
-        currentParent = currentParent.getParentPost();
-    }
-
-    parents.reverse();
-    const hasMoreContext = parents.length > 0 && parents[0].getParentPostId();
-
-    const createdAtDate = tree.post.getCreatedAt().toDate();
-
+    const parents = parentsFlattened(tree.post);
     return <section className={styles['thread']}>
+        <Parents parents={parents} collapsible={collapsible} showActions={showActions} />
+
         <PrimaryPost post={tree.post} collapsible={collapsible} showActions={showActions} />
 
         {tree.children.order.size > 0 ?
@@ -340,3 +308,4 @@ const Thread = memo(({ tree, collapsible, showActions, maxChildDepth, onShowMore
 });
 
 export default Thread;
+export { parentsFlattened, Parents };

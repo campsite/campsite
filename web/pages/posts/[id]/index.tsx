@@ -5,12 +5,12 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
-import Card, { CardBody } from '../../components/Card';
-import { PostChildren, PostTree } from '../../components/Thread';
-import Thread from '../../components/Thread';
-import * as modelsPb from '../../gen/proto/campsite/v1/models_pb';
-import * as postsPb from '../../gen/proto/campsite/v1/posts_pb';
-import { postsClient } from '../../lib/rpc';
+import Card, { CardBody } from '../../../components/Card';
+import { PostChildren, PostTree } from '../../../components/Thread';
+import Thread from '../../../components/Thread';
+import * as modelsPb from '../../../gen/proto/campsite/v1/models_pb';
+import * as postsPb from '../../../gen/proto/campsite/v1/posts_pb';
+import { postsClient } from '../../../lib/rpc';
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const req = new postsPb.GetPostRequest();
@@ -114,7 +114,7 @@ function postsToChildren(rootID: string, posts: modelsPb.Post[]): PostChildren {
     return children;
 }
 
-export default function Post(props: { raw: Message.MessageArray }) {
+export default function Index(props: { raw: Message.MessageArray }) {
     const router = useRouter();
     const { id } = router.query;
 
