@@ -14,10 +14,6 @@
     margin-right: 0.5rem;
 }
 
-.post-avatar>:global(.avatar) {
-    display: block;
-}
-
 .post-parent-gutter {
     flex-grow: 1;
     width: 100%;
@@ -29,7 +25,6 @@
 
 .post-parent-line {
     flex-grow: 1;
-    margin-bottom: 0.5rem;
     border-left: 2px solid var(--gutter-line-color);
 }
 
@@ -72,8 +67,12 @@
     align-items: stretch;
 }
 
+.post-reply.linear>.post-reply-gutter {
+    display: none;
+}
+
 .post-replies {
-    padding-left: 1.5rem;
+    padding-left: 1.25rem;
     margin-left: -1px;
 }
 
@@ -114,7 +113,6 @@
 .post-child-line {
     border-left: 2px solid var(--gutter-line-color);
     flex-grow: 1;
-    margin-top: 0.5rem;
 }
 
 .post-secondary-body {
@@ -165,7 +163,6 @@
 
 .post-child-container {
     display: flex;
-    padding-left: 0.25rem;
 }
 
 .post-primary-info {
@@ -234,11 +231,11 @@
     border-top: 1px solid var(--gutter-line-color);
     margin: 0 -1rem;
     padding: 0 1rem;
-    padding-left: 0.5rem;
+    padding-left: 1rem;
 }
 
 .thread-replies-start {
-    padding-left: 1.5rem;
+    padding-left: 1.25rem;
     height: 1rem;
     display: flex;
 }

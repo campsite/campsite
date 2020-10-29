@@ -177,7 +177,7 @@ const ParentPost = memo(({ tree, collapsible, showActions }: { tree: PostTree, c
     return <article className={styles['post-parent']}>
         <div className={styles['post-parent-container']}>
             <div className={styles['post-parent-rail']}>
-                <a className={styles['post-avatar']} href='/'><Avatar url='https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png' size='2.5rem' /></a>
+                <a className={styles['post-avatar']} href='/'><Avatar url='https://github.com/tolfino.png' size='2.5rem' /></a>
                 <div className={styles['post-parent-line']}></div>
             </div>
             <PostBody tree={tree} collapsible={collapsible} showActions={showActions} />
@@ -188,10 +188,14 @@ const ParentPost = memo(({ tree, collapsible, showActions }: { tree: PostTree, c
 const Children = memo(({ parent, children, maxChildDepth, showActions, onShowMoreChildren }: { parent: modelsPb.Post, children: PostChildren, maxChildDepth: number, showActions: boolean, onShowMoreChildren: (suffix: string[]) => void }) => {
     const [t, i18n] = useTranslation('thread');
 
+    if (parent.getNumChildren() === 1 && children.order.size > 0) {
+        return <ChildPost tree={children.items.get(children.order.first())} maxChildDepth={maxChildDepth} showActions={showActions} linear={true} onShowMoreChildren={onShowMoreChildren} />;
+    }
+
     return <div className={styles['post-replies']}>
         {children.order.map(id => {
             const child = children.items.get(id);
-            return <ChildPost tree={child} key={child.post.getId()} maxChildDepth={maxChildDepth} showActions={showActions} onShowMoreChildren={onShowMoreChildren} />;
+            return <ChildPost tree={child} key={child.post.getId()} maxChildDepth={maxChildDepth} showActions={showActions} linear={false} onShowMoreChildren={onShowMoreChildren} />;
         })}
         {children.order.size < parent.getNumChildren() ?
             <div className={styles['post-reply']}>
@@ -215,10 +219,10 @@ const Children = memo(({ parent, children, maxChildDepth, showActions, onShowMor
     </div>;
 });
 
-const ChildPost = memo(({ tree, maxChildDepth, showActions, onShowMoreChildren }: { tree: PostTree, maxChildDepth: number, showActions: boolean, onShowMoreChildren: (suffix: string[]) => void }) => {
+const ChildPost = memo(({ tree, maxChildDepth, showActions, linear, onShowMoreChildren }: { tree: PostTree, maxChildDepth: number, showActions: boolean, linear: boolean, onShowMoreChildren: (suffix: string[]) => void }) => {
     const [t, i18n] = useTranslation('thread');
 
-    return <article className={styles['post-reply']}>
+    return <article className={`${styles['post-reply']} ${linear ? styles['linear'] : ''}`}>
         <div className={styles['post-reply-gutter']}>
             <div className={styles['post-reply-line-corner']}></div>
             <div className={styles['post-reply-line']}></div>
@@ -226,7 +230,7 @@ const ChildPost = memo(({ tree, maxChildDepth, showActions, onShowMoreChildren }
         <div className={styles['post-child-body']}>
             <div className={styles['post-child-container']}>
                 <div className={styles['post-child-rail']}>
-                    <a className={styles['post-avatar']} href='/'><Avatar url='https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png' size='2.5rem' /></a>
+                    <a className={styles['post-avatar']} href='/'><Avatar url='https://github.com/tolfino.png' size='2.5rem' /></a>
                     {tree.post.getNumChildren() > 0 ? <div className={styles['post-child-line']}></div> : null}
                 </div>
                 <PostBody tree={tree} collapsible={true} showActions={showActions} />
@@ -281,7 +285,7 @@ const PrimaryPost = memo(({ post, collapsible, showActions }: { post: modelsPb.P
 
         <div className={styles['post-primary']}>
             <div className={styles['post-primary-info']}>
-                <a className={styles['post-avatar']} href=''><Avatar url='https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png' size={'2.5rem'} /></a>
+                <a className={styles['post-avatar']} href=''><Avatar url='https://github.com/tolfino.png' size={'2.5rem'} /></a>
                 <header className={styles['post-info']}>
                     <a className={styles['post-username']} href=''>{post.getAuthor() ? post.getAuthor().getName() : ''}</a><br />
                     <span className={styles['post-time']}>
