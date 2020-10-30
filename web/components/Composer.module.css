@@ -24,6 +24,11 @@
 
 .body {
     display: flex;
+    flex-grow: 1;
+}
+
+.body>fieldset {
+    display: flex;
     flex-direction: column;
     flex-grow: 1;
 }

@@ -259,3 +259,22 @@
 .post-content * {
     max-width: 100%;
 }
+
+.topics {
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.topics>li {
+    margin-right: 0.5rem;
+    display: inline-block;
+}
+
+.topics>li>a {
+    font-weight: bold;
+    background: var(--muted-text-color);
+    display: inline-block;
+    color: white !important;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+}

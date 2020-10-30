@@ -213,6 +213,8 @@ export default function Index(props: { raw: Message.MessageArray }) {
                         post: post,
                         children: children,
                     }}
+                    publisher={null}
+                    topics={[]}
                     collapsible={true}
                     showActions={true}
                     maxChildDepth={maxChildDepth}

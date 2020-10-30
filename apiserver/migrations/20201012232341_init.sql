@@ -14,8 +14,11 @@ create table users (
 
 create table topics (
     id uuid primary key references channels(id) on delete cascade,
+    slug text not null,
     name text not null
 );
+
+create unique index on topics(slug);
 
 create table sessions (
     id uuid primary key default gen_random_uuid(),

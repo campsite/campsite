@@ -55,10 +55,18 @@ message Post {
     int32 num_children = 25;
 }
 
+message Topic {
+    string id = 1;
+    string slug = 2;
+    string name = 3;
+    string description = 4;
+}
+
 message Publication {
     Post post = 1;
     google.protobuf.Timestamp published_at = 2;
     User publisher = 3;
+    repeated Topic topics = 4;
 }
 
 message Notification {

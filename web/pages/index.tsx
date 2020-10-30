@@ -37,13 +37,11 @@ export default function Index() {
         <div>
             <Card>
                 <CardBody>
-                    <Composer onSubmit={(skel) => {
+                    <Composer onSubmit={async (skel) => {
                         const req = new postsPb.CreatePostRequest();
                         req.setContent(skel.content);
-                        const call = postsClient.createPost(req, {
+                        await postsClient.createPost(req, {
                             authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
-                        }, (err, resp) => {
-                            console.log(resp);
                         });
                     }} />
                 </CardBody>
@@ -53,6 +51,8 @@ export default function Index() {
                     <CardBody>
                         <Thread
                             tree={{ post: pub.getPost(), children: PostChildren() }}
+                            publisher={pub.getPublisher()}
+                            topics={pub.getTopicsList()}
                             maxChildDepth={0}
                             collapsible={true}
                             showActions={true}

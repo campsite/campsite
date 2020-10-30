@@ -49,15 +49,14 @@ export default function Reply() {
         <Card>
             <CardBody>
                 <Parents parents={posts} collapsible={true} showActions={true} />
-                <Composer onSubmit={(skel) => {
+                <Composer onSubmit={async (skel) => {
                     const req = new postsPb.CreatePostRequest();
                     req.setParentPostId((new StringValue()).setValue(post.getId()));
                     req.setContent(skel.content);
-                    const call = postsClient.createPost(req, {
+                    const resp = await postsClient.createPost(req, {
                         authorization: 'Bearer W8CNKPQBSPaFr5kfn-GJxw',
-                    }, (err, resp) => {
-                        router.push(`/posts/${resp.getPost().getId()}`);
                     });
+                    router.push(`/posts/${resp.getPost().getId()}`);
                 }} />
             </CardBody>
         </Card>

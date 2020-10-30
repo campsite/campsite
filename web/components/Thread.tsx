@@ -285,11 +285,18 @@ function parentsFlattened(post: modelsPb.Post): modelsPb.Post[] {
     return parents;
 }
 
-const Thread = memo(({ tree, collapsible, showActions, maxChildDepth, onShowMoreChildren }: { tree: PostTree, collapsible: boolean, showActions: boolean, maxChildDepth: number, onShowMoreChildren: (path: string[]) => void }) => {
+const Thread = memo(({ tree, topics,  publisher, collapsible, showActions, maxChildDepth, onShowMoreChildren }: { tree: PostTree, topics: modelsPb.Topic[], publisher: modelsPb.User | null, collapsible: boolean, showActions: boolean, maxChildDepth: number, onShowMoreChildren: (path: string[]) => void }) => {
     const [t, i18n] = useTranslation('thread');
 
     const parents = parentsFlattened(tree.post);
     return <section className={styles['thread']}>
+        {topics.length > 0 ?
+            <ul className={styles['topics']}>
+                {topics.map(topic =>
+                    <li><Link href={`/topics/${topic.getSlug()}`}><a className={styles['topic']}>{topic.getName()}</a></Link></li>)}
+            </ul> :
+            null}
+
         <Parents parents={parents} collapsible={collapsible} showActions={showActions} />
 
         <PrimaryPost post={tree.post} collapsible={collapsible} showActions={showActions} />
