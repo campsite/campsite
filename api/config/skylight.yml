@@ -1,6 +1,0 @@
----
-# The authentication token for the application.
-authentication: <%= Rails.application.credentials.skylight&.fetch(:token) %>
-enable_sidekiq: true
-deploy:
-  git_sha: <%= ENV['RELEASE_SHA'] %>
