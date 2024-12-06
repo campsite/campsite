@@ -35,9 +35,6 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# don't ignore some safe .env files
-!html-to-image/.env
-
 # turbo
 .turbo
 
