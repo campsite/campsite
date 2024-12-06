@@ -74,10 +74,10 @@ api/app/assets/builds/*
 api/Brewfile.lock.json
 
 api/config/credentials/production.key
+api/config/credentials/production.yml.enc
 
 api/config/credentials/development.key
-
-api/config/credentials/test.key
+api/config/credentials/development.yml.enc
 
 # Ignore ngrok.yaml, we'll generate from ngrok.yml.template
 api/ngrok.yaml

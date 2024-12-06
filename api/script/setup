@@ -20,21 +20,7 @@ if [ -n "$SETUP_PRISTINE" ]; then
 fi
 
 echo "\nChecking encryption keys...\n============================================================"
-if [ ! -f config/credentials/test.key ]; then
-	echo "Please enter a key for the test environment credentials file from 1Password: "
-	read -s TEST_KEY
-	echo $TEST_KEY > config/credentials/test.key
-else
-	echo "config/credentials/test.key exists"
-fi
-
-if [ ! -f config/credentials/development.key ]; then
-	echo "Please enter a key for the development environment credentials file from 1Password: "
-	read -s DEVELOPMENT_KEY
-	echo $DEVELOPMENT_KEY > config/credentials/development.key
-else
-	echo "config/credentials/development.key exists"
-fi
+bin/rails dev:setup_credentials
 
 echo "\nRunning redis-server in the background...\n============================================================"
 brew services start redis &

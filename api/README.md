@@ -2,32 +2,6 @@
 
 This is the API that powers https://app.campsite.com
 
-## Setup API
-
-1. Bootstrap the application
-
-```shell
-script/bootstrap
-```
-
-2. Add development and test keys
-
-Create `config/credentials/development.key` and `config/credentials/test.key`.
-
-In each of those files, paste the `Rails Development Key` and `Rails Test Key` found in the shared 1Password vault.
-
-3. Setup services and databases
-
-```shell
-script/setup
-```
-
-4. Start the application
-
-```shell
-script/server
-```
-
 ## Dev Environment
 
 1. Install recommended VS Code extensions

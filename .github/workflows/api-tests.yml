@@ -16,7 +16,6 @@ env:
   MYSQL_PASSWORD: root
   DATABASE_HOST: 127.0.0.1
   RAILS_ENV: test
-  RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
 
 jobs:
   test:
