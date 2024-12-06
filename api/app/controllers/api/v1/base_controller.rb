@@ -91,7 +91,8 @@ module Api
       end
 
       def set_user_last_seen_at
-        UpdateUserLastSeenAtJob.perform_async(current_user.id)
+        # Disabled since Userlist isn't setup in the public version
+        # UpdateUserLastSeenAtJob.perform_async(current_user.id)
       end
 
       def set_organization_membership_last_seen_at
