@@ -1,0 +1,9 @@
+en:
+  activerecord:
+    attributes:
+      organization:
+        slug: 'Organization URL'
+  pundit:
+    default: 'This action requires additional privileges.'
+    project_policy:
+      create_post?: "You don't have permission to create this post. If you're attempting to post to a private channel, be sure to add the integration to the channel."

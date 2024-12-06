@@ -1,0 +1,46 @@
+---
+http_interactions:
+  - request:
+      method: post
+      uri: https://core-api.uk.plain.com/graphql/v1
+      body:
+        encoding: UTF-8
+        string: '{"query":"mutation UpsertCustomer($upsertCustomerInput: UpsertCustomerInput!)
+          {\n  upsertCustomer(input: $upsertCustomerInput) {\n    result\n    error
+          {\n      fields {\n        message\n      }\n    }\n  }\n}\n","variables":{"upsertCustomerInput":{"identifier":{"externalId":"different-id-same-email"},"onCreate":{"externalId":"different-id-same-email","fullName":"Hermione
+          Granger","shortName":"Hermione","email":{"email":"hermione@campsite.com","isVerified":true}},"onUpdate":{"externalId":{"value":"different-id-same-email"},"fullName":{"value":"Hermione
+          Granger"},"shortName":{"value":"Hermione"},"email":{"email":"hermione@campsite.com","isVerified":true}}}}}'
+      headers:
+        Content-type:
+          - application/json
+        Authorization:
+          - Bearer <PLAIN_API_KEY>
+        User-Agent:
+          - Faraday v2.7.5
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        date:
+          - Fri, 12 Jan 2024 04:33:28 GMT
+        content-type:
+          - application/json; charset=utf-8
+        content-length:
+          - '137'
+        connection:
+          - keep-alive
+        x-powered-by:
+          - Express
+        etag:
+          - W/"89-v6lAOSHB9FdGHiKogGoNExENHE0"
+        apigw-requestid:
+          - RaMb1gYwrPEEM1Q=
+      body:
+        encoding: UTF-8
+        string: '{"data":{"upsertCustomer":{"result":null,"error":{"fields":[{"message":"A
+          customer already exists with the provided email address"}]}}}}
+
+          '
+    recorded_at: Fri, 12 Jan 2024 04:33:28 GMT
+recorded_with: VCR 6.1.0

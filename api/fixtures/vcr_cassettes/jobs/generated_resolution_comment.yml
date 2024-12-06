@@ -1,0 +1,159 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.openai.com/v1/chat/completions
+    body:
+      encoding: UTF-8
+      string: '{"model":"gpt-4o","messages":[{"role":"system","content":"Provide a
+        concise summary of the final conversation outcome, highlighting responsible
+        parties for actions or decisions. Focus solely on the conversation''s conclusion,
+        omitting intermediate steps. Utilize language akin to the original discourse
+        but maintain a professional tone. DO NOT use first-person, narrator voice,
+        passive voice, AI speak, or the word \"resolution\". Avoid an introduction
+        and keep the summary factual, excluding acknowledgments or gratitude expressions.
+        Complex decisions should be minimized, avoiding repetition of all steps in
+        the decision-making process. The summary MUST be under 50 words. Skew heavily
+        towards the contents of the provided comment, rephrasing for clarity and brevity.
+        If the selected comment does not provide clear actions or decisions, make
+        a best attempt to infer them based on the original post and other comments
+        and replies."},{"role":"user","content":"RESOLVING COMMENT AUTHOR: Harry Potter\nRESOLVING
+        COMMENT: ```\nI think you should have cereal.\n```\n\nPOST TITLE: Look at
+        these designs\nPOST AUTHOR: Harry Potter\nPOST: ```\nWhat should I eat for
+        breakfast?\n```\nCOMMENTS:\n1. AUTHOR: Harry Potter\n```\nI definitely think
+        you should have pancakes.\n```\nREPLIES:\n- AUTHOR: Harry Potter\n```\nI totally
+        agree, pancakes sound delicious!\n```\n2. AUTHOR: Harry Potter\n```\nI totally
+        agree, pancakes sound delicious!\n```\n3. AUTHOR: Harry Potter\n```\nI think
+        you should have cereal.\n```\nREPLIES:\n- AUTHOR: Harry Potter\n```\nNah,
+        I think you should have pancakes.\n```\n4. AUTHOR: Harry Potter\n```\nNah,
+        I think you should have pancakes.\n```\n5. AUTHOR: Harry Potter\n```\nPancakes
+        it is!\n```\nPOST TITLE: Look at these designs\nPOST AUTHOR: Harry Potter\nPOST:
+        ```\nWhat should I eat for breakfast?\n```\nCOMMENTS:\n1. AUTHOR: Harry Potter\n```\nI
+        definitely think you should have pancakes.\n```\nREPLIES:\n- AUTHOR: Harry
+        Potter\n```\nI totally agree, pancakes sound delicious!\n```\n2. AUTHOR: Harry
+        Potter\n```\nI totally agree, pancakes sound delicious!\n```\n3. AUTHOR: Harry
+        Potter\n```\nI think you should have cereal.\n```\nREPLIES:\n- AUTHOR: Harry
+        Potter\n```\nNah, I think you should have pancakes.\n```\n4. AUTHOR: Harry
+        Potter\n```\nNah, I think you should have pancakes.\n```\n5. AUTHOR: Harry
+        Potter\n```\nPancakes it is!\n```"}],"temperature":0.0}'
+    headers:
+      Content-Type:
+      - application/json
+      Authorization:
+      - Bearer <OPENAI_API_KEY>
+      OpenAI-Organization:
+      - "<OPENAI_ORGANIZATION>"
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      date:
+      - Wed, 22 May 2024 13:48:07 GMT
+      content-type:
+      - application/json
+      transfer-encoding:
+      - chunked
+      connection:
+      - keep-alive
+      openai-organization:
+      - campsite
+      openai-processing-ms:
+      - '470'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '500'
+      x-ratelimit-limit-tokens:
+      - '30000'
+      x-ratelimit-remaining-requests:
+      - '499'
+      x-ratelimit-remaining-tokens:
+      - '29433'
+      x-ratelimit-reset-requests:
+      - 120ms
+      x-ratelimit-reset-tokens:
+      - 1.134s
+      x-request-id:
+      - req_4bab5ad924fc12d5741e713adae348d9
+      cf-cache-status:
+      - DYNAMIC
+      set-cookie:
+      - __cf_bm=Lgq99BC3R35x_NMRfMKLSZb5Cu5T.i0pBEa0A.NM_V0-1716385687-1.0.1.1-WueOnDoIWeyR7ru2x0GPHZlz5gqagZ38_b0TDmeNPf1k4uwJHC.Pp8J7BtMmK98_SZB1gFa0I3uExW_nn6vqdQ;
+        path=/; expires=Wed, 22-May-24 14:18:07 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None, _cfuvid=fvIkkrZi2AXdsg_pHqLG1pZWxdgD05Ud658cTynSgDw-1716385687117-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      server:
+      - cloudflare
+      cf-ray:
+      - 887d430c4e2542ce-EWR
+      content-encoding:
+      - gzip
+      alt-svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: |
+        {
+          "id": "chatcmpl-9Rgc2eRka3x2aUf6LshwH9t17toVj",
+          "object": "chat.completion",
+          "created": 1716385686,
+          "model": "gpt-4o-2024-05-13",
+          "choices": [
+            {
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": "Pancakes were chosen for breakfast."
+              },
+              "logprobs": null,
+              "finish_reason": "stop"
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 525,
+            "completion_tokens": 8,
+            "total_tokens": 533
+          },
+          "system_fingerprint": "fp_729ea513f7"
+        }
+  recorded_at: Wed, 22 May 2024 13:48:07 GMT
+- request:
+    method: post
+    uri: http://localhost:3002/markdown_to_html
+    body:
+      encoding: UTF-8
+      string: '{"markdown":"Pancakes were chosen for breakfast.","editor":"markdown"}'
+    headers:
+      User-Agent:
+      - Faraday v2.9.0
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer d8c0a2827589659ff292a8999b024f24a185ed82
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      x-powered-by:
+      - Express
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '53'
+      etag:
+      - W/"35-v5KfaAHGp+BvLI7qAoNjbE7Z3lg"
+      date:
+      - Wed, 22 May 2024 13:48:07 GMT
+      connection:
+      - keep-alive
+      keep-alive:
+      - timeout=5
+    body:
+      encoding: UTF-8
+      string: '{"html":"<p>Pancakes were chosen for breakfast.</p>"}'
+  recorded_at: Wed, 22 May 2024 13:48:07 GMT
+recorded_with: VCR 6.1.0

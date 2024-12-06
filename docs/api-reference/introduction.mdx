@@ -1,0 +1,42 @@
+---
+title: 'Introduction'
+description: "Use Campsite's REST API to create custom integrations and scripts that interact with Campsite."
+---
+
+<Info>
+  Check out our [examples repo on GitHub](https://github.com/campsite/examples) for code samples and suggested use
+  cases.
+</Info>
+
+## Base URL
+
+```
+https://api.campsite.com
+```
+
+## Authentication
+
+All API endpoints are authenticated using Bearer tokens.
+
+Follow these steps to get an API key for your organization:
+
+1. Go to your Organization settings and click the **Integrations** tab.
+2. In the **Custom integrations** box, click the **+ New** button and create a new integration.
+3. On the next screen in the **API keys** box, click **Generate API key** and copy the API key that appears.
+4. Include the key in the Authorization header of your requests:
+
+```
+Authorization: Bearer <CAMPSITE_API_KEY>
+```
+
+## Making requests
+
+Include your bearer token and a Content-Type: application/json header with all requests. Example:
+
+```
+curl --request POST \
+ --url https://api.campsite.com/v2/posts \
+ --header 'Authorization: Bearer <CAMPSITE_API_KEY>' \
+ --header 'Content-Type: application/json' \
+ --data '{ "content_markdown": "Post content" }'
+```

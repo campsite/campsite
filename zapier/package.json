@@ -1,0 +1,30 @@
+{
+  "name": "zapier",
+  "version": "1.0.1",
+  "private": true,
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "pnpm run clean && tsc",
+    "clean": "rimraf ./lib ./build",
+    "dev": "pnpm run clean && tsc --watch",
+    "push:dev": "cp -f .zapierapprc-dev .zapierapprc && pnpm run build && zapier push",
+    "push:prod": "cp -f .zapierapprc-prod .zapierapprc && pnpm run build && zapier push",
+    "test": "pnpm run build && jest --testTimeout 10000 --rootDir ./lib/test"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "nock": "^13.5.4",
+    "zapier-platform-core": "15.5.3",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@campsite/types": "file:../packages/types",
+    "@types/jest": "^26.0.23",
+    "@types/node": "^20",
+    "@types/node-fetch": "^2.6.11",
+    "jest": "^29.6.0",
+    "rimraf": "^3.0.2",
+    "typescript": "^5.4.3"
+  }
+}

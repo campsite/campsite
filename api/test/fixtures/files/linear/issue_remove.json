@@ -1,0 +1,16 @@
+{
+  "action": "remove",
+  "data": {
+    "id": "XXXYYY",
+    "title": "Issue title",
+    "teamId": "YYYZZZ",
+    "team": {
+      "id": "YYYZZZ",
+      "key": "TEA",
+      "name": "Team"
+    },
+    "archivedAt": "2019-01-01T00:00:00.000Z"
+  },
+  "type": "Issue",
+  "organizationId": "AAABBB"
+}

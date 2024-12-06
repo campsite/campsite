@@ -1,0 +1,16 @@
+<% size = size || 24 %>
+<% class_name ||= "rounded-full" %>
+
+<% image = capture do %>
+  <img src="<%= avatar_url %>" width="<%= size %>" height="<%= size %>" class="aspect-square overflow-hidden <%= class_name %>" />
+<% end %>
+
+<% if href.present? %>
+  <a href="<%= href %>" target="_blank" class="inline-block align-top items-center">
+    <%= image %>
+  </a>
+<% else %>
+  <span class="inline-block align-top items-center">
+    <%= image %>
+  </span>
+<% end %>

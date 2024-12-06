@@ -1,0 +1,103 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+.pnp
+.pnp.js
+dist
+
+# testing
+coverage
+
+# vercel
+.vercel
+
+# next.js
+.next/
+out/
+build
+
+# misc
+.DS_Store
+*.pem
+.npmrc
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# don't ignore some safe .env files
+!html-to-image/.env
+
+# turbo
+.turbo
+
+# sentry
+.sentryclirc
+
+# Ignore bundler config.
+.bundle
+api/.bundle
+
+# Ignore all logfiles and tempfiles.
+api/log/*
+api/tmp/*
+!api/log/.keep
+!api/tmp/.keep
+
+# Ignore pidfiles, but keep the directory.
+api/tmp/pids/*
+!api/tmp/pids/
+!api/tmp/pids/.keep
+
+# Ignore uploaded files in development.
+api/storage/*
+!api/storage/.keep
+api/tmp/storage/*
+!api/tmp/storage/
+!api/tmp/storage/.keep
+
+api/public/assets
+
+# Ignore master key for decrypting credentials and more.
+api/config/master.key
+
+api/app/assets/builds/*
+!api/app/assets/builds/.keep
+
+api/Brewfile.lock.json
+
+api/config/credentials/production.key
+
+api/config/credentials/development.key
+
+api/config/credentials/test.key
+
+# Ignore ngrok.yaml, we'll generate from ngrok.yml.template
+api/ngrok.yaml
+
+dump.rdb
+
+# planetscale
+.pscale.yml
+
+.overmind.sock
+
+.venv/
+.env*.local
+
+# Sanity CMS utility files
+.sanity
+
+# PostHog migrations and backups
+posthog_migration
+posthog_migration_batches

@@ -1,0 +1,24 @@
+{
+  "version": "2.0",
+  "id": "********-****-****-****-***********",
+  "account_id": "************************",
+  "timestamp": "2021-11-30T12:58:46Z",
+  "type": "beam.started.success",
+  "data": {
+    "beam_id": "************************",
+    "job_id": "************************",
+    "metadata_id": "********-****-****-****-***********",
+    "metadata_timestamp": "2021-11-30T12:58:46.400759043Z",
+    "peer_id": "********-****-****-****-***********",
+    "recording_enabled": true,
+    "room_id": "************************",
+    "session_id": "************************",
+    "template_id": "************************",
+    "start_delay": 12,
+    "max_width": 1280,
+    "max_height": 720,
+    "meeting_url": "https://app.100ms.live/preview/rpe-pwl-akt?token=beam_recording",
+    "rtmp": [{ "url": "http://test.com" }],
+    "session_started_at": "2021-11-30T12:58:49.97291247Z"
+  }
+}

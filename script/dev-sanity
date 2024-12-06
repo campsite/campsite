@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Start the pnpm command in the background
+pnpm dev -F @campsite/sanity-studio --no-cache &
+# Get its PID
+PNPM_PID=$!
+
+# Define cleanup procedure
+cleanup() {
+    echo "Cleaning up."
+    kill $PNPM_PID
+    exit $?
+}
+
+# Trap CTRL+C
+trap cleanup SIGINT
+
+# Give the server a chance to start
+sleep 1
+
+# Open the default browser to the specified URL
+open "http://localhost:3333"
+
+# Wait for pnpm command to stop
+wait $PNPM_PID

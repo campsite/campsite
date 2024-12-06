@@ -1,0 +1,123 @@
+name: Run database migrations
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    paths:
+      - 'api/db/schema.rb'
+
+env:
+  PLANETSCALE_SERVICE_TOKEN_ID: ${{ secrets.PLANETSCALE_SERVICE_TOKEN_ID }}
+  PLANETSCALE_SERVICE_TOKEN: ${{ secrets.PLANETSCALE_SERVICE_TOKEN }}
+
+jobs:
+  planetscale:
+    if: github.event.pull_request.draft == false
+    permissions:
+      pull-requests: write
+      contents: read
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Set PlanetScale branch name
+        id: set_PLANETSCALE_BRANCH_NAME
+        run: |
+          REF="${{ github.head_ref }}"
+          PLANETSCALE_BRANCH_NAME=$(echo "${REF}" | sed -E 's/[^a-zA-Z0-9-]+/-/g' | cut -c 1-63 | sed -E 's/-$//g')
+          echo "PLANETSCALE_BRANCH_NAME=${PLANETSCALE_BRANCH_NAME}" >> "$GITHUB_ENV"
+      - name: Create a branch
+        uses: planetscale/create-branch-action@v4
+        id: create_branch
+        with:
+          org_name: ${{ secrets.PLANETSCALE_ORG_NAME }}
+          database_name: ${{ secrets.PLANETSCALE_DATABASE_NAME }}
+          branch_name: ${{ env.PLANETSCALE_BRANCH_NAME }}
+          from: main
+          check_exists: true
+          wait: true
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          working-directory: api
+          ruby-version: 3.3.4
+      - name: Cache Ruby gems
+        uses: actions/cache@v4
+        with:
+          path: api/vendor/bundle
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gems-
+      - name: Install dependencies
+        working-directory: api
+        run: |
+          bundle config --local path vendor/bundle
+          bundle config --local deployment true
+          bundle install
+      - name: Set migration config at root
+        run: |
+          echo "org: ${{ secrets.PLANETSCALE_ORG_NAME }}" > .pscale.yml
+          echo "database: ${{ secrets.PLANETSCALE_DATABASE_NAME }}" >> .pscale.yml
+          echo "branch: $PLANETSCALE_BRANCH_NAME" >> .pscale.yml
+      - name: Set migration config in API directory
+        working-directory: api
+        run: |
+          echo "org: ${{ secrets.PLANETSCALE_ORG_NAME }}" > .pscale.yml
+          echo "database: ${{ secrets.PLANETSCALE_DATABASE_NAME }}" >> .pscale.yml
+          echo "branch: $PLANETSCALE_BRANCH_NAME" >> .pscale.yml
+      - name: Setup pscale
+        uses: planetscale/setup-pscale-action@v1
+      - name: Run migrations
+        working-directory: api
+        run: |
+          bundle exec rails psdb:migrate > migration-output.txt
+        env:
+          PSCALE_SERVICE_TOKEN_ID: ${{ secrets.PLANETSCALE_SERVICE_TOKEN_ID }}
+          PSCALE_SERVICE_TOKEN: ${{ secrets.PLANETSCALE_SERVICE_TOKEN }}
+      - name: Open DR if migrations
+        working-directory: api
+        run: |
+          if grep -q "migrated" migration-output.txt; then
+            echo "DB_MIGRATED=true" >> $GITHUB_ENV
+            if pscale deploy-request create ${{ secrets.PLANETSCALE_DATABASE_NAME }} $PLANETSCALE_BRANCH_NAME --auto-delete-branch; then
+              cat migration-output.txt
+              echo "DR_OPENED=true" >> $GITHUB_ENV
+              echo "Deploy request successfully opened"
+            else
+              echo "Error: Deployment request failed"
+              exit 1
+            fi
+          elif grep -q "bin/rails aborted!" migration-output.txt; then
+            echo "Error: Migrations failed to run"
+            cat migration-output.txt
+            exit 1
+          else
+            echo "Did not open a DR since nothing found in migration-output.txt"
+            cat migration-output.txt
+            exit 0
+          fi
+      - name: Get Deploy Requests
+        if: ${{ env.DR_OPENED }}
+        working-directory: api
+        run: |
+          deploy_request_number=$(pscale deploy-request show ${{ secrets.PLANETSCALE_DATABASE_NAME }} $PLANETSCALE_BRANCH_NAME -f json | jq -r '.number')
+          echo "DEPLOY_REQUEST_NUMBER=$deploy_request_number" >> $GITHUB_ENV
+      - name: Comment PR - db migrated
+        if: ${{ env.DR_OPENED }}
+        working-directory: api
+        run: |
+          sleep 2
+          echo "Deploy request opened: https://app.planetscale.com/${{ secrets.PLANETSCALE_ORG_NAME }}/${{ secrets.PLANETSCALE_DATABASE_NAME }}/deploy-requests/${{ env.DEPLOY_REQUEST_NUMBER }}" >> migration-message.txt
+          echo "" >> migration-message.txt
+          echo "\`\`\`diff" >> migration-message.txt
+          pscale deploy-request diff ${{ secrets.PLANETSCALE_DATABASE_NAME }} ${{ env.DEPLOY_REQUEST_NUMBER }}  -f json | jq -r '.[].raw' >> migration-message.txt
+          echo "\`\`\`" >> migration-message.txt
+      - name: Comment PR - db migrated
+        uses: thollander/actions-comment-pull-request@v2
+        if: ${{ env.DR_OPENED }}
+        with:
+          filePath: api/migration-message.txt

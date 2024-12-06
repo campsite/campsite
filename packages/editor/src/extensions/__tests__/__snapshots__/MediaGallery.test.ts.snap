@@ -1,0 +1,17 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`MediaGallery > assigns optimistic ids to attachments when the html does not include them 1`] = `"<p></p><media-gallery id="foo"><media-gallery-item id="foo" optimistic_id="foo" file_type="image"></media-gallery-item><media-gallery-item id="bar" optimistic_id="o_bar" file_type="image"></media-gallery-item></media-gallery>"`;
+
+exports[`MediaGallery > creates a gallery and adds an attachment 1`] = `"<p></p><media-gallery id="foo"><media-gallery-item id="foo" optimistic_id="o_foo" file_type="image"></media-gallery-item><media-gallery-item id="bar" optimistic_id="o_bar" file_type="image"></media-gallery-item></media-gallery><p></p>"`;
+
+exports[`MediaGallery > inserts an attachment to an existing gallery 1`] = `"<p></p><media-gallery id="foo"><media-gallery-item id="foo" optimistic_id="o_foo" file_type="image"></media-gallery-item><media-gallery-item id="bar" optimistic_id="o_bar" file_type="image"></media-gallery-item></media-gallery>"`;
+
+exports[`MediaGallery > removes an attachment from a gallery 1`] = `"<p></p><media-gallery id="foo"><media-gallery-item id="foo" optimistic_id="o_foo" file_type="image"></media-gallery-item></media-gallery>"`;
+
+exports[`MediaGallery > removes an attachment from a gallery in a post with multiple galleries 1`] = `"<p></p><media-gallery id="a"><media-gallery-item id="a1" optimistic_id="o_a1" file_type="image"></media-gallery-item><media-gallery-item id="a3" optimistic_id="o_a3" file_type="image"></media-gallery-item></media-gallery><media-gallery id="c"><media-gallery-item id="c1" optimistic_id="o_c1" file_type="image"></media-gallery-item></media-gallery><media-gallery id="d"><media-gallery-item id="d1" optimistic_id="o_d1" file_type="image"></media-gallery-item></media-gallery>"`;
+
+exports[`MediaGallery > removes the gallery when there are no attachments 1`] = `"<p></p>"`;
+
+exports[`MediaGallery > updates an attachment in a gallery 1`] = `"<p></p><media-gallery id="foo"><media-gallery-item id="bar" optimistic_id="o_foo" file_type="image"></media-gallery-item></media-gallery>"`;
+
+exports[`MediaGallery > updates the order of items in a gallery 1`] = `"<p></p><media-gallery id="foo"><media-gallery-item id="e" optimistic_id="o_e" file_type="image"></media-gallery-item><media-gallery-item id="d" optimistic_id="o_d" file_type="image"></media-gallery-item><media-gallery-item id="c" optimistic_id="o_c" file_type="image"></media-gallery-item><media-gallery-item id="b" optimistic_id="o_b" file_type="image"></media-gallery-item><media-gallery-item id="a" optimistic_id="o_a" file_type="image"></media-gallery-item></media-gallery>"`;

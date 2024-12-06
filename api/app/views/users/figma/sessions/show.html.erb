@@ -1,0 +1,21 @@
+<% @page_title = "Open Figma - Campsite" %>
+
+<main class="flex items-center justify-center w-full h-screen p-4 bg-neutral-50 dark:bg-neutral-900">
+  <div class="flex flex-col items-center justify-center w-full max-w-sm gap-4 p-8">
+    <img
+      alt="Campsite and Figma icons connected"
+      src="<%= asset_path('/figma-plugin.png') %>"
+      class="w-80 h-40"
+    />
+
+    <div class="flex flex-col items-center justify-center gap-1 pb-2">
+      <p class="text-lg font-bold text-center dark:text-white">Connected to Figma</p>
+      <p class="text-base text-tertiary text-center dark:text-white">It's safe to close this window.</p>
+    </div>
+
+    <div class="flex flex-col items-center w-full gap-2">
+      <a href="figma://open" class="w-full btn btn-primary">Open Figma</a>
+      <a href="mailto:support@campsite.com" class="w-full btn">Get help</a>
+    </div>
+  </div>
+</main>

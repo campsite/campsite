@@ -1,0 +1,130 @@
+---
+title: 'Class methods are Ruby’s useEffect'
+description: 'Tread carefully around both escape hatches'
+publishedAt: '2024-10-17 00:00:00.000'
+author: nholden
+---
+
+In [You Might Not Need an Effect](https://react.dev/learn/you-might-not-need-an-effect), the React docs describe effects as “an escape hatch from the React paradigm… removing unnecessary effects will make your code easier to follow, faster to run, and less error-prone.”
+
+In Ruby, we also have an escape hatch from idiomatic code that we should tread carefully around: class methods.
+
+## Instance methods to the rescue
+
+To explore why class methods aren’t often the best approach, let’s port a function from JavaScript to Ruby. Here’s a simplified version of `addMinutes` from [date-fns](https://github.com/date-fns/date-fns).
+
+```javascript
+function addMinutes(date, amount) {
+  const result = new Date(date);
+  result.setMinutes(result.getMinutes() + amount);
+  return result;
+}
+
+addMinutes(new Date, 1)
+=> "Tue Oct 15 2024 10:01:00 GMT-0700 (Pacific Daylight Time)"
+```
+
+This function does one thing well. Let’s move it over to Ruby.
+
+```ruby
+class DateTimeFns
+  def self.add_minutes(datetime, amount)
+    datetime + Rational(amount, 24 * 60)
+  end
+end
+
+DateTimeFns.add_minutes(DateTime.current, 1)
+=> "Tue, 15 Oct 2024 17:01:00 +0000"
+```
+
+We can now take a Ruby `DateTime` and add minutes.
+
+Let’s say our requirements change and we now want to add one hour and one minute to a `DateTime`.
+
+```ruby
+class DateTimeFns
+  def self.add_hours(datetime, amount)
+    add_minutes(datetime, amount * 60)
+  end
+
+  def self.add_minutes(datetime, amount)
+    datetime + Rational(amount, 24 * 60)
+  end
+end
+
+DateTimeFns.add_minutes(DateTimeFns.add_hours(DateTime.current, 1), 1)
+=> "Tue, 15 Oct 2024 18:01:00 +0000"
+```
+
+Most of our Ruby code reads like English, but that’s not the case when we combine multiple `DateTimeFns` class methods.
+
+What would this look like if we embraced object orientation and used instance methods instead of class methods?
+
+```ruby
+class DateTimeShift
+  def initialize(datetime)
+    @datetime = datetime
+  end
+
+  attr_reader :datetime
+
+  def add_hours(amount)
+    add_minutes(amount * 60)
+  end
+
+  def add_minutes(amount)
+    @datetime += Rational(amount, 24 * 60)
+    self
+  end
+end
+
+DateTimeShift.new(DateTime.current).add_hours(1).add_minutes(1).datetime
+=> "Tue, 15 Oct 2024 18:01:00 +0000"
+```
+
+Create a `DateTimeShift`, add one hour, add one minute, return the `DateTime` — simple! We didn’t need to pass the `DateTime` around between each method because it lives on the class.
+
+Rails takes advantage of instance methods Ruby’s object orientation to a whole other level.
+
+```ruby
+DateTime.current + 1.hour + 1.minute
+=> "Tue, 15 Oct 2024 18:01:00 +0000"
+```
+
+Everything in Ruby is an object, including integers! Rails extends `Integer` to [add](https://github.com/rails/rails/blob/12f89b87e1eef33329a090acd501c6f42f8e8e70/activesupport/lib/active_support/core_ext/numeric/time.rb#L18-L32) `hour` and `minute` methods that return `ActiveSupport::Duration` objects, which implement `to_i` so that Ruby knows how to add them to `DateTime` objects.
+
+## We need class methods… but your application code might not
+
+So why do we have `useEffect` or class methods at all? There are appropriate uses for both, but those often aren’t in your application code.
+
+Take data fetching in React. You could use the Fetch API inside of a `useEffect` to set some state and render data. As your data fetching needs become more complex and you need to handle loading states, error states, and caching, trying to manage everything inside of an effect in your application code becomes error prone.
+
+Instead, most applications are better off relying on libraries that call `useEffect` under the hood to fetch data and manage server state. At Campsite, we use [TanStack Query](https://tanstack.com/query/latest), which lets us avoid effects and helps us keep interactions feeling snappy with optimistic updates.
+
+Similarly, you could write your own class methods to filter collections in Ruby. For example, with Active Record, you could write a class method on `Post` called `published`.
+
+```ruby
+class Post < ApplicationRecord
+  def self.published
+    where.not(published_at: nil)
+  end
+end
+```
+
+Most of the time, you’d be better off relying on Active Record’s [scope](https://guides.rubyonrails.org/active_record_querying.html#scopes) instead of using a class method.
+
+```ruby
+class Post < ApplicationRecord
+  scope :published, -> { where.not(published_at: nil) }
+end
+```
+
+These two approaches function the same, but unlike class methods, Active Record scopes are guaranteed to be chainable.
+
+You can confidently apply and merge a long list of scopes. Between guests, private projects, and public posts, Campsite gives admins and authors a variety of ways to control who can see content, and we use scopes to apply those rules consistently and performantly. Class methods can return anything or nothing, so using them for complex filtering is more bug prone. Justin Weiss explains this well in [Should You Use Scopes or Class Methods?](https://www.justinweiss.com/articles/should-you-use-scopes-or-class-methods/).
+
+## Avoiding escape hatches
+
+Escape hatches like `useEffect` and class methods exist for a reason — sometimes they’re the only option. But when you come across class methods in code you write or review, consider alternatives.
+
+Could you make that class method an instance method? Is there a convention in a tool like Rails that could handle class methods for you? Using another approach often leads to more readable and maintainable code.

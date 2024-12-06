@@ -1,0 +1,58 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.100ms.live/v2/rooms
+    body:
+      encoding: UTF-8
+      string: "{}"
+    headers:
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer eyJhbGciOiJIUzI1NiJ9.eyJhY2Nlc3Nfa2V5IjoiNjU3Nzk5YzBjZDk5M2RmYjQ0YWE0OTYwIiwidHlwZSI6Im1hbmFnZW1lbnQiLCJ2ZXJzaW9uIjoyLCJqdGkiOiJkZDAxNDhjMS1jYzA4LTRhMWYtYjI2YS1lNGUwNmY1MmU3ZTMiLCJpYXQiOjE3MDI0ODg3NTMsIm5iZiI6MTcwMjQ4ODc1MywiZXhwIjoxNzAyNTc1MTUzfQ.EHdnr6vTDEOInGX11Jt-7cAeaQL5rY-mw7Ka5nllks0
+      User-Agent:
+      - Faraday v2.7.5
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      content-type:
+      - application/json; charset=utf-8
+      vary:
+      - Origin
+      x-request-id:
+      - 3282ce52-6d06-4a7f-838d-3f92eb625a64
+      date:
+      - Wed, 13 Dec 2023 17:32:35 GMT
+      content-length:
+      - '448'
+      x-envoy-upstream-service-time:
+      - '933'
+      content-security-policy:
+      - frame-ancestors none;
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains
+      x-frame-options:
+      - deny
+      x-xss-protection:
+      - 1; mode=block
+      x-content-type-options:
+      - nosniff
+      referrer-policy:
+      - no-referrer
+      x-download-options:
+      - noopen
+      x-dns-prefetch-control:
+      - 'off'
+      permissions-policy:
+      - camera 'none';microphone 'none';geolocation 'none';encrypted-media 'none';payment
+        'none';speaker 'none';usb 'none';
+      server:
+      - istio-envoy
+    body:
+      encoding: UTF-8
+      string: '{"id":"6579eab2afd3b28533492e0d","name":"0b6272cc-d1a1-4a2a-9a4f-58f78f3e40aa","enabled":true,"description":"","customer_id":"657799c0cd993dfb44aa495e","app_id":"657799c0cd993dfb44aa495f","recording_info":null,"template_id":"657799dca8c1fb92568b16c8","template":"VC-purple-surf-372705","region":"us","created_at":"2023-12-13T17:32:34.788311483Z","updated_at":"2023-12-13T17:32:34.32387985Z","customer":"657799c0cd993dfb44aa495e","large_room":false}'
+  recorded_at: Wed, 13 Dec 2023 17:32:35 GMT
+recorded_with: VCR 6.1.0

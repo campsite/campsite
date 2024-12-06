@@ -1,0 +1,29 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "dev": {
+      "dependsOn": ["@campsite/config#build"]
+    },
+    "build": {
+      "env": [
+        "CHANGELOG_APP_ID",
+        "CHANGELOG_CLIENT_ID",
+        "CHANGELOG_CLIENT_SECRET",
+        "CHANGELOG_INSTALLATION_ID",
+        "CHANGELOG_PRIVATE_KEY",
+        "NEXT_PUBLIC_AXIOM_INGEST_ENDPOINT",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_VERCEL_ENV",
+        "NEXT_PUBLIC_POSTHOG_KEY",
+        "NEXT_RUNTIME",
+        "PLAIN_CONTACT_FORM_API_KEY",
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_DSN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "TIPTAP_PRIVATE_REGISTRY_KEY"
+      ]
+    }
+  }
+}

@@ -1,0 +1,69 @@
+<% if (attachments&.size || 0) > 1 %>
+  <a href="<%= url %>" target="_blank"
+    class="w-full items-center text-center justify-center rounded-md -mt-3 mb-4 inline-block py-2 text-sm font-medium bg-secondary">
+    +<%= attachments.size - 1 %> more <%= "attachment".pluralize(attachments.size - 1) %>
+  </a>
+<% end %>
+<% if origami_attachments&.any? %>
+  <% origami_attachments.each do |origami| %>
+  <div class="py-2 rounded-md pl-2 pr-4 mb-6 border">
+    <table cellpadding="0" cellspacing="0" class="w-full">
+      <tr>
+        <td align="left" valign="center" width="24px" height="24px">
+          <img src="https://campsite.imgix.net/static/origami.png" width="24px" height="24px" class="w-6 h-6 rounded-full" />
+        </td>
+        <td align="left" valign="center" class="text-sm pl-2 text-secondary">
+          Origami prototype
+        </td>
+        <td align="right" valign="center">
+          <a class="text-sm text-secondary" href="<%= origami.download_url %>" target="_blank">
+            Open
+          </a>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <% end %>
+<% end %>
+<% if principle_attachments&.any? %>
+  <% principle_attachments.each do |principle| %>
+  <div class="py-2 rounded-md pl-2 pr-4 mb-6 border">
+    <table cellpadding="0" cellspacing="0" class="w-full">
+      <tr>
+        <td align="left" valign="center" width="24px" height="24px">
+          <img src="https://campsite.imgix.net/static/principle.png" width="24px" height="24px" class="w-6 h-6 rounded-full" />
+        </td>
+        <td align="left" valign="center" class="text-sm pl-2 text-secondary">
+          Principle prototype
+        </td>
+        <td align="right" valign="center">
+          <a class="text-sm text-secondary" href="<%= principle.download_url %>" target="_blank">
+            Open
+          </a>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <% end %>
+<% end %>
+<% if stitch_attachments&.any? %>
+  <% stitch_attachments.each do |stitch| %>
+  <div class="py-2 rounded-md pl-2 pr-4 mb-6 border">
+    <table cellpadding="0" cellspacing="0" class="w-full">
+      <tr>
+        <td align="left" valign="center" width="24px" height="24px">
+          <img src="https://campsite.imgix.net/static/stitch.png" width="24px" height="24px" class="w-6 h-6 rounded-full" />
+        </td>
+        <td align="left" valign="center" class="text-sm pl-2 text-secondary">
+          Stitch prototype
+        </td>
+        <td align="right" valign="center">
+          <a class="text-sm text-secondary" href="<%= stitch.download_url %>" target="_blank">
+            Open
+          </a>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <% end %>
+<% end %>

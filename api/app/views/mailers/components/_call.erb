@@ -1,0 +1,43 @@
+<% button_title ||= nil %>
+
+<div class="rounded-lg overflow-clip border">
+  <table cellpadding="0" cellspacing="0" class="w-full">
+    <tr>
+      <td align="left" valign="top" class="p-4">
+        <div class="w-full">
+          <a class="inline-block text-sm text-secondary" href="<%= call.url %>" target="_blank">
+            <%= call.created_at.strftime("%b %d") %>
+          </a>
+          <span class="inline-block text-sm text-secondary">
+            · <%= call.formatted_recordings_duration %>
+          </span>
+          <span class="inline-block text-sm text-secondary">
+            · <%= call.peers.map(&:name).join(", ") %>
+          </span>
+        </div>
+        <% if call.formatted_title %>
+          <div class="w-full pt-3">
+            <a class="font-bold text-[18px]" href="<%= call.url %>" target="_blank">
+              <%= call.formatted_title %>
+            </a>
+          </div>
+        <% end %>
+        <% if (preview_text = call.plain_summary_text&.truncate(200, separator: /\s/)) %>
+          <div class="w-full pt-1">
+            <%= preview_text %>
+          </div>
+          <% if call.plain_summary_text != preview_text %>
+            <a class="text-link" href="<%= call.url %>" target="_blank">
+              Read more
+            </a>
+          <% end %>
+        <% end %>
+        <% if button_title %>
+          <div class="pt-4">
+            <%= render 'mailers/components/cta_button', url: call.url, text: button_title %>
+          </div>
+        <% end %>
+      </td>
+    </tr>
+  </table>
+</div>

@@ -1,0 +1,30 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "rdbg",
+      "name": "Debug rails test (current file)",
+      "rdbgPath": "bundle exec rdbg",
+      "request": "launch",
+      "command": "bin/rails",
+      "cwd": "${workspaceRoot}",
+      "script": "test",
+      "args": ["${file}"],
+      "askParameters": false,
+      "env": {
+        "PATH": "${userHome}/.gem/ruby/3.3.4/bin:${userHome}/.rubies/ruby-3.3.4/bin",
+        "PARALLEL_WORKERS": "1",
+        "GEM_HOME": "${userHome}/.gem/ruby/3.3.4",
+        "GEM_PATH": "${userHome}/.gem/ruby/3.3.4"
+      }
+    },
+    {
+      "name": "Attach to rails server",
+      "request": "attach",
+      "type": "rdbg"
+    }
+  ]
+}

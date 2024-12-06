@@ -1,0 +1,42 @@
+<table class="w-full p-0 m-0" border="0" cellpadding="0" cellspacing="0">
+  <tr><td align="left" valign="top">
+    <%= render 'mailers/components/avatar', avatar_url: notification.actor.avatar_url(size: 40), href: "#{notification.organization.url}/people/#{notification.actor.username}", name: notification.actor.display_name, size: 40, class_name: notification.actor.integration? ? "rounded" : "rounded-full" %>
+  </td></tr>
+  <tr><td align="left" valign="top" class="pt-4">
+    <%= notification.summary.email %>
+  </td></tr>
+  <tr><td align="left" valign="top" class="pt-6">
+    <div class="rounded-lg overflow-clip border p-4">
+      <table cellpadding="0" cellspacing="0" class="w-full">
+        <% if (html = notification.subject.mailer_body_html&.html_safe) && !html.empty? %>
+        <tr><td>
+          <table cellpadding="0" cellspacing="0" class="w-full">
+            <tr>
+          <td align="left" valign="top" class="prose <%= notification.subject.attachments.any? ? "pb-6" : "" %>">
+            <%= html %>
+          </td>
+          <% if (canvas_preview_url = notification.subject.canvas_preview_url(144)) %>
+          <td align="left" valign="top" width="72px" height="72px" class="pl-4">
+            <img src="<%= canvas_preview_url %>" class="block w-18 h-18 aspect-square rounded-md">
+          </td>
+          <% end %>
+        </tr>
+        </table></td></tr>
+        <% end %>
+        <%= render 'mailers/components/attachments_row', attachments: notification.subject.mailer_hero_attachments, url: notification.subject.url, inner_embed: true %>
+        <tr><td align="left" valign="top" class="w-full pt-3">
+        <%= render 'mailers/components/attachments_inner_row',
+          attachments: notification.subject.attachments,
+          origami_attachments: notification.subject.origami_attachments,
+          principle_attachments: notification.subject.principle_attachments,
+          stitch_attachments: notification.subject.stitch_attachments,
+          lottie_attachments: notification.subject.lottie_attachments,
+          url: notification.subject.url %>
+        </td></tr>
+        <tr><td align="left" valign="top" class="<%= (attachments&.size || 0) > 1 ? "pt-6" : "" %>">
+          <%= render 'mailers/components/cta_button', url: notification.subject.url, text: "View comment" %>
+        </td></tr>
+      </table>
+    </div>
+  </td></tr>
+</table>

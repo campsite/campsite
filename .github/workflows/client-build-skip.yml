@@ -1,0 +1,14 @@
+name: Client Build
+
+on:
+  pull_request:
+    paths-ignore:
+      - '.github/workflows/client-build.yml'
+      - 'apps/**'
+      - 'packages/**'
+
+jobs:
+  client-build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No build required"'

@@ -1,0 +1,86 @@
+---
+http_interactions:
+  - request:
+      method: post
+      uri: https://api.imgix.com/api/v1/sources/62b4f72dffcbff616be192da/assets/add/o/foklwviisxc1/p/6c6c54a9-e7ad-4a73-b990-62fd4f8a2e1c.png
+      body:
+        encoding: UTF-8
+        string: '{}'
+      headers:
+        Content-type:
+          - application/json
+        Authorization:
+          - Bearer <IMGIX_API_KEY>
+        User-Agent:
+          - Faraday v2.7.5
+    response:
+      status:
+        code: 409
+        message: Conflict
+      headers:
+        content-type:
+          - application/vnd.api+json
+        content-security-policy:
+          - script-src 'self'
+        x-content-security-policy:
+          - script-src 'self'
+        x-frame-options:
+          - DENY
+        strict-transport-security:
+          - max-age=31536000, subdomains
+        x-content-type-options:
+          - no-sniff
+        x-xss-protection:
+          - 1; mode=block
+        vary:
+          - Accept-Encoding
+        x-cloud-trace-context:
+          - e5f8293cf99e67c39e67c675861c8054;o=1
+        date:
+          - Tue, 06 Feb 2024 17:48:18 GMT
+        server:
+          - Google Frontend
+        content-length:
+          - '658'
+        via:
+          - 1.1 google, 1.1 google
+        alt-svc:
+          - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      body:
+        encoding: UTF-8
+        string: |
+          {
+            "errors": [
+              {
+                "detail": "The provided asset has already been processed",
+                "id": "e179bec685894194a26e2bfc8c228bab",
+                "meta": {},
+                "status": "409",
+                "title": "Conflict"
+              }
+            ],
+            "jsonapi": {
+              "version": "1.0"
+            },
+            "meta": {
+              "authentication": {
+                "authorized": true,
+                "clientId": null,
+                "mode": "PUBLIC_APIKEY",
+                "modeTitle": "Public API Key",
+                "tag": "brian@campsite.com",
+                "user": null
+              },
+              "server": {
+                "commit": "bc670471",
+                "status": {
+                  "healthy": true,
+                  "read_only": false,
+                  "tombstone": false
+                },
+                "version": "3.210.7"
+              }
+            }
+          }
+    recorded_at: Tue, 06 Feb 2024 17:48:18 GMT
+recorded_with: VCR 6.1.0

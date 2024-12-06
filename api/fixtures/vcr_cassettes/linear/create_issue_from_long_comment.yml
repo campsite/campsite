@@ -1,0 +1,161 @@
+---
+http_interactions:
+  - request:
+      method: post
+      uri: https://api.linear.app/graphql
+      body:
+        encoding: UTF-8
+        string: '{"query":"\n        mutation IssueCreate {\n          issueCreate(\n            input:
+          {\n              teamId: \"f032f417-c15a-4b9b-b82c-d4e880b1c396\",\n              title:
+          \"Test title\",\n              description: \"\"\"Test description\"\"\",\n              createAsUser:
+          \"Harry Potter\",\n              displayIconUrl: \"http://campsite-test.imgix.net/static/avatars/H.png?blend-color=9333ea&fit=crop&h=80&w=80\",\n            }\n          )
+          {\n            success\n            issue {\n              id\n              title\n              url\n              identifier\n              description\n              state
+          {\n                id\n                name\n                type\n                color\n              }\n            }\n          }\n        }\n      "}'
+      headers:
+        Content-type:
+          - application/json
+        Authorization:
+          - '<LINEAR_TOKEN>'
+        User-Agent:
+          - Faraday v2.9.0
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        date:
+          - Fri, 02 Aug 2024 20:14:18 GMT
+        content-type:
+          - application/json; charset=utf-8
+        transfer-encoding:
+          - chunked
+        connection:
+          - keep-alive
+        cf-ray:
+          - 8ad0bbc38dbd2f33-LAX
+        cf-cache-status:
+          - DYNAMIC
+        cache-control:
+          - private, no-cache, no-store, must-revalidate
+        etag:
+          - W/"154-Zm+6Vfi03ir4aKYX8uqqxVk/jjc"
+        set-cookie:
+          - uploadsSig:73c413df-77d6-4a6b-a237-b6ac41a753d2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyQWNjb3VudElkIjoiNzNjNDEzZGYtNzdkNi00YTZiLWEyMzctYjZhYzQxYTc1M2QyIiwib3JnYW5pemF0aW9uSWRzIjpbImRlODY0NzcyLTJlZjUtNGZmNi1iZWE2LTgyYzkxY2VjMDViMyJdLCJpYXQiOjE3MjI2Mjk2NTgsImV4cCI6MTcyMzIzNDQ1OH0.FyAovfGJWeO1v8XZWetBirCCAxLa9lPJWPJlhou31k8;
+            Domain=.linear.app; HttpOnly; Max-Age=604800; SameSite=None; Secure, __cf_bm=Zqfb0qaPJCb9a63g7j8Mwl0PRkiza.kK7v_gk6U7vUM-1722629658-1.0.1.1-t1_5qnWPK9iIA7FVF25aPtWJqlAprOqr4n6IYX8sQH3iKAQYhKJWss.7Zw0.AJUkJrRu4Wd7FbT0YQnZQJQpOQ;
+            path=/; expires=Fri, 02-Aug-24 20:44:18 GMT; domain=.linear.app; HttpOnly;
+            Secure; SameSite=None, _cfuvid=DF9kwNyldpnPr5XKrHhg4joh4EUX4SQn1IeuHCJFFC8-1722629658681-0.0.1.1-604800000;
+            path=/; domain=.linear.app; HttpOnly; Secure; SameSite=None
+        via:
+          - 1.1 google
+        alt-svc:
+          - h3=":443"; ma=86400
+        x-complexity:
+          - '4'
+        x-ratelimit-complexity-limit:
+          - '1000000'
+        x-ratelimit-complexity-remaining:
+          - '999996'
+        x-ratelimit-complexity-reset:
+          - '1722633258540'
+        x-ratelimit-requests-limit:
+          - '1200'
+        x-ratelimit-requests-remaining:
+          - '1199'
+        x-ratelimit-requests-reset:
+          - '1722633258540'
+        x-request-id:
+          - 8ad0bbc576342f33-LAX
+        vary:
+          - Accept-Encoding
+        server:
+          - cloudflare
+        content-encoding:
+          - gzip
+      body:
+        encoding: UTF-8
+        string:
+          '{"data":{"issueCreate":{"success":true,"issue":{"id":"090b8c55-e23b-416b-b328-c486832142ea","title":"Test
+          title","url":"https://linear.app/campsite/issue/CAM-9344/test-title","identifier":"CAM-9344","description":"Test
+          description","state":{"id":"31be71ac-2055-4152-acfe-d8e92a789733","name":"Triage","type":"triage","color":"#FC7840"}}}}}
+
+          '
+    recorded_at: Fri, 02 Aug 2024 20:14:18 GMT
+  - request:
+      method: post
+      uri: https://api.linear.app/graphql
+      body:
+        encoding: UTF-8
+        string: '{"query":"\n        mutation AttachmentCreate($issueId: String!, $title:
+          String!, $subtitle: String, $url: String!) {\n          attachmentCreate(\n            input:
+          {\n              issueId: $issueId,\n              title: $title,\n              subtitle:
+          $subtitle,\n              url: $url,\n            }\n          ) {\n            success\n            attachment
+          {\n              id\n            }\n          }\n        }\n      ","variables":{"issueId":"090b8c55-e23b-416b-b328-c486832142ea","title":"Look
+          at these designs (Comment)","subtitle":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","url":"http://app.campsite.test:3000/org-1/posts/z5u773yan63q#comment-44dup4e4gewl"}}'
+      headers:
+        Content-type:
+          - application/json
+        Authorization:
+          - '<LINEAR_TOKEN>'
+        User-Agent:
+          - Faraday v2.9.0
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        date:
+          - Fri, 02 Aug 2024 20:14:19 GMT
+        content-type:
+          - application/json; charset=utf-8
+        transfer-encoding:
+          - chunked
+        connection:
+          - keep-alive
+        cf-ray:
+          - 8ad0bbc85fbf7e80-LAX
+        cf-cache-status:
+          - DYNAMIC
+        cache-control:
+          - private, no-cache, no-store, must-revalidate
+        etag:
+          - W/"6a-j1foxZ910qNmFlL9Y5r1dLZWDAE"
+        set-cookie:
+          - uploadsSig:73c413df-77d6-4a6b-a237-b6ac41a753d2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyQWNjb3VudElkIjoiNzNjNDEzZGYtNzdkNi00YTZiLWEyMzctYjZhYzQxYTc1M2QyIiwib3JnYW5pemF0aW9uSWRzIjpbImRlODY0NzcyLTJlZjUtNGZmNi1iZWE2LTgyYzkxY2VjMDViMyJdLCJpYXQiOjE3MjI2Mjk2NTksImV4cCI6MTcyMzIzNDQ1OX0.wm3somlH1PaW6mlOso5AlFthTRTsDYVd-sMuXGVsOeA;
+            Domain=.linear.app; HttpOnly; Max-Age=604800; SameSite=None; Secure, __cf_bm=YHOB5cd84.hALuD.BR0VA.oZDevG9p_wZVghm1N3jlU-1722629659-1.0.1.1-o_MhS60I1bothXQLDzdOykDlDZe.M4vooMZeDmY40Dfsfb7VrcneVxxYdk3fJvv0np_S_iHxJviCxVMdq3Jv7g;
+            path=/; expires=Fri, 02-Aug-24 20:44:19 GMT; domain=.linear.app; HttpOnly;
+            Secure; SameSite=None, _cfuvid=Dtb0pDwI2nrX9ivAAXgku8Q5_.BwkeWHNjpU0G9p60E-1722629659163-0.0.1.1-604800000;
+            path=/; domain=.linear.app; HttpOnly; Secure; SameSite=None
+        via:
+          - 1.1 google
+        alt-svc:
+          - h3=":443"; ma=86400
+        x-complexity:
+          - '3'
+        x-ratelimit-complexity-limit:
+          - '1000000'
+        x-ratelimit-complexity-remaining:
+          - '999997'
+        x-ratelimit-complexity-reset:
+          - '1722633259030'
+        x-ratelimit-requests-limit:
+          - '1200'
+        x-ratelimit-requests-remaining:
+          - '1198'
+        x-ratelimit-requests-reset:
+          - '1722633259030'
+        x-request-id:
+          - 8ad0bbc8934c7e80-LAX
+        vary:
+          - Accept-Encoding
+        server:
+          - cloudflare
+        content-encoding:
+          - gzip
+      body:
+        encoding: UTF-8
+        string:
+          '{"data":{"attachmentCreate":{"success":true,"attachment":{"id":"e61a4997-1aeb-4c33-8851-1833bdc05e12"}}}}
+
+          '
+    recorded_at: Fri, 02 Aug 2024 20:14:19 GMT
+recorded_with: VCR 6.1.0

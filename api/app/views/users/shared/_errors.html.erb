@@ -1,0 +1,21 @@
+<% if notice %>
+  <div class="notice">
+    <%= notice %>
+  </div>
+<% end %>
+
+<% if resource&.errors&.any? %>
+  <div class="error">
+    <ul>
+      <% resource.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
+<% if alert %>
+  <div class="error">
+    <%= alert %>
+  </div>
+<% end %>

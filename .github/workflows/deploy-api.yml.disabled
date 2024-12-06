@@ -1,0 +1,70 @@
+name: Deploy API
+on:
+  workflow_dispatch:
+  workflow_call:
+
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  DEPLOY_QUEUE_THREAD_ID: suwdx19o6mqj
+
+jobs:
+  deploy-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: GitHub App token
+        id: gen-token
+        uses: tibdex/github-app-token@v2.1.0
+        with:
+          app_id: 290357
+          private_key: ${{ secrets.DEPLOYBOT_TOKEN }}
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.gen-token.outputs.token }}
+
+      - name: Set git info
+        id: git-info
+        run: .github/set-git-message
+
+      - name: Setup Fly
+        uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy API
+        working-directory: api
+        run: flyctl deploy --remote-only -e RELEASE_SHA=${{ github.sha }}
+
+      - name: Bump version and push tag
+        id: tag
+        uses: campsite/github-tag-action@master
+        with:
+          github_token: ${{ steps.gen-token.outputs.token }}
+          tag_prefix: api-
+          default_bump: major
+          fetch_all_tags: true
+
+      - name: Notify success
+        uses: campsite/campsite-github-action@v1.0.0
+        with:
+          api_key: ${{ secrets.CAMPBOT_API_KEY }}
+          action_type: create_message
+          thread_id: ${{ env.DEPLOY_QUEUE_THREAD_ID }}
+          content: |
+            **🛤️ API deployed**
+            
+            [${{ github.actor }}](https://github.com/${{ github.actor }}) deployed ${{ steps.git-info.outputs.escaped-git-message }}
+            
+            [${{ steps.git-info.outputs.git-sha }}](https://github.com/campsite/campsite/commit/${{ github.sha }}) · [Run logs](https://github.com/campsite/campsite/actions/runs/${{ github.run_id }})
+
+      - name: Notify failure
+        if: ${{ failure() }}
+        uses: campsite/campsite-github-action@v1.0.0
+        with:
+          api_key: ${{ secrets.CAMPBOT_API_KEY }}
+          action_type: create_message
+          thread_id: ${{ env.DEPLOY_QUEUE_THREAD_ID }}
+          content: |
+            **🚨 API deploy failed!**
+            
+            [${{ github.actor }}](https://github.com/${{ github.actor }}) tried to deploy ${{ steps.git-info.outputs.escaped-git-message }}
+            
+            [${{ steps.git-info.outputs.git-sha }}](https://github.com/campsite/campsite/commit/${{ github.sha }}) · [Run logs](https://github.com/campsite/campsite/actions/runs/${{ github.run_id }})

@@ -1,0 +1,58 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.100ms.live/v2/recordings/room/658f4f90dc4b58e3133c284d/stop
+    body:
+      encoding: UTF-8
+      string: "{}"
+    headers:
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer eyJhbGciOiJIUzI1NiJ9.eyJhY2Nlc3Nfa2V5IjoiNjU3Nzk5YzBjZDk5M2RmYjQ0YWE0OTYwIiwidHlwZSI6Im1hbmFnZW1lbnQiLCJ2ZXJzaW9uIjoyLCJqdGkiOiI5NzI0NGQ1MC1kMTM0LTRmNjMtOGEzZi02YmZiYzRjZjkwNzEiLCJpYXQiOjE3MDM4OTIyMDIsIm5iZiI6MTcwMzg5MjIwMiwiZXhwIjoxNzAzOTc4NjAyfQ.yLiXOSRB9m8finJX0fL55Vkc7WZ62C7Rx81NDGdpLwI
+      User-Agent:
+      - Faraday v2.7.5
+  response:
+    status:
+      code: 404
+      message: Not Found
+    headers:
+      content-type:
+      - application/json;charset=utf-8
+      vary:
+      - Origin
+      date:
+      - Fri, 29 Dec 2023 23:23:23 GMT
+      content-length:
+      - '40'
+      x-envoy-upstream-service-time:
+      - '226'
+      content-security-policy:
+      - frame-ancestors none;
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains
+      x-frame-options:
+      - deny
+      x-xss-protection:
+      - 1; mode=block
+      x-content-type-options:
+      - nosniff
+      referrer-policy:
+      - no-referrer
+      x-download-options:
+      - noopen
+      x-dns-prefetch-control:
+      - 'off'
+      permissions-policy:
+      - camera 'none';microphone 'none';geolocation 'none';encrypted-media 'none';payment
+        'none';speaker 'none';usb 'none';
+      server:
+      - istio-envoy
+    body:
+      encoding: UTF-8
+      string: '{"code":404,"message":"beam not found"}
+
+        '
+  recorded_at: Fri, 29 Dec 2023 23:23:23 GMT
+recorded_with: VCR 6.1.0

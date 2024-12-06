@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media (prefers-color-scheme: dark) {
+  body.sb-main-centered {
+    background: var(--bg-main);
+  }
+}
+
+@layer base {
+  button,
+  a {
+    @apply ring-2 ring-transparent focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 dark:focus-visible:ring-blue-600/40;
+    -webkit-app-region: no-drag;
+  }
+
+  button {
+    @apply select-none;
+  }
+
+  .drag {
+    -webkit-app-region: drag;
+  }
+
+  .no-drag {
+    -webkit-app-region: no-drag;
+  }
+}
+
+@layer components {
+  .prose {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      @apply text-primary font-bold;
+    }
+  }
+
+  .tag-picker input:focus {
+    @apply ring-0;
+  }
+}

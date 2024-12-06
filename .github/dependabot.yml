@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    versioning-strategy: increase
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    allow:
+      - dependency-name: '@sentry/*'
+      - dependency-name: '@tanstack/*'
+      - dependency-name: 'next'
+      - dependency-name: 'eslint-config-next'
+      - dependency-name: '@next/bundle-analyzer'
+    # This option has no impact on security updates which have a separate internal limit of 10 PRs
+    # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file#open-pull-requests-limit
+    open-pull-requests-limit: 2
+    commit-message:
+      # Prefix all commit messages with "chore: "
+      prefix: 'chore'
+      include: 'scope'

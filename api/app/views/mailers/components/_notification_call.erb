@@ -1,0 +1,8 @@
+<table class="w-full p-0 m-0" border="0" cellpadding="0" cellspacing="0">
+  <tr><td align="left" valign="top">
+    <%= notification.summary.email %>
+  </td></tr>
+  <tr><td align="left" valign="top" class="pt-6">
+    <%= render 'mailers/components/call', call: notification.subject, button_title: "View call" %>
+  </td></tr>
+</table>

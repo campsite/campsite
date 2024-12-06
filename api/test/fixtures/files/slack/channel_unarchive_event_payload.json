@@ -1,0 +1,14 @@
+{
+  "token": "XXYYZZ",
+  "team_id": "TXXXXXXXX",
+  "api_app_id": "AXXXXXXXXX",
+  "event": {
+    "type": "channel_unarchive",
+    "channel": "C024BE91L",
+    "user": "U024BE7LH"
+  },
+  "type": "event_callback",
+  "authed_users": ["UXXXXXXX1", "UXXXXXXX2"],
+  "event_id": "Ev08MFMKH6",
+  "event_time": 123456789
+}

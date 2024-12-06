@@ -1,0 +1,19 @@
+# fly.toml file generated for campsite-logs on 2023-03-27T14:58:29-04:00
+
+app = "campsite-logs"
+kill_signal = "SIGINT"
+kill_timeout = 60
+primary_region = "iad"
+processes = []
+
+[build]
+  image = "ghcr.io/superfly/fly-log-shipper:latest"
+
+[env]
+
+[experimental]
+  auto_rollback = true
+
+[[services]]
+  http_checks = []
+  internal_port = 8686

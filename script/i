@@ -1,0 +1,5 @@
+pnpm i
+
+cd api
+bundle i
+cd ..

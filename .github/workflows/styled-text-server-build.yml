@@ -1,0 +1,70 @@
+name: Styled Text Server Build
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/styled-text-server-build.yml'
+      - 'apps/styled-text-server/**'
+      - 'packages/editor/**'
+      - 'packages/config/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  TIPTAP_PRIVATE_REGISTRY_KEY: ${{ secrets.TIPTAP_PRIVATE_REGISTRY_KEY }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  TURBO_REMOTE_ONLY: true
+
+jobs:
+  styled-text-server-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: GitHub App token
+        id: gen-token
+        uses: tibdex/github-app-token@v2.1.0
+        with:
+          app_id: 290357
+          private_key: ${{ secrets.DEPLOYBOT_TOKEN }}
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.gen-token.outputs.token }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.0.0
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - run: pnpm config set "@tiptap-pro:registry" https://registry.tiptap.dev/
+      - run: pnpm config set "//registry.tiptap.dev/:_authToken" ${{ secrets.TIPTAP_PRIVATE_REGISTRY_KEY }}
+      - run: pnpm install
+
+      - run: pnpm turbo run lint --filter=@campsite/styled-text-server -- --fix
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 🤖 linting with autofix
+          branch: ${{ github.head_ref }}
+
+      - run: pnpm test

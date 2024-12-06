@@ -1,0 +1,72 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.linear.app/graphql
+    body:
+      encoding: UTF-8
+      string: '{"query":"{\n          teams(first: 1) {\n            nodes {\n              name\n            }\n          }\n        }"}'
+    headers:
+      Content-type:
+      - application/json
+      Authorization:
+      - "<LINEAR_TOKEN>"
+      User-Agent:
+      - Faraday v2.7.5
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      date:
+      - Tue, 26 Sep 2023 16:35:35 GMT
+      content-type:
+      - application/json; charset=utf-8
+      transfer-encoding:
+      - chunked
+      connection:
+      - keep-alive
+      x-complexity:
+      - '2'
+      x-ratelimit-complexity-limit:
+      - '1000000'
+      x-ratelimit-complexity-remaining:
+      - '999998'
+      x-ratelimit-complexity-reset:
+      - '1695749735777'
+      x-ratelimit-requests-limit:
+      - '500'
+      x-ratelimit-requests-remaining:
+      - '499'
+      x-ratelimit-requests-reset:
+      - '1695749735777'
+      etag:
+      - W/"3b-PpraV2BcqqHBfqDP3qjatILl8E0"
+      cache-control:
+      - private, no-cache, no-store, must-revalidate
+      x-request-id:
+      - 80ccebc428d00fb2-LAX
+      via:
+      - 1.1 google
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      set-cookie:
+      - __cf_bm=Z1mTld77FVy6MnGwgd2EiY.aShjfrwBtk85JxC1d95E-1695746135-0-ATAg42O1vcWMxW2xUm8bQ/vX6oXPYPBORdmtM94s7br59oYMTCK48JWnQOQKmNn7Z8ESATel0vbrhLcCNXAkw5s=;
+        path=/; expires=Tue, 26-Sep-23 17:05:35 GMT; domain=.linear.app; HttpOnly;
+        Secure; SameSite=None, _cfuvid=eJWdh8PDHQHRXT9DUiIlr_zF0B4ehZJg7AU0LO1w5nY-1695746135821-0-604800000;
+        path=/; domain=.linear.app; HttpOnly; Secure; SameSite=None
+      server:
+      - cloudflare
+      cf-ray:
+      - 80ccebc428d00fb2-LAX
+      content-encoding:
+      - gzip
+    body:
+      encoding: UTF-8
+      string: '{"data":{"teams":{"nodes":[{"name":"Product engineer"}]}}}
+
+        '
+  recorded_at: Tue, 26 Sep 2023 16:35:35 GMT
+recorded_with: VCR 6.1.0

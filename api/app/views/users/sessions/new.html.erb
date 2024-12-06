@@ -1,0 +1,72 @@
+<% @page_title = "Sign in - Campsite" %>
+
+<main class="outer-container">
+  <div class="inner-container">
+    <div class="page-title-container">
+      <svg width="49" height="20" viewBox="0 0 49 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0.201982 21.9532L13.7942 0.654571C14.0531 0.248924 14.5245 0 15.0338 0H37.1765C38.2907 0 38.9824 1.12038 38.4161 2.00776L24.8238 23.3064C24.565 23.7121 24.0936 23.961 23.5843 23.961H1.44157C0.327401 23.961 -0.364321 22.8406 0.201982 21.9532Z" fill="currentColor"/>
+        <path d="M32.0309 23.9609H47.4978C48.5832 23.9609 49.2781 22.8922 48.7691 22.0055L41.4653 9.28149C40.9386 8.36398 39.5292 8.33304 38.9561 9.22642L30.793 21.9505C30.2237 22.8378 30.9152 23.9609 32.0309 23.9609Z" fill="currentColor"/>
+      </svg>
+
+      <h2 class="page-title">Sign in</h2>
+
+      <span class="w-full text-sm text-tertiary">
+        New to Campsite? <%= link_to "Sign up", new_user_registration_path(allow: true), class: "hover:underline font-medium text-link" %>
+      </span>
+    </div>
+
+    <%- if devise_mapping.omniauthable? %>
+      <div class='flex flex-col w-full mt-8'>
+        <template class="js-desktop-template">
+          <input class="js-redirect-uri" type="hidden" name="redirect_uri" value="<%= user_desktop_omniauth_callback_url %>">
+        </template>
+        <%= form_tag omniauth_authorize_path(resource_name, :google_oauth2), class: "js-google-oauth2" do %>
+          <button type="submit" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M43.2857 23.1363C43.2857 21.5924 43.1471 20.1079 42.8898 18.6827H22.3839V27.1048H34.1015C33.5968 29.8264 32.0628 32.1323 29.7569 33.6762V39.1392H36.7934C40.9105 35.3488 43.2857 29.767 43.2857 23.1363Z" fill="#4285F4"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M22.3839 44.4142C28.2625 44.4142 33.191 42.4645 36.7934 39.1392L29.7569 33.6763C27.8072 34.9826 25.3133 35.7546 22.3839 35.7546C16.713 35.7546 11.9131 31.9245 10.201 26.7783H2.92695V32.4194C6.50955 39.5351 13.8727 44.4142 22.3839 44.4142Z" fill="#34A853"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M10.201 26.7782C9.76556 25.4719 9.51814 24.0764 9.51814 22.6414C9.51814 21.2064 9.76556 19.8109 10.201 18.5046V12.8635H2.92694C1.45233 15.8028 0.611115 19.1281 0.611115 22.6414C0.611115 26.1547 1.45233 29.48 2.92694 32.4193L10.201 26.7782Z" fill="#FBBC05"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M22.3839 9.52826C25.5805 9.52826 28.4505 10.6268 30.707 12.7843L36.9518 6.53946C33.1811 3.02613 28.2526 0.868652 22.3839 0.868652C13.8727 0.868652 6.50955 5.74772 2.92695 12.8634L10.201 18.5046C11.9131 13.3583 16.713 9.52826 22.3839 9.52826Z" fill="#EA4335"/>
+            </svg>
+
+            <span>Continue with Google</span>
+          </button>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%= link_to sign_in_sso_path, class: "btn btn-secondary mt-5" do %>
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.75 11.75C5.75 11.1977 6.19772 10.75 6.75 10.75H17.25C17.8023 10.75 18.25 11.1977 18.25 11.75V17.25C18.25 18.3546 17.3546 19.25 16.25 19.25H7.75C6.64543 19.25 5.75 18.3546 5.75 17.25V11.75Z"/>
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.75 10.5V10.3427C7.75 8.78147 7.65607 7.04125 8.74646 5.9239C9.36829 5.2867 10.3745 4.75 12 4.75C13.6255 4.75 14.6317 5.2867 15.2535 5.9239C16.3439 7.04125 16.25 8.78147 16.25 10.3427V10.5"/>
+      </svg>
+
+      <span>Continue with SSO</span>
+    <% end %>
+
+    <div class="divider">
+      <span class="divider-label">or</span>
+    </div>
+
+    <%= form_for(resource, as: resource_name, url: user_session_path, html: { class: "w-full space-y-5" }) do |f| %>
+      <%= render "users/shared/errors", resource: resource %>
+
+      <div class="form-group">
+        <%= f.label(:email) %>
+        <%= f.email_field(:email, autofocus: true, autocomplete: "email", required: true) %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label(:password) %>
+        <%= f.password_field(:password, autocomplete: "current-password", required: true, value: resource.password) %>
+      </div>
+
+      <%- if devise_mapping.recoverable? && controller_name != 'passwords' && controller_name != 'registrations' %>
+        <%= link_to "Forgot password?", new_password_path(resource_name), class: "text-sm text-tertiary hover:text-primary inline-flex" %>
+      <% end %>
+
+      <%= f.button("Sign in", class: "btn btn-primary") %>
+    <% end %>
+
+  </div>
+</main>

@@ -1,0 +1,42 @@
+:concurrency: 1
+production:
+  :concurrency: 5
+:queues:
+  - critical
+  - default
+  - background
+  - within_30_minutes
+  - searchkick
+  - backfill
+:scheduler:
+  :schedule:
+    schedule_post_digest_notification_job:
+      class: 'SchedulePostDigestNotificationJobs'
+      cron: '15,45 * * * *' # every minute 15 and 45 of the hour
+      description: 'Sends a digest of org activity to a user'
+      queue: background
+      enabled: true
+    apply_notification_schedules_job:
+      class: 'ApplyNotificationSchedulesJob'
+      cron: '0,30 * * * *' # every minute 0 and 30 of the hour
+      description: 'Pauses notifications for users with notification schedules that just ended'
+      queue: background
+      enabled: true
+    batch_sync_all_organization_plans_job:
+      class: 'BatchSyncAllOrganizationPlansJob'
+      cron: '0 8 * * *' # every day at 8am UTC
+      description: 'Syncs all organization plans with Stripe'
+      queue: within_30_minutes
+      enabled: true
+    post_index_health_job:
+      class: 'PostIndexHealthJob'
+      cron: '14 * * * *' # every hour with some slop
+      description: 'Checks that posts are indexed in Elasticsearch'
+      queue: background
+      enabled: true
+    call_health_job:
+      class: 'CallHealthJob'
+      cron: '24 * * * *' # every hour with some slop
+      description: 'Checks that calls are processing'
+      queue: background
+      enabled: true

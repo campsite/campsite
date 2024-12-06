@@ -1,0 +1,15 @@
+name: Styled Text Server Build
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/styled-text-server-build.yml'
+      - 'apps/styled-text-server/**'
+      - 'packages/editor/**'
+      - 'packages/config/**'
+
+jobs:
+  styled-text-server-build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No build required"'

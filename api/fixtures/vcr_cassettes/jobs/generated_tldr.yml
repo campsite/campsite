@@ -1,0 +1,153 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.openai.com/v1/chat/completions
+    body:
+      encoding: UTF-8
+      string: '{"model":"gpt-4o","messages":[{"role":"system","content":"You are an
+        expert at summarizing posts and comments. Your task is to create bullet points
+        summarizing the most important main topics, decisions, and outcomes from a
+        post, comments, and replies. Clearly indicate who is responsible for any decisions
+        or outcomes if they are present.\nWhen formatting your response:\n- The first
+        bullet point should summarize the main topic of the post.\n- Do not use more
+        than 3 bullet points.\n- Each bullet point must be one sentence with less
+        than 15 words.\n- Format each bullet in plain text.\n- Write in an active
+        voice, using clear and concise sentences. Avoid using forms of \"be\" verbs
+        and rearrange sentences to ensure the subject is acting, not being acted upon.\n-
+        Use past tense when referring to events that have already occurred.\n- You
+        MUST replace any occurence of the name \"Harry Potter\" with \"you\" or \"your\"."},{"role":"user","content":"\nPOST
+        TITLE: Look at these designs\nPOST AUTHOR: Harry Potter\nPOST: ```\nWhat should
+        I eat for breakfast?\n```\nCOMMENTS:\n1. AUTHOR: Harry Potter\n```\nI definitely
+        think you should have pancakes.\n```\nREPLIES:\n- AUTHOR: Harry Potter\n```\nI
+        totally agree, pancakes sound delicious!\n```\n2. AUTHOR: Harry Potter\n```\nI
+        totally agree, pancakes sound delicious!\n```\n3. AUTHOR: Harry Potter\n```\nI
+        think you should have cereal.\n```\nREPLIES:\n- AUTHOR: Harry Potter\n```\nNah,
+        I think you should have pancakes.\n```\n4. AUTHOR: Harry Potter\n```\nNah,
+        I think you should have pancakes.\n```\n5. AUTHOR: Harry Potter\n```\nPancakes
+        it is!\n```"}],"temperature":0.0}'
+    headers:
+      Content-Type:
+      - application/json
+      Authorization:
+      - Bearer <OPENAI_API_KEY>
+      OpenAI-Organization:
+      - "<OPENAI_ORGANIZATION>"
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      date:
+      - Tue, 04 Jun 2024 15:15:28 GMT
+      content-type:
+      - application/json
+      transfer-encoding:
+      - chunked
+      connection:
+      - keep-alive
+      openai-organization:
+      - campsite
+      openai-processing-ms:
+      - '1115'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '500'
+      x-ratelimit-limit-tokens:
+      - '30000'
+      x-ratelimit-remaining-requests:
+      - '499'
+      x-ratelimit-remaining-tokens:
+      - '29616'
+      x-ratelimit-reset-requests:
+      - 120ms
+      x-ratelimit-reset-tokens:
+      - 768ms
+      x-request-id:
+      - req_5963439f5a113e0951e0399ad625acac
+      cf-cache-status:
+      - DYNAMIC
+      set-cookie:
+      - __cf_bm=LYsEBKpe4boBFS3mUI0Li07.D9Bad_4WTxnOOauONZA-1717514128-1.0.1.1-jfoWFXfGRMlpoNoj.f5DoVI26hEu8nwWCDAGh0HEs5za5xQsVCiBeVmAW_Pjca9H6ZAKBAJ06TCEXGZAdwBs6g;
+        path=/; expires=Tue, 04-Jun-24 15:45:28 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None, _cfuvid=eSwG2nZH5w8r3DsPEH4F5FLy9nZ7HBkCtPJgT2mB79Y-1717514128691-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      server:
+      - cloudflare
+      cf-ray:
+      - 88e8e0e05ee0c326-EWR
+      content-encoding:
+      - gzip
+      alt-svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: |
+        {
+          "id": "chatcmpl-9WQAhwJFl9wKYEJE1fTDISHTYrKcc",
+          "object": "chat.completion",
+          "created": 1717514127,
+          "model": "gpt-4o-2024-05-13",
+          "choices": [
+            {
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": "- You asked for breakfast suggestions.\n- You decided to have pancakes for breakfast.\n- You received and agreed with multiple suggestions to eat pancakes."
+              },
+              "logprobs": null,
+              "finish_reason": "stop"
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 356,
+            "completion_tokens": 28,
+            "total_tokens": 384
+          },
+          "system_fingerprint": "fp_319be4768e"
+        }
+  recorded_at: Tue, 04 Jun 2024 15:15:28 GMT
+- request:
+    method: post
+    uri: http://localhost:3002/markdown_to_html
+    body:
+      encoding: UTF-8
+      string: '{"markdown":"- You asked for breakfast suggestions.\n- You decided
+        to have pancakes for breakfast.\n- You received and agreed with multiple suggestions
+        to eat pancakes.","editor":"markdown"}'
+    headers:
+      User-Agent:
+      - Faraday v2.9.0
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer d8c0a2827589659ff292a8999b024f24a185ed82
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      x-powered-by:
+      - Express
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '213'
+      etag:
+      - W/"d5-fHws3hnYaPScpTYeb80RKucKkPU"
+      date:
+      - Tue, 04 Jun 2024 15:15:28 GMT
+      connection:
+      - keep-alive
+      keep-alive:
+      - timeout=5
+    body:
+      encoding: UTF-8
+      string: '{"html":"<ul><li><p>You asked for breakfast suggestions.</p></li><li><p>You
+        decided to have pancakes for breakfast.</p></li><li><p>You received and agreed
+        with multiple suggestions to eat pancakes.</p></li></ul>"}'
+  recorded_at: Tue, 04 Jun 2024 15:15:28 GMT
+recorded_with: VCR 6.1.0

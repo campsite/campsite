@@ -1,0 +1,3 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Mention > inserts before the paragraph 1`] = `"<p><span class="mention" data-type="mention" data-id="m-id" data-label="m-label" data-role="member" data-username="m-username">@m-label</span> Foo bar</p>"`;

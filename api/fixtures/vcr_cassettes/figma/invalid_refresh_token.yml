@@ -1,0 +1,55 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.figma.com/v1/oauth/refresh
+    body:
+      encoding: UTF-8
+      string: refresh_token=foobar
+    headers:
+      Authorization:
+      - Basic YVplNDB3VXV5ODZ2TUF3d1hCbVlxMzpLMWtSUFJpbFJDNTNoc3NFTVZEWXlmamVRYkNyc1I=
+      Content-type:
+      - application/x-www-form-urlencoded
+      User-Agent:
+      - Faraday v2.9.0
+  response:
+    status:
+      code: 400
+      message: Bad Request
+    headers:
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '65'
+      connection:
+      - keep-alive
+      date:
+      - Sat, 02 Nov 2024 00:38:06 GMT
+      x-content-type-options:
+      - nosniff
+      access-control-allow-origin:
+      - "*"
+      access-control-allow-headers:
+      - Content-Type, X-Figma-Token, Authorization
+      vary:
+      - X-Figma-Token, Authorization, Accept-Encoding
+      cache-control:
+      - no-cache, no-store
+      x-cache:
+      - Error from cloudfront
+      via:
+      - 1.1 c14d91be8fc3c5a6730066f98890db4c.cloudfront.net (CloudFront)
+      x-amz-cf-pop:
+      - LAX53-P3
+      alt-svc:
+      - h3=":443"; ma=86400
+      x-amz-cf-id:
+      - vb44iRyOGsAIdxHOMFkLvhBQRQWAEqING76P34Xqabn98_pDzRXyTw==
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+    body:
+      encoding: UTF-8
+      string: '{"error":true,"status":400,"message":"invalid_grant","i18n":null}'
+  recorded_at: Sat, 02 Nov 2024 00:38:06 GMT
+recorded_with: VCR 6.1.0

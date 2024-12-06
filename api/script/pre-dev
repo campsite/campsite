@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+if [ -f tmp/pids/server.pid ]; then
+  rm tmp/pids/server.pid
+fi
+
+DB_PORT="${DB_PORT:-3306}"
+export DB_PORT
+
+RELEASE_SHA="$(git rev-parse --short HEAD)"
+export RELEASE_SHA
+
+set +e
+bundle exec rails db:version >/dev/null 2>&1 || true
+RETURN_CODE="$?"
+set -e
+
+if [ "$RETURN_CODE" -ne "0" ]; then
+  bundle exec rails db:setup
+fi
+
+bundle exec rails db:migrate

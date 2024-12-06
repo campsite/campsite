@@ -1,0 +1,2 @@
+"Migrations pending":
+  - "api/db/migrate/**/*"

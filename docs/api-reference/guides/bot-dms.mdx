@@ -1,0 +1,61 @@
+---
+title: 'Bot DMs'
+description: 'Enable direct messaging between users and your integration'
+---
+
+Bot DMs allow users to have private, one-on-one conversations with your integration. When enabled, users can start direct message threads with your integration, which appear in their sidebar with your integration's name and avatar.
+
+## Enabling Bot DMs
+
+To enable direct messaging for your integration:
+
+1. Set up a webhook that listens for the `message.dm` event (see [Webhooks](/api-reference/guides/webhooks))
+2. Ensure your webhook is active and responding to events
+3. Your integration will automatically appear in the "New Thread" UI with an "app" badge next to its name
+
+<Tip>
+  Users will only see your integration in the "New Thread" UI if your webhook is actively listening for the `message.dm`
+  event.
+</Tip>
+
+## Receiving messages from users
+
+When a user sends a message to your integration, Campsite will send a webhook event with the `message.dm` event type. Here's an example payload:
+
+```json
+{
+  "id": "dm8h4tnud123",
+  "type": "message.dm",
+  "timestamp": "2024-10-01T18:30:03Z",
+  "organization_id": "jkh4ytt0s18o",
+  "application_id": "uc1d5rg02s2y",
+  "data": {
+    "message": {
+      "id": "msg9ecyqn2lf1",
+      "content": "Hello bot!",
+      "created_at": "2024-10-01T18:30:02.060Z",
+      "thread_id": "thd5vvauzu3",
+      "sender": {
+        "id": "4qteru9o6s08",
+        "name": "Ranger Rick",
+        "type": "user",
+        "avatar_urls": {
+          "xs": "https://campsite.imgix.net/...",
+          "sm": "https://campsite.imgix.net/...",
+          "base": "https://campsite.imgix.net/..."
+        }
+      }
+    }
+  }
+}
+```
+
+## Sending messages to users
+
+To send a direct message to a user, use the [Create DM endpoint](/api-reference/create-dm). This endpoint uses member IDs instead of thread IDs so you can message users without keeping track of a thread ID for each user.
+
+## Bot DM guidelines
+
+- Respond to user messages promptly (within a few seconds when possible)
+- Provide feedback when processing longer operations
+- Handle errors gracefully with clear error messages

@@ -1,0 +1,57 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://localhost:3002/markdown_to_html
+    body:
+      encoding: UTF-8
+      string: '{"markdown":"# Heading 1\n## Heading 2\n### Heading 3\n#### Heading
+        4\n##### Heading 5\n###### Heading 6\n\nThis is a paragraph with **bold**
+        and italics.\n\n- Bullet one\n- Bullet two\n\n1. Number one\n2. Number two\n\n```\nconst
+        foo = \"bar\"\n```\n\nHard break\nSoft break\n\n---\n\n![CleanShot 2024-03-22
+        at 16 42 23@2x](https://github.com/campsite/campsite/assets/739696/49b398b1-8c03-4255-a759-21b8b53a3f5d)\n\n|
+        Header | Header | Header |\n|--------|--------|--------|\n| Cell | Cell |
+        Cell |\n| Cell | Cell | Cell | \n\n\u003e Ullamco eiusmod laborum minim nulla
+        adipisicing incididunt occaecat consequat non ipsum ex qui excepteur culpa.\n\nAnd
+        [here](https://linear.app/campsite/issue/CAM-6845/normalize-notes) is a link.
+        With a `inline code` mark.","editor":"markdown"}'
+    headers:
+      User-Agent:
+      - Faraday v2.7.5
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer d8c0a2827589659ff292a8999b024f24a185ed82
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      x-powered-by:
+      - Express
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '958'
+      etag:
+      - W/"3be-+s0IZMsatJLoNnjT0POnpeC02IY"
+      date:
+      - Mon, 01 Apr 2024 13:43:16 GMT
+      connection:
+      - keep-alive
+      keep-alive:
+      - timeout=5
+    body:
+      encoding: UTF-8
+      string: '{"html":"<h1>Heading 1</h1><h2>Heading 2</h2><h3>Heading 3</h3><h4>Heading
+        4</h4><h5>Heading 5</h5><h6>Heading 6</h6><p>This is a paragraph with <strong>bold</strong>
+        and italics.</p><ul><li><p>Bullet one</p></li><li><p>Bullet two</p></li></ul><ol><li><p>Number
+        one</p></li><li><p>Number two</p></li></ol><pre><code>const foo = \"bar\"</code></pre><p>Hard
+        breakSoft break</p><p><a class=\"prose-link\" target=\"_blank\" href=\"https://github.com/campsite/campsite/assets/739696/49b398b1-8c03-4255-a759-21b8b53a3f5d\"><span>CleanShot
+        2024-03-22 at 16 42 23@2x</span></a></p><p>HeaderHeaderHeaderCellCellCellCellCellCell</p><blockquote><p>Ullamco
+        eiusmod laborum minim nulla adipisicing incididunt occaecat consequat non
+        ipsum ex qui excepteur culpa.</p></blockquote><p>And <a class=\"prose-link\"
+        target=\"_blank\" href=\"https://linear.app/campsite/issue/CAM-6845/normalize-notes\"><span>here</span></a>
+        is a link. With a <code>inline code</code> mark.</p>"}'
+  recorded_at: Mon, 01 Apr 2024 13:43:16 GMT
+recorded_with: VCR 6.1.0

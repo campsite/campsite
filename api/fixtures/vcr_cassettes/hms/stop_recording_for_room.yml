@@ -1,0 +1,58 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.100ms.live/v2/recordings/room/658f4f90dc4b58e3133c284d/stop
+    body:
+      encoding: UTF-8
+      string: "{}"
+    headers:
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer eyJhbGciOiJIUzI1NiJ9.eyJhY2Nlc3Nfa2V5IjoiNjU3Nzk5YzBjZDk5M2RmYjQ0YWE0OTYwIiwidHlwZSI6Im1hbmFnZW1lbnQiLCJ2ZXJzaW9uIjoyLCJqdGkiOiIyYzlmZDcyMC1iYmY2LTQ2ZjAtYmM1Mi05NmQ0YTIzYjJiOGIiLCJpYXQiOjE3MDM4OTIwNDYsIm5iZiI6MTcwMzg5MjA0NiwiZXhwIjoxNzAzOTc4NDQ2fQ.zlEq_Rp0nb0s-MsvsAN8oyBsppvsjt7IXm8FmPW-r1g
+      User-Agent:
+      - Faraday v2.7.5
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      content-type:
+      - application/json;charset=utf-8
+      vary:
+      - Origin
+      date:
+      - Fri, 29 Dec 2023 23:20:49 GMT
+      content-length:
+      - '1178'
+      x-envoy-upstream-service-time:
+      - '3070'
+      content-security-policy:
+      - frame-ancestors none;
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains
+      x-frame-options:
+      - deny
+      x-xss-protection:
+      - 1; mode=block
+      x-content-type-options:
+      - nosniff
+      referrer-policy:
+      - no-referrer
+      x-download-options:
+      - noopen
+      x-dns-prefetch-control:
+      - 'off'
+      permissions-policy:
+      - camera 'none';microphone 'none';geolocation 'none';encrypted-media 'none';payment
+        'none';speaker 'none';usb 'none';
+      server:
+      - istio-envoy
+    body:
+      encoding: UTF-8
+      string: '{"limit":1,"data":[{"id":"658f54324df23a1a8ab624d7","room_id":"658f4f90dc4b58e3133c284d","session_id":"658f542b72ef7a9d8d54ebf7","status":"stopping","created_at":"2023-12-29T23:20:18.488Z","started_at":"2023-12-29T23:20:26.069Z","updated_at":"2023-12-29T23:20:49.081Z","stopped_at":null,"meeting_url":"https://nick-videoconf-1523.app.100ms.live/preview/658f4f90dc4b58e3133c284d/__internal_recorder?auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2ZXJzaW9uIjoyLCJ0eXBlIjoiYXBwIiwiYXBwX2RhdGEiOm51bGwsImFjY2Vzc19rZXkiOiI2NTc3OTljMGNkOTkzZGZiNDRhYTQ5NjAiLCJyb2xlIjoiX19pbnRlcm5hbF9yZWNvcmRlciIsInJvb21faWQiOiI2NThmNGY5MGRjNGI1OGUzMTMzYzI4NGQiLCJ1c2VyX2lkIjoiMTAwbXNfMWM1OTgwYmMtOTgzMi00NjQ3LTg0YTItZGZkNDg3NWE5NjRkIiwiZXhwIjoxNzAzOTc4NDE3LCJqdGkiOiI5ZjgzNjI3OC0xOTdjLTQ1ZWQtOWM3MC1iOTdjMzA1ZDRjNjIiLCJpYXQiOjE3MDM4OTIwMTcsImlzcyI6IjY1Nzc5OWMwY2Q5OTNkZmI0NGFhNDk1ZSIsIm5iZiI6MTcwMzg5MjAxNywic3ViIjoiYXBpIn0.9TUwF91Nt1QinY2diokp680wXlVzOyeBOenTB0JJtGY&skip_preview=true","started_by":"","stopped_by":"","asset_types":["room-composite","chat","transcript","summary"],"recording_assets":null,"destination":"5a6f9c17-3ec7-4e92-bf0a-02aee267b5a8"}],"last":"658f54324df23a1a8ab624d7"}
+
+        '
+  recorded_at: Fri, 29 Dec 2023 23:20:49 GMT
+recorded_with: VCR 6.1.0

@@ -1,0 +1,34 @@
+{
+  "name": "@campsite/integrations",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "clean": "rm -rf .next .turbo .vercel node_modules",
+    "dev": "next dev -p 3004",
+    "lint": "next lint",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^0.0.51",
+    "@ai-sdk/openai": "^0.0.67",
+    "ai": "^3.4.10",
+    "campsite-client": "0.1.0-alpha.1",
+    "jsdom": "^25.0.1",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "stripe": "catalog:"
+  },
+  "devDependencies": {
+    "@campsite/tsconfig": "workspace:*",
+    "@sentry/nextjs": "catalog:",
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-next": "catalog:",
+    "typescript": "catalog:"
+  }
+}

@@ -1,0 +1,104 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+git_source(:github) { |repo| "https://github.com/#{repo}.git" }
+
+ruby "3.3.4"
+
+gem "acts_as_list"
+gem "bootsnap", require: false
+gem "blueprinter"
+gem "commonmarker"
+gem "console1984", "0.2.1"
+gem "counter_culture"
+gem "cssbundling-rails"
+gem "device_detector"
+gem "devise", "~> 4.9"
+gem "devise-doorkeeper"
+gem "devise-two-factor"
+gem "discard"
+gem "doorkeeper", "~> 5.6.9"
+gem "down"
+gem "elasticsearch"
+gem "fastimage"
+gem "faraday"
+gem "faraday-follow_redirects"
+gem "flipper", "~> 1.0"
+gem "flipper-active_record", "~> 1.0"
+gem "friendly_id", "~> 5.4.0"
+gem "workos"
+gem "ip_anonymizer"
+gem "jsbundling-rails"
+gem "json-schema"
+gem "jwt"
+gem "nanoid"
+gem "omniauth"
+gem "omniauth-google-oauth2"
+gem "omniauth-rails_csrf_protection"
+gem "openapi3_parser"
+gem "postmark-rails"
+gem "premailer-rails"
+gem "prosopite"
+gem "pry-rails"
+gem "public_suffix"
+gem "puma", "~> 6.4"
+gem "pundit"
+gem "pusher"
+gem "pwned"
+gem "rack-attack"
+gem "rack-cors"
+gem "rack-mini-profiler"
+gem "rails", "7.2.0"
+gem "redis", "4.8.1"
+gem "ruby-openai"
+gem "stackprof"
+gem "aws-sdk-s3"
+gem "aws-sdk-ecs"
+gem "aws-sdk-transcribeservice"
+gem "searchkick"
+gem "sentry-rails", "~> 5.18"
+gem "sentry-ruby", "~> 5.18"
+gem "sentry-sidekiq", "~> 5.18"
+gem "sidekiq", "7.3.0"
+gem "sidekiq-scheduler", "~> 5.0"
+gem "slack-ruby-client"
+gem "sprockets-rails"
+gem "stripe"
+gem "strong_password"
+gem "swearjar"
+gem "trilogy"
+gem "tzinfo-data", platforms: [:mingw, :mswin, :x64_mingw, :jruby]
+gem "userlist-rails"
+gem "web-push"
+gem "workflow-activerecord"
+gem "yajl-ruby"
+gem "streamio-ffmpeg"
+
+# Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
+# gem "image_processing", "~> 1.2"
+
+group :development, :test do
+  gem "factory_bot_rails"
+  gem "faker"
+end
+
+group :development do
+  gem "web-console"
+  gem "letter_opener_web"
+  gem "debug", require: false
+
+  gem "planetscale_rails"
+  gem "rubocop-rails"
+  gem "rubocop-shopify"
+end
+
+group :test do
+  gem "minitest-focus"
+  gem "minitest-spec-rails", "~> 7.1"
+  gem "minitest-stub-const"
+  gem "mock_redis"
+  gem "mocha", "~> 2.1"
+  gem "timecop"
+  gem "vcr"
+  gem "webmock"
+end

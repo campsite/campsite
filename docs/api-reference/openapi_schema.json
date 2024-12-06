@@ -1,0 +1,1241 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Campsite API",
+    "version": "2.0.0",
+    "contact": {
+      "email": "support@campsite.com"
+    },
+    "description": "This is the internal documentation for our public REST API. Use this as a starting point for hacking on projects. We'll build a proper documentation site later.\n\n⚠️  This API is a work in progress! Field and endpoint names are subject to change, and not all endpoints have been added yet.\n"
+  },
+  "servers": [
+    {
+      "url": "https://api.campsite.com"
+    }
+  ],
+  "paths": {
+    "/v2/members/{member_id}/messages": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "member_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "v2_member_messages_post",
+        "summary": "Create DM",
+        "description": "Creates a new chat message in a direct message thread with a user.",
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2Message"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v2_member_messages_post_request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/members": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "properties": {}
+            },
+            "description": "Search by name or email."
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "properties": {}
+            },
+            "description": "Use with `next_cursor` and `prev_cursor` in the response to paginate through results."
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "properties": {}
+            },
+            "description": "Specifies how many records to return. The default and maximum is 50."
+          },
+          {
+            "in": "query",
+            "name": "roles",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["admin", "member", "viewer", "guest"],
+              "properties": {}
+            },
+            "description": "Filter by role. Separate multiple roles with commas."
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["created_at", "last_seen_at"],
+              "properties": {}
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "properties": {}
+            }
+          }
+        ],
+        "operationId": "v2_members_get",
+        "summary": "List members",
+        "description": "Lists all members of the organization.",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2OrganizationMemberPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/posts/{post_id}/comments": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "properties": {}
+            },
+            "description": "Use with `next_cursor` and `prev_cursor` in the response to paginate through results."
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "properties": {}
+            },
+            "description": "Specifies how many records to return. The default and maximum is 50."
+          },
+          {
+            "in": "query",
+            "name": "parent_id",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "properties": {}
+            },
+            "description": "The ID of the parent comment."
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["created_at"],
+              "properties": {}
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "properties": {}
+            }
+          },
+          {
+            "in": "path",
+            "name": "post_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "v2_post_comments_get",
+        "summary": "List comments",
+        "description": "Lists all comments on a post.",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2CommentPage"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "post_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "_v2_posts_post_id_comments_post",
+        "summary": "Create comment",
+        "description": "Creates a new comment on a post.",
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2Comment"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_v2_posts_post_id_comments_post_request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/posts/{post_id}/resolution": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "post_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "_v2_posts_post_id_resolution_post",
+        "summary": "Resolve post",
+        "description": "Resolves a post with an optional message or resolving comment.",
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2Post"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_v2_posts_post_id_resolution_post_request"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "post_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "v2_post_resolution_delete",
+        "summary": "Unresolve post",
+        "description": "Unresolves a post.",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/posts": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "properties": {}
+            },
+            "description": "Use with `next_cursor` and `prev_cursor` in the response to paginate through results."
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "properties": {}
+            },
+            "description": "Specifies how many records to return. The default and maximum is 50."
+          },
+          {
+            "in": "query",
+            "name": "channel_id",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "properties": {}
+            },
+            "description": "Filters the posts to only include those from a specific channel."
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["last_activity_at", "published_at"],
+              "properties": {}
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "properties": {}
+            }
+          }
+        ],
+        "operationId": "v2_posts_get",
+        "summary": "List posts",
+        "description": "Lists posts.",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2PostPage"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "parameters": [],
+        "operationId": "_v2_posts_post",
+        "summary": "Create post",
+        "description": "Creates a new post.",
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2Post"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_v2_posts_post_request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/posts/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "v2_post_get",
+        "summary": "Get post",
+        "description": "Gets a post.",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/channels": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "properties": {}
+            },
+            "description": "When included, filters channels by name."
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "properties": {}
+            },
+            "description": "Use with `next_cursor` and `prev_cursor` in the response to paginate through results."
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "properties": {}
+            },
+            "description": "Specifies how many records to return. The default and maximum is 50."
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["name", "last_activity_at", "created_at"],
+              "properties": {}
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "properties": {}
+            }
+          }
+        ],
+        "operationId": "v2_channels_get",
+        "summary": "List channels",
+        "description": "Lists all channels in your organization.",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProjectPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/threads/{thread_id}/messages": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "properties": {}
+            },
+            "description": "Use with `next_cursor` and `prev_cursor` in the response to paginate through results."
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "properties": {}
+            },
+            "description": "Specifies how many records to return. The default and maximum is 50."
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["created_at"],
+              "properties": {}
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "properties": {}
+            }
+          },
+          {
+            "in": "path",
+            "name": "thread_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "v2_thread_messages_get",
+        "summary": "List messages",
+        "description": "Lists all messages in a thread.",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2MessagePage"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "thread_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "_v2_threads_thread_id_messages_post",
+        "summary": "Create message",
+        "description": "Creates a new chat message.",
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2Message"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_v2_threads_thread_id_messages_post_request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/threads": {
+      "post": {
+        "parameters": [],
+        "operationId": "v2_threads_post",
+        "summary": "Create thread",
+        "description": "Creates a new thread.",
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2MessageThread"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v2_threads_post_request"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AvatarUrls": {
+        "type": "object",
+        "required": ["xs", "sm", "base", "lg", "xl", "xxl"],
+        "properties": {
+          "xs": {
+            "type": "string",
+            "properties": {}
+          },
+          "sm": {
+            "type": "string",
+            "properties": {}
+          },
+          "base": {
+            "type": "string",
+            "properties": {}
+          },
+          "lg": {
+            "type": "string",
+            "properties": {}
+          },
+          "xl": {
+            "type": "string",
+            "properties": {}
+          },
+          "xxl": {
+            "type": "string",
+            "properties": {}
+          }
+        }
+      },
+      "V2Author": {
+        "type": "object",
+        "required": ["avatar_urls", "name", "id", "type"],
+        "properties": {
+          "avatar_urls": {
+            "$ref": "#/components/schemas/AvatarUrls"
+          },
+          "name": {
+            "type": "string",
+            "properties": {}
+          },
+          "id": {
+            "type": "string",
+            "properties": {}
+          },
+          "type": {
+            "type": "string",
+            "enum": ["app", "member"],
+            "properties": {}
+          }
+        }
+      },
+      "V2Message": {
+        "type": "object",
+        "required": ["id", "content", "created_at", "updated_at", "parent_id", "thread_id", "author"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "properties": {}
+          },
+          "content": {
+            "type": "string",
+            "properties": {}
+          },
+          "created_at": {
+            "type": "string",
+            "properties": {}
+          },
+          "updated_at": {
+            "type": "string",
+            "properties": {}
+          },
+          "parent_id": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "thread_id": {
+            "type": "string",
+            "properties": {}
+          },
+          "author": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/V2Author"
+              }
+            ]
+          }
+        }
+      },
+      "v2_member_messages_post_request": {
+        "type": "object",
+        "required": ["content_markdown"],
+        "properties": {
+          "content_markdown": {
+            "type": "string",
+            "properties": {}
+          },
+          "parent_id": {
+            "type": "string",
+            "properties": {}
+          }
+        }
+      },
+      "V2User": {
+        "type": "object",
+        "required": ["id", "avatar_urls", "email", "display_name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "properties": {}
+          },
+          "avatar_urls": {
+            "$ref": "#/components/schemas/AvatarUrls"
+          },
+          "email": {
+            "type": "string",
+            "properties": {}
+          },
+          "display_name": {
+            "type": "string",
+            "properties": {}
+          }
+        }
+      },
+      "V2OrganizationMember": {
+        "type": "object",
+        "required": ["id", "role", "created_at", "is_deactivated", "user"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "properties": {}
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "member", "viewer", "guest"],
+            "properties": {}
+          },
+          "created_at": {
+            "type": "string",
+            "properties": {}
+          },
+          "is_deactivated": {
+            "type": "boolean",
+            "properties": {}
+          },
+          "user": {
+            "$ref": "#/components/schemas/V2User"
+          }
+        }
+      },
+      "V2OrganizationMemberPage": {
+        "type": "object",
+        "required": ["data", "total_count"],
+        "properties": {
+          "next_cursor": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "prev_cursor": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/V2OrganizationMember"
+            },
+            "type": "array"
+          },
+          "total_count": {
+            "type": "number",
+            "properties": {}
+          }
+        }
+      },
+      "V2Comment": {
+        "type": "object",
+        "required": [
+          "id",
+          "content",
+          "created_at",
+          "replies_count",
+          "parent_id",
+          "subject_id",
+          "subject_type",
+          "author"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "properties": {}
+          },
+          "content": {
+            "type": "string",
+            "properties": {}
+          },
+          "created_at": {
+            "type": "string",
+            "properties": {}
+          },
+          "replies_count": {
+            "type": "number",
+            "properties": {}
+          },
+          "parent_id": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "subject_id": {
+            "type": "string",
+            "properties": {}
+          },
+          "subject_type": {
+            "type": "string",
+            "properties": {}
+          },
+          "author": {
+            "$ref": "#/components/schemas/V2Author"
+          }
+        }
+      },
+      "V2CommentPage": {
+        "type": "object",
+        "required": ["data", "total_count"],
+        "properties": {
+          "next_cursor": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "prev_cursor": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/V2Comment"
+            },
+            "type": "array"
+          },
+          "total_count": {
+            "type": "number",
+            "properties": {}
+          }
+        }
+      },
+      "_v2_posts_post_id_comments_post_request": {
+        "type": "object",
+        "required": ["content_markdown"],
+        "properties": {
+          "content_markdown": {
+            "type": "string",
+            "description": "The comment content in Markdown format.",
+            "properties": {}
+          },
+          "parent_id": {
+            "type": "string",
+            "description": "The ID of an existing comment to reply to. A single level of nested comments is supported.",
+            "properties": {}
+          }
+        }
+      },
+      "V2Project": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "properties": {}
+          },
+          "name": {
+            "type": "string",
+            "properties": {}
+          }
+        }
+      },
+      "V2PostResolution": {
+        "type": "object",
+        "required": ["resolved_at", "resolved_html", "resolved_by", "resolved_comment"],
+        "properties": {
+          "resolved_at": {
+            "type": "string",
+            "properties": {}
+          },
+          "resolved_html": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "resolved_by": {
+            "$ref": "#/components/schemas/V2Author"
+          },
+          "resolved_comment": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/V2Comment"
+              }
+            ]
+          }
+        }
+      },
+      "V2Post": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "created_at",
+          "last_activity_at",
+          "url",
+          "content",
+          "comments_count",
+          "channel",
+          "author",
+          "resolution"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "properties": {}
+          },
+          "title": {
+            "type": "string",
+            "properties": {}
+          },
+          "created_at": {
+            "type": "string",
+            "properties": {}
+          },
+          "last_activity_at": {
+            "type": "string",
+            "properties": {}
+          },
+          "url": {
+            "type": "string",
+            "properties": {}
+          },
+          "content": {
+            "type": "string",
+            "properties": {}
+          },
+          "comments_count": {
+            "type": "number",
+            "properties": {}
+          },
+          "channel": {
+            "$ref": "#/components/schemas/V2Project"
+          },
+          "author": {
+            "$ref": "#/components/schemas/V2Author"
+          },
+          "resolution": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/V2PostResolution"
+              }
+            ]
+          }
+        }
+      },
+      "_v2_posts_post_id_resolution_post_request": {
+        "type": "object",
+        "required": ["content_markdown", "comment_id"],
+        "properties": {
+          "content_markdown": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "comment_id": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          }
+        }
+      },
+      "V2PostPage": {
+        "type": "object",
+        "required": ["data", "total_count"],
+        "properties": {
+          "next_cursor": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "prev_cursor": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/V2Post"
+            },
+            "type": "array"
+          },
+          "total_count": {
+            "type": "number",
+            "properties": {}
+          }
+        }
+      },
+      "_v2_posts_post_request": {
+        "type": "object",
+        "required": ["content_markdown", "channel_id"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "properties": {}
+          },
+          "content_markdown": {
+            "type": "string",
+            "description": "The post content in Markdown format.",
+            "properties": {}
+          },
+          "channel_id": {
+            "type": "string",
+            "description": "The ID of the channel to create the post in.",
+            "properties": {}
+          }
+        }
+      },
+      "V2ProjectPage": {
+        "type": "object",
+        "required": ["data", "total_count"],
+        "properties": {
+          "next_cursor": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "prev_cursor": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/V2Project"
+            },
+            "type": "array"
+          },
+          "total_count": {
+            "type": "number",
+            "properties": {}
+          }
+        }
+      },
+      "V2MessagePage": {
+        "type": "object",
+        "required": ["data", "total_count"],
+        "properties": {
+          "next_cursor": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "prev_cursor": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/V2Message"
+            },
+            "type": "array"
+          },
+          "total_count": {
+            "type": "number",
+            "properties": {}
+          }
+        }
+      },
+      "_v2_threads_thread_id_messages_post_request": {
+        "type": "object",
+        "required": ["content_markdown"],
+        "properties": {
+          "content_markdown": {
+            "type": "string",
+            "description": "The message content in Markdown format.",
+            "properties": {}
+          },
+          "parent_id": {
+            "type": "string",
+            "description": "The ID of the parent message.",
+            "properties": {}
+          }
+        }
+      },
+      "V2MessageThread": {
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "updated_at",
+          "group",
+          "last_message_at",
+          "members_count",
+          "avatar_urls",
+          "title",
+          "creator"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "properties": {}
+          },
+          "created_at": {
+            "type": "string",
+            "properties": {}
+          },
+          "updated_at": {
+            "type": "string",
+            "properties": {}
+          },
+          "group": {
+            "type": "boolean",
+            "properties": {}
+          },
+          "last_message_at": {
+            "type": "string",
+            "properties": {},
+            "nullable": true
+          },
+          "members_count": {
+            "type": "number",
+            "properties": {}
+          },
+          "avatar_urls": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AvatarUrls"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "properties": {}
+          },
+          "creator": {
+            "$ref": "#/components/schemas/V2Author"
+          }
+        }
+      },
+      "v2_threads_post_request": {
+        "type": "object",
+        "required": ["member_ids"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "properties": {}
+          },
+          "member_ids": {
+            "items": {
+              "type": "string",
+              "description": "The IDs of members to add to the thread.",
+              "properties": {}
+            },
+            "type": "array"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

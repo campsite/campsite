@@ -1,0 +1,102 @@
+name: Deploy Web
+on:
+  workflow_dispatch:
+  workflow_call:
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: prj_ecDUhYR4IMEOyMnXJ9YkMgRInMS5
+  TIPTAP_PRIVATE_REGISTRY_KEY: ${{ secrets.TIPTAP_PRIVATE_REGISTRY_KEY }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  TURBO_REMOTE_ONLY: true
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+  SENTRY_ORG: campsite-software
+  SENTRY_PROJECT: campsite-web
+  DEPLOY_QUEUE_THREAD_ID: suwdx19o6mqj
+
+jobs:
+  deploy-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: GitHub App token
+        id: gen-token
+        uses: tibdex/github-app-token@v2.1.0
+        with:
+          app_id: 290357
+          private_key: ${{ secrets.DEPLOYBOT_TOKEN }}
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.gen-token.outputs.token }}
+
+      - name: Set git info
+        id: git-info
+        run: .github/set-git-message
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.0.0
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - run: pnpm config set "@tiptap-pro:registry" https://registry.tiptap.dev/
+      - run: pnpm config set "//registry.tiptap.dev/:_authToken" ${{ secrets.TIPTAP_PRIVATE_REGISTRY_KEY }}
+
+      - name: Install Vercel CLI
+        run: pnpm install --global vercel
+      - name: Vercel Deploy Web
+        run: |
+          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Bump version and push tag
+        id: tag
+        uses: campsite/github-tag-action@master
+        with:
+          github_token: ${{ steps.gen-token.outputs.token }}
+          tag_prefix: web-
+          default_bump: major
+          fetch_all_tags: true
+
+      - name: Notify success
+        uses: campsite/campsite-github-action@v1.0.0
+        with:
+          api_key: ${{ secrets.CAMPBOT_API_KEY }}
+          action_type: create_message
+          thread_id: ${{ env.DEPLOY_QUEUE_THREAD_ID }}
+          content: |
+            **🖥️ Web deployed**
+            
+            [${{ github.actor }}](https://github.com/${{ github.actor }}) deployed ${{ steps.git-info.outputs.escaped-git-message }}
+            
+            [${{ steps.git-info.outputs.git-sha }}](https://github.com/campsite/campsite/commit/${{ github.sha }}) · [Run logs](https://github.com/campsite/campsite/actions/runs/${{ github.run_id }})
+
+      - name: Notify failure
+        if: ${{ failure() }}
+        uses: campsite/campsite-github-action@v1.0.0
+        with:
+          api_key: ${{ secrets.CAMPBOT_API_KEY }}
+          action_type: create_message
+          thread_id: ${{ env.DEPLOY_QUEUE_THREAD_ID }}
+          content: |
+            **🚨 Web deploy failed!**
+            
+            [${{ github.actor }}](https://github.com/${{ github.actor }}) tried to deploy ${{ steps.git-info.outputs.escaped-git-message }}
+            
+            [${{ steps.git-info.outputs.git-sha }}](https://github.com/campsite/campsite/commit/${{ github.sha }}) · [Run logs](https://github.com/campsite/campsite/actions/runs/${{ github.run_id }})

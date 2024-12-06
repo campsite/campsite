@@ -1,0 +1,25 @@
+<div class="mb-6">
+  <%= render 'mailers/components/avatar', avatar_url: "https://campsite.imgix.net/static/mailer-footer-logo.png", href: "https://campsite.com/", name: "Campsite", size: 40 %>
+</div>
+
+<% if @is_changing_email %>
+<div class="mb-6">
+  Your email was changed to <b><%= @resource.unconfirmed_email %></b>.
+</div>
+<%= render 'mailers/components/cta_button', url: confirmation_url(@resource, confirmation_token: @token), text: "Confirm email" %>
+<div class="pt-6 text-sm text-secondary">
+  If you did not make this change, please reach out to <a href="mailto:support@campsite.com" target="_blank">support@campsite.com</a>
+</div>
+<% else %>
+<div class="mb-4">
+  Thank you for signing up for <b>Campsite</b>. We are happy you're here!
+</div>
+<div class="mb-6">
+  Please confirm your email to complete your account setup.
+</div>
+<%= render 'mailers/components/cta_button', url: confirmation_url(@resource, confirmation_token: @token), text: "Confirm email" %>
+<% end %>
+
+<div class="pt-6">
+  <div class="separator" />
+</div>

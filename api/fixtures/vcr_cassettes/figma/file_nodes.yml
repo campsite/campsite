@@ -1,0 +1,68 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://api.figma.com/v1/files/LatexK446J8mGtPFbySaOe/nodes?ids=1%3A2
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer <FIGMA_OAUTH_TOKEN>
+      User-Agent:
+      - Faraday v2.7.5
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      content-type:
+      - application/json; charset=utf-8
+      transfer-encoding:
+      - chunked
+      connection:
+      - keep-alive
+      date:
+      - Thu, 28 Sep 2023 22:23:09 GMT
+      access-control-allow-origin:
+      - "*"
+      access-control-allow-headers:
+      - Content-Type, X-Figma-Token, Authorization
+      cache-control:
+      - no-cache, no-store
+      vary:
+      - X-Figma-Token,Authorization
+      x-cache:
+      - Miss from cloudfront
+      via:
+      - 1.1 a8f89fdc121f08ec83c3151ff4606c8a.cloudfront.net (CloudFront)
+      x-amz-cf-pop:
+      - LAX53-P3
+      alt-svc:
+      - h3=":443"; ma=86400
+      x-amz-cf-id:
+      - hkafN6G1fZlCDST3DkbW4V4Zy2sjY4ElDG9_EJMaZP3YOVDFCMFefQ==
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+    body:
+      encoding: UTF-8
+      string: '{"name":"Untitled (Copy) (Copy)","lastModified":"2023-09-28T21:38:52Z","thumbnailUrl":"https://s3-alpha.figma.com/thumbnails/fe29dc65-6b01-4b7d-bc6e-b2d529db5e29?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQ4GOSFWCZDMGHAUS%2F20230928%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20230928T000000Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=03f43889b8902c23732fd41db28a1309be002dc429a7afdac563b2ad075583ab","version":"4245308843","role":"owner","editorType":"figma","linkAccess":"inherit","nodes":{"1:2":{"document":{"id":"1:2","name":"Frame
+        1","type":"FRAME","scrollBehavior":"SCROLLS","blendMode":"PASS_THROUGH","children":[{"id":"1:4","name":"welcome
+        2 campsite","type":"TEXT","scrollBehavior":"SCROLLS","blendMode":"PASS_THROUGH","absoluteBoundingBox":{"x":-280.0,"y":-165.0,"width":447.0,"height":58.0},"absoluteRenderBounds":{"x":-282.156250,"y":-154.9531250,"width":447.2343750,"height":44.3906250},"constraints":{"vertical":"TOP","horizontal":"LEFT"},"fills":[{"blendMode":"NORMAL","type":"SOLID","color":{"r":1.0,"g":0.0,"b":0.0,"a":1.0}}],"strokes":[],"strokeWeight":1.0,"strokeAlign":"OUTSIDE","effects":[],"characters":"welcome
+        2 campsite","style":{"fontFamily":"Irish Grover","fontPostScriptName":"IrishGrover-Regular","fontWeight":400,"textAutoResize":"WIDTH_AND_HEIGHT","fontSize":48.0,"textAlignHorizontal":"LEFT","textAlignVertical":"TOP","letterSpacing":0.0,"lineHeightPx":58.031250,"lineHeightPercent":100.0,"lineHeightUnit":"INTRINSIC_%"},"layoutVersion":4,"characterStyleOverrides":[],"styleOverrideTable":{},"lineTypes":["NONE"],"lineIndentations":[0]},{"id":"1:5","name":"Rectangle
+        1","type":"VECTOR","scrollBehavior":"SCROLLS","blendMode":"PASS_THROUGH","absoluteBoundingBox":{"x":-339.0,"y":-9.0,"width":268.0,"height":71.0},"absoluteRenderBounds":{"x":-339.0,"y":-9.0,"width":268.0,"height":71.0},"constraints":{"vertical":"TOP","horizontal":"LEFT"},"fills":[{"blendMode":"NORMAL","type":"SOLID","color":{"r":0.78358334302902222,"g":1.0,"b":0.77916663885116577,"a":1.0}}],"strokes":[],"strokeWeight":1.0,"strokeAlign":"INSIDE","effects":[]},{"id":"1:8","name":"good
+        job","type":"TEXT","scrollBehavior":"SCROLLS","blendMode":"PASS_THROUGH","absoluteBoundingBox":{"x":-300.0,"y":-2.0,"width":191.0,"height":58.0},"absoluteRenderBounds":{"x":-299.250,"y":7.43750,"width":187.968750,"height":48.093750},"constraints":{"vertical":"TOP","horizontal":"LEFT"},"fills":[{"blendMode":"NORMAL","type":"SOLID","color":{"r":0.0,"g":0.0,"b":0.0,"a":1.0}}],"strokes":[],"strokeWeight":1.0,"strokeAlign":"OUTSIDE","effects":[],"characters":"good
+        job","style":{"fontFamily":"Irish Grover","fontPostScriptName":"IrishGrover-Regular","fontWeight":400,"textAutoResize":"WIDTH_AND_HEIGHT","fontSize":48.0,"textAlignHorizontal":"LEFT","textAlignVertical":"TOP","letterSpacing":0.0,"lineHeightPx":58.031250,"lineHeightPercent":100.0,"lineHeightUnit":"INTRINSIC_%"},"layoutVersion":4,"characterStyleOverrides":[],"styleOverrideTable":{},"lineTypes":["NONE"],"lineIndentations":[0]},{"id":"1:6","name":"feedback
+        time ⏰","type":"TEXT","scrollBehavior":"SCROLLS","blendMode":"PASS_THROUGH","absoluteBoundingBox":{"x":-244.0,"y":-87.0,"width":374.0,"height":58.0},"absoluteRenderBounds":{"x":-243.7656250,"y":-85.639999389648438,"width":373.3593750,"height":48.811874389648438},"constraints":{"vertical":"TOP","horizontal":"LEFT"},"fills":[{"blendMode":"NORMAL","type":"SOLID","color":{"r":0.0,"g":0.0,"b":0.0,"a":1.0}}],"strokes":[],"strokeWeight":1.0,"strokeAlign":"OUTSIDE","effects":[],"characters":"feedback
+        time ⏰","style":{"fontFamily":"Irish Grover","fontPostScriptName":"IrishGrover-Regular","fontWeight":400,"textAutoResize":"WIDTH_AND_HEIGHT","fontSize":48.0,"textAlignHorizontal":"LEFT","textAlignVertical":"TOP","letterSpacing":0.0,"lineHeightPx":58.031250,"lineHeightPercent":100.0,"lineHeightUnit":"INTRINSIC_%"},"layoutVersion":4,"characterStyleOverrides":[],"styleOverrideTable":{"1":{"fills":[{"blendMode":"NORMAL","type":"IMAGE","scaleMode":"STRETCH","imageRef":null,"imageTransform":[[1.0,0.0,0.0],[0.0,1.0,0.0]]}]}},"lineTypes":["NONE"],"lineIndentations":[0]},{"id":"1:9","name":"Rectangle
+        2","type":"VECTOR","scrollBehavior":"SCROLLS","blendMode":"PASS_THROUGH","absoluteBoundingBox":{"x":-29.0,"y":-9.0,"width":268.0,"height":72.0},"absoluteRenderBounds":{"x":-29.0,"y":-9.0,"width":268.0,"height":72.0},"constraints":{"vertical":"TOP","horizontal":"LEFT"},"fills":[{"blendMode":"NORMAL","type":"SOLID","color":{"r":0.080000221729278564,"g":1.0,"b":0.0,"a":1.0}}],"strokes":[],"strokeWeight":1.0,"strokeAlign":"INSIDE","effects":[]},{"id":"1:11","name":"great
+        job","type":"TEXT","scrollBehavior":"SCROLLS","blendMode":"PASS_THROUGH","absoluteBoundingBox":{"x":3.0,"y":-2.0,"width":203.0,"height":58.0},"absoluteRenderBounds":{"x":3.750,"y":10.906250,"width":200.1093750,"height":44.6250},"constraints":{"vertical":"TOP","horizontal":"LEFT"},"fills":[{"blendMode":"NORMAL","type":"SOLID","color":{"r":1.0,"g":1.0,"b":1.0,"a":1.0}}],"strokes":[],"strokeWeight":1.0,"strokeAlign":"OUTSIDE","effects":[],"characters":"great
+        job","style":{"fontFamily":"Irish Grover","fontPostScriptName":"IrishGrover-Regular","fontWeight":400,"textAutoResize":"WIDTH_AND_HEIGHT","fontSize":48.0,"textAlignHorizontal":"LEFT","textAlignVertical":"TOP","letterSpacing":0.0,"lineHeightPx":58.031250,"lineHeightPercent":100.0,"lineHeightUnit":"INTRINSIC_%"},"layoutVersion":4,"characterStyleOverrides":[],"styleOverrideTable":{},"lineTypes":["NONE"],"lineIndentations":[0]},{"id":"1:15","name":"Polygon
+        1","type":"REGULAR_POLYGON","scrollBehavior":"SCROLLS","blendMode":"PASS_THROUGH","absoluteBoundingBox":{"x":-76.0,"y":-252.0,"width":127.0,"height":87.0},"absoluteRenderBounds":{"x":-71.492614746093750,"y":-252.0,"width":117.98522949218750,"height":73.250},"constraints":{"vertical":"TOP","horizontal":"LEFT"},"fills":[{"blendMode":"NORMAL","type":"SOLID","color":{"r":1.0,"g":0.60000002384185791,"b":0.0,"a":1.0}}],"strokes":[],"strokeWeight":1.0,"strokeAlign":"INSIDE","effects":[{"type":"DROP_SHADOW","visible":true,"color":{"r":0.0,"g":0.0,"b":0.0,"a":0.250},"blendMode":"NORMAL","offset":{"x":0.0,"y":4.0},"radius":4.0,"showShadowBehindNode":false}]},{"id":"1:16","name":"Vector
+        1","type":"VECTOR","scrollBehavior":"SCROLLS","blendMode":"PASS_THROUGH","absoluteBoundingBox":{"x":-164.0,"y":-263.0,"width":151.0,"height":76.0},"absoluteRenderBounds":{"x":-168.0,"y":-263.0,"width":159.0,"height":84.0},"constraints":{"vertical":"TOP","horizontal":"LEFT"},"fills":[{"blendMode":"NORMAL","type":"SOLID","color":{"r":1.0,"g":0.60000002384185791,"b":0.0,"a":1.0}}],"strokes":[{"blendMode":"NORMAL","visible":false,"type":"SOLID","color":{"r":0.0,"g":0.0,"b":0.0,"a":1.0}}],"strokeWeight":1.0,"strokeAlign":"CENTER","effects":[{"type":"DROP_SHADOW","visible":true,"color":{"r":0.0,"g":0.0,"b":0.0,"a":0.250},"blendMode":"NORMAL","offset":{"x":0.0,"y":4.0},"radius":4.0,"showShadowBehindNode":false}]}],"absoluteBoundingBox":{"x":-503.0,"y":-345.0,"width":892.0,"height":517.0},"absoluteRenderBounds":{"x":-503.0,"y":-345.0,"width":892.0,"height":517.0},"constraints":{"vertical":"TOP","horizontal":"LEFT"},"clipsContent":true,"background":[{"blendMode":"NORMAL","type":"SOLID","color":{"r":0.84166663885116577,"g":0.86700010299682617,"b":1.0,"a":1.0}}],"fills":[{"blendMode":"NORMAL","type":"SOLID","color":{"r":0.84166663885116577,"g":0.86700010299682617,"b":1.0,"a":1.0}}],"strokes":[],"strokeWeight":1.0,"strokeAlign":"INSIDE","backgroundColor":{"r":0.84166663885116577,"g":0.86700010299682617,"b":1.0,"a":1.0},"exportSettings":[{"suffix":"","format":"SVG","constraint":{"type":"SCALE","value":1.0}}],"effects":[]},"components":{},"componentSets":{},"schemaVersion":0,"styles":{}}}}
+
+        '
+  recorded_at: Thu, 28 Sep 2023 22:23:09 GMT
+recorded_with: VCR 6.1.0

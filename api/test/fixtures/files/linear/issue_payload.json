@@ -1,0 +1,20 @@
+{
+  "action": "update",
+  "data": {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "teamId": "00000000-0000-0000-0000-000000000000",
+    "title": "Issue title",
+    "description": "Issue description",
+    "identifier": "CAM-1234",
+    "team": {
+      "id": "00000000-0000-0000-0000-000000000000",
+      "key": "CAM",
+      "name": "Campsite"
+    }
+  },
+  "updatedFrom": {
+    "title": "Previous title"
+  },
+  "type": "Issue",
+  "organizationId": "00000000-0000-0000-0000-000000000000"
+}

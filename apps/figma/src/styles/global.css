@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+.light {
+  @apply text-primary;
+
+  --text-blue: theme(colors.blue.700);
+  --tag-border: theme(colors.neutral.100);
+  --tag-bg: theme(colors.neutral.100);
+  --tag-focus: 0px 0px 0px 1px theme(colors.blue.500), 0px 0px 0px 3px theme(colors.blue.500 / 0.15);
+
+  --text-light: theme(colors.gray.50);
+  --text-dark: theme(colors.gray.900);
+  --text-light-secondary: theme(colors.gray.600);
+  --text-dark-secondary: theme(colors.gray.400);
+
+  --text-primary-action: theme(colors.white);
+
+  --text-primary: theme(colors.gray.900);
+  --text-secondary: theme(colors.gray.600);
+  --text-tertiary: theme(colors.gray.500);
+  --text-quaternary: theme(colors.gray.400);
+
+  --bg-main: theme(colors.gray.50);
+
+  --bg-primary-action: theme(colors.gray.900);
+  --bg-primary-action-hover: theme(colors.gray.750);
+  --bg-secondary-action: theme(colors.gray.200);
+  --bg-tertiary-action: theme(colors.white);
+
+  --bg-button: theme(colors.white);
+
+  --bg-primary: theme(colors.white);
+  --bg-secondary: theme(colors.gray.50);
+  --bg-tertiary: theme(colors.gray.100);
+  --bg-quaternary: theme(colors.gray.150);
+  --bg-elevated: theme(colors.white);
+  --bg-react-select: theme(colors.white);
+
+  --border-primary: theme(colors.black / 0.1);
+  --border-secondary: theme(colors.black / 0.07);
+  --border-tertiary: theme(colors.black / 0.04);
+
+  --base-shadow-color: rgb(0 0 0 / 0.05);
+
+  --button-drop-shadow: rgb(0 0 0 / 0);
+  --button-shadow: inset 0px 1px 0px 0px rgb(255 255 255 / 1), 0px 0px 0px 1px rgb(0 0 0 / 0.06),
+    0px 1px 0px 0px rgb(0 0 0 / 0.08), 0px 2px 2px 0px rgb(0 0 0 / 0.04), 0px 3px 3px 0px rgb(0 0 0 / 0.02),
+    0px 4px 4px 0px rgb(0 0 0 / 0.01);
+  --popover-shadow: 0px 0px 3.6px rgba(0, 0, 0, 0.04), 0px 0px 10px rgba(0, 0, 0, 0.04),
+    0px 0px 24.1px rgba(0, 0, 0, 0.05), 0px 0px 80px rgba(0, 0, 0, 0.08);
+  --dropdown-item-shadow: inset 0px 1px 0px rgb(255 255 255 / 0.02), inset 0px 0px 0px 1px rgb(255 255 255 / 0.02),
+    0px 1px 2px rgb(0 0 0 / 0.12), 0px 2px 4px rgb(0 0 0 / 0.08), 0px 0px 0px 0.5px rgb(0 0 0 / 0.24);
+  --button-base-shadow: 0px 1px 1px -1px rgb(0 0 0 / 0.08), 0px 2px 2px -1px rgb(0 0 0 / 0.08),
+    0px 0px 0px 1px rgb(0 0 0 / 0.06), inset 0px 1px 0px #fff, inset 0px 1px 2px 1px #fff,
+    inset 0px 1px 2px rgb(0 0 0 / 0.06);
+
+  .bg-main,
+  .bg-elevated {
+    --base-shadow-color: rgb(0 0 0 / 0.045);
+
+    .bg-primary {
+      --base-shadow-color: rgb(0 0 0 / 0.05);
+    }
+  }
+}
+
+.dark,
+.figma-dark {
+  @apply text-primary;
+
+  --text-blue: theme(colors.blue.400);
+  --tag-border: theme(colors.neutral.700);
+  --tag-bg: theme(colors.neutral.600);
+  --tag-focus: 0px 0px 0px 1px theme(colors.blue.600), 0px 0px 0px 3px theme(colors.blue.600 / 0.15);
+
+  --text-primary: theme(colors.gray.100);
+  --text-secondary: theme(colors.gray.300);
+  --text-tertiary: theme(colors.gray.400);
+  --text-quaternary: theme(colors.gray.500);
+  --text-primary-action: theme(colors.gray.900);
+
+  --bg-main: theme(colors.gray.950);
+
+  --bg-primary-action: theme(colors.white);
+  --bg-primary-action-hover: theme(colors.gray.150);
+  --bg-secondary-action: theme(colors.gray.700);
+  --bg-tertiary-action: theme(colors.gray.800);
+
+  --bg-button: theme(colors.gray.750);
+
+  --bg-primary: theme(colors.gray.950);
+  --bg-secondary: theme(colors.gray.900);
+  --bg-tertiary: theme(colors.gray.800);
+  --bg-quaternary: theme(colors.gray.750);
+  --bg-elevated: theme(colors.gray.850);
+  --bg-react-select: theme(colors.gray.750);
+
+  --border-primary: theme(colors.white / 0.12);
+  --border-secondary: theme(colors.white / 0.08);
+  --border-tertiary: theme(colors.white / 0.06);
+
+  --base-shadow-color: rgb(0 0 0 / 0.16);
+
+  --button-drop-shadow: rgb(0 0 0 / 0.4);
+  --danger-drop-shadow: rgb(127 29 29 / 0.8);
+  --button-shadow: 0px -1px 0px 0px rgb(255 255 255 / 0.04), 0px 0px 0px 1px rgb(255 255 255 / 0.12),
+    0px 0px 1px 0px rgb(0 0 0 / 0.04), 0px 2px 2px 0px rgb(0 0 0 / 0.04), 0px 4px 2px 0px rgb(0 0 0 / 0.04),
+    0px 6px 3px 0px rgb(0 0 0 / 0.04);
+  --popover-shadow: 0px 0px 4px rgba(0, 0, 0, 0.08), 0px 0px 10px rgba(0, 0, 0, 0.12), 0px 0px 24px rgba(0, 0, 0, 0.16),
+    0px 0px 80px rgba(0, 0, 0, 0.2);
+  --button-base-shadow: 0px 0px 0px 0.5px rgb(0 0 0 / 0.4), 0px 1px 1px -1px rgb(0 0 0 / 0.12),
+    0px 2px 2px -1px rgb(0 0 0 / 0.12), inset 0px 0.5px 0px rgb(255 255 255 / 0.06),
+    inset 0px 0px 1px 0px rgb(255 255 255 / 0.16), inset 0px -6px 12px -4px rgb(0 0 0 / 0.16);
+  --button-primary-shadow: 0px 1px 1px -1px rgb(0 0 0 / 0.08), 0px 2px 2px -1px rgb(0 0 0 / 0.08),
+    0px 0px 0px 1px rgb(0 0 0 / 0.06), inset 0px 1px 0px #fff, inset 0px 0px 2px 1px #fff,
+    inset 0px 1px 2px rgb(0 0 0 / 0.06), inset 0px -4px 8px -4px rgb(0 0 0 / 0.06);
+
+  .bg-main,
+  .bg-elevated {
+    --base-shadow-color: rgb(0 0 0 / 0.05);
+
+    .bg-primary {
+      --base-shadow-color: rgb(0 0 0 / 0.14);
+    }
+  }
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  @apply pointer-events-none float-left h-0 text-neutral-400;
+  content: attr(data-placeholder);
+}
+
+.ProseMirror p:has(+ p) {
+  @apply mb-1.5;
+}
+
+.ProseMirror p + p {
+  @apply mt-1.5;
+}

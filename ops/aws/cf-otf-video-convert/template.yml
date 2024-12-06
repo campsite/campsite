@@ -1,0 +1,558 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this
+# software and associated documentation files (the "Software"), to deal in the Software
+# without restriction, including without limitation the rights to use, copy, modify,
+# merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# This is AWS SAM template that represents the architecture of On-The-Fly video conversion serverless solution
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  SAM template for On-The-Fly video conversion using Lambda@Edge triggered by user requests via CloudFront distribution with an S3 origin and MediaConvert
+
+Transform:
+  - AWS::Serverless-2016-10-31
+
+Mappings:
+  RepoBucket:
+    name:
+      'prefix': 'cloudfront-blog-resources'
+  Lambda:
+    code:
+      'LambdaEdgeOtfVideoConvert': 'cf-otf-video-convert/lambda-at-edge-otf-video-convert.zip'
+
+#
+#  SourceMediaBucket: campsite-media
+#  SourceMediaBucketDev: campsite-media-dev
+#  HlsMediaBucketName: campsite-hls
+#  HlsMediaBucketNameDev: campsite-hls-dev
+#
+Parameters:
+  SourceMediaBucket:
+    Description: Source media bucket must be unique and must not contain spaces or uppercase letters. Bucket must already exist.
+    AllowedPattern: '.+'
+    Type: String
+  SourceMediaBucketDev:
+    Description: Source media bucket for development must be unique and must not contain spaces or uppercase letters. Bucket must already exist.
+    AllowedPattern: '.+'
+    Type: String
+  HlsMediaBucketName:
+    Description: HLS output bucket. The bucket created would be {BucketName}. Bucket name must be unique and must not contain spaces or uppercase letters.
+    AllowedPattern: '.+'
+    Type: String
+  HlsMediaBucketNameDev:
+    Description: HLS output bucket for development. The bucket created would be {BucketName}. Bucket name must be unique and must not contain spaces or uppercase letters.
+    AllowedPattern: '.+'
+    Type: String
+
+Resources:
+  HlsMediaBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${HlsMediaBucketName}
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods: [GET, HEAD]
+            AllowedOrigins: ['*']
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  HlsMediaBucketDev:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${HlsMediaBucketNameDev}
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods: [GET, HEAD]
+            AllowedOrigins: ['*']
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  HlsMediaBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref HlsMediaBucket
+      PolicyDocument:
+        Statement:
+          - Sid: PolicyForCloudFrontPrivateContent
+            Effect: Allow
+            Principal:
+              CanonicalUser: !GetAtt OriginAccessIdentity.S3CanonicalUserId
+            Action:
+              - 's3:GetObject'
+            Resource: !Sub arn:aws:s3:::${HlsMediaBucket}/*
+          - Sid: PolicyForLambdaEdgeAndMediaConvert
+            Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt MediaConvertJobRole.Arn
+                - !GetAtt LambdaEdgeOtfVideoConvertRole.Arn
+            Action:
+              - 's3:GetObject'
+              - 's3:PutObject'
+            Resource: !Sub 'arn:aws:s3:::${HlsMediaBucket}/*'
+
+  HlsMediaBucketDevPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref HlsMediaBucketDev
+      PolicyDocument:
+        Statement:
+          - Sid: PolicyForCloudFrontPrivateContent
+            Effect: Allow
+            Principal:
+              CanonicalUser: !GetAtt OriginAccessIdentity.S3CanonicalUserId
+            Action:
+              - 's3:GetObject'
+            Resource: !Sub arn:aws:s3:::${HlsMediaBucketDev}/*
+          - Sid: PolicyForLambdaEdgeAndMediaConvert
+            Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt MediaConvertJobRole.Arn
+                - !GetAtt LambdaEdgeOtfVideoConvertRole.Arn
+            Action:
+              - 's3:GetObject'
+              - 's3:PutObject'
+            Resource: !Sub 'arn:aws:s3:::${HlsMediaBucketDev}/*'
+
+  # Don't generate the source or the source policy because we don't want
+  # Cloudformation to touch the primary media buckets incorrectly.
+  #
+  # SourceMediaBucket:
+  #   Type: AWS::S3::Bucket
+  #   Properties:
+  #       BucketName: !Sub ${SourceBucketName}-${AWS::AccountId}
+  #       BucketEncryption:
+  #         ServerSideEncryptionConfiguration:
+  #           - ServerSideEncryptionByDefault:
+  #               SSEAlgorithm: AES256
+  #
+  # SourceMediaBucketPolicy:
+  #   Type: AWS::S3::BucketPolicy
+  #   Properties:
+  #     Bucket: !Ref SourceMediaBucket
+  #     PolicyDocument:
+  #       Statement:
+  #         - Sid: PolicyForMediaConvertJobRole
+  #           Effect: Allow
+  #           Principal:
+  #             AWS:
+  #               - !GetAtt MediaConvertJobRole.Arn
+  #           Action:
+  #             - "s3:GetObject"
+  #           Resource: !Sub "arn:aws:s3:::${SourceMediaBucket}/*"
+
+  OriginAccessIdentity:
+    Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
+    Metadata:
+      Comment: !Sub '${AWS::StackName} - Access private S3 bucket content only through CloudFront'
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub '${AWS::StackName} - Access private S3 bucket content only through CloudFront'
+
+  CachePolicyM3u8:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Comment: 'cache policy for on-the-fly media convert m3u8'
+        MinTTL: 0
+        DefaultTTL: 86400
+        MaxTTL: 31536000
+        Name: !Sub '${AWS::StackName}-cp-on-the-fly-video-convert-m3u8'
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingGzip: true
+          CookiesConfig:
+            CookieBehavior: 'whitelist'
+            Cookies:
+              - no-cookie
+          HeadersConfig:
+            HeaderBehavior: 'whitelist'
+            Headers:
+              - Access-Control-Request-Headers
+              - Access-Control-Request-Method
+              - Origin
+          QueryStringsConfig:
+            QueryStringBehavior: 'whitelist'
+            QueryStrings:
+              - width
+              - height
+              - mediafilename
+
+  OriginRequestPolicyM3u8:
+    Type: AWS::CloudFront::OriginRequestPolicy
+    Properties:
+      OriginRequestPolicyConfig:
+        Comment: 'Origin request policy for on-the-fly media convert m3u8'
+        Name: !Sub '${AWS::StackName}-orp-on-the-fly-video-convert-m3u8'
+        CookiesConfig:
+          CookieBehavior: 'whitelist'
+          Cookies:
+            - no-cookie
+        HeadersConfig:
+          HeaderBehavior: 'whitelist'
+          Headers:
+            - Access-Control-Request-Headers
+            - Access-Control-Request-Method
+            - Origin
+        QueryStringsConfig:
+          QueryStringBehavior: 'whitelist'
+          QueryStrings:
+            - width
+            - height
+            - mediafilename
+
+  CachePolicyTs:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Comment: 'cache policy for on-the-fly media convert ts'
+        MinTTL: 0
+        DefaultTTL: 86400
+        MaxTTL: 31536000
+        Name: !Sub '${AWS::StackName}-cp-on-the-fly-video-convert-ts'
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingGzip: true
+          CookiesConfig:
+            CookieBehavior: 'whitelist'
+            Cookies:
+              - no-cookie
+          HeadersConfig:
+            HeaderBehavior: 'whitelist'
+            Headers:
+              - Access-Control-Request-Headers
+              - Access-Control-Request-Method
+              - Origin
+          QueryStringsConfig:
+            QueryStringBehavior: 'whitelist'
+            QueryStrings:
+              - no-qs
+
+  OriginRequestPolicyTs:
+    Type: AWS::CloudFront::OriginRequestPolicy
+    Properties:
+      OriginRequestPolicyConfig:
+        Comment: 'Origin request policy for on-the-fly media convert ts'
+        Name: !Sub '${AWS::StackName}-orp-on-the-fly-video-convert-ts'
+        CookiesConfig:
+          CookieBehavior: 'whitelist'
+          Cookies:
+            - no-cookie
+        HeadersConfig:
+          HeaderBehavior: 'whitelist'
+          Headers:
+            - Access-Control-Request-Headers
+            - Access-Control-Request-Method
+            - Origin
+        QueryStringsConfig:
+          QueryStringBehavior: 'whitelist'
+          QueryStrings:
+            - no-qs
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub '${AWS::StackName} - on-the-fly video convert'
+        Origins:
+          - DomainName: !Sub ${HlsMediaBucket}.s3.amazonaws.com
+            Id: otfS3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${OriginAccessIdentity}'
+            OriginCustomHeaders:
+              - HeaderName: 'mediaconvert-api-endpoint'
+                HeaderValue: !GetAtt HelperFunctionInvoke.endpoint
+              - HeaderName: 'mediaconvert-job-role'
+                HeaderValue: !GetAtt MediaConvertJobRole.Arn
+              - HeaderName: 'SourceMediaBucket'
+                HeaderValue: !Ref SourceMediaBucket
+              - HeaderName: 'HlsMediaBucket'
+                HeaderValue: !Ref HlsMediaBucket
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          TargetOriginId: otfS3Origin
+          ViewerProtocolPolicy: allow-all
+          SmoothStreaming: false
+          Compress: false
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: 'none'
+        CacheBehaviors:
+          - AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            TargetOriginId: otfS3Origin
+            CachePolicyId: !Ref CachePolicyM3u8
+            OriginRequestPolicyId: !Ref OriginRequestPolicyM3u8
+            ViewerProtocolPolicy: allow-all
+            PathPattern: '*.m3u8'
+            LambdaFunctionAssociations:
+              - EventType: origin-request
+                LambdaFunctionARN: !Ref LambdaEdgeOtfVideoConvert.Version
+          - AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            TargetOriginId: otfS3Origin
+            CachePolicyId: !Ref CachePolicyTs
+            OriginRequestPolicyId: !Ref OriginRequestPolicyTs
+            ViewerProtocolPolicy: allow-all
+            PathPattern: '*.ts'
+        PriceClass: PriceClass_All
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+
+  CloudFrontDistributionDev:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub '${AWS::StackName} - on-the-fly video convert dev'
+        Origins:
+          - DomainName: !Sub ${HlsMediaBucketDev}.s3.amazonaws.com
+            Id: otfS3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${OriginAccessIdentity}'
+            OriginCustomHeaders:
+              - HeaderName: 'mediaconvert-api-endpoint'
+                HeaderValue: !GetAtt HelperFunctionInvoke.endpoint
+              - HeaderName: 'mediaconvert-job-role'
+                HeaderValue: !GetAtt MediaConvertJobRole.Arn
+              - HeaderName: 'SourceMediaBucket'
+                HeaderValue: !Ref SourceMediaBucketDev
+              - HeaderName: 'HlsMediaBucket'
+                HeaderValue: !Ref HlsMediaBucketDev
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          TargetOriginId: otfS3Origin
+          ViewerProtocolPolicy: allow-all
+          SmoothStreaming: false
+          Compress: false
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: 'none'
+        CacheBehaviors:
+          - AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            TargetOriginId: otfS3Origin
+            CachePolicyId: !Ref CachePolicyM3u8
+            OriginRequestPolicyId: !Ref OriginRequestPolicyM3u8
+            ViewerProtocolPolicy: allow-all
+            PathPattern: '*.m3u8'
+            LambdaFunctionAssociations:
+              - EventType: origin-request
+                LambdaFunctionARN: !Ref LambdaEdgeOtfVideoConvert.Version
+          - AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            TargetOriginId: otfS3Origin
+            CachePolicyId: !Ref CachePolicyTs
+            OriginRequestPolicyId: !Ref OriginRequestPolicyTs
+            ViewerProtocolPolicy: allow-all
+            PathPattern: '*.ts'
+        PriceClass: PriceClass_All
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+
+  MediaConvertJobRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - 'mediaconvert.amazonaws.com'
+                - 'mediaconvert.us-east-1.amazonaws.com'
+                - 'mediaconvert.ap-northeast-1.amazonaws.com'
+                - 'mediaconvert.ap-southeast-1.amazonaws.com'
+                - 'mediaconvert.ap-southeast-2.amazonaws.com'
+                - 'mediaconvert.eu-central-1.amazonaws.com'
+                - 'mediaconvert.eu-west-1.amazonaws.com'
+                - 'mediaconvert.us-east-1.amazonaws.com'
+                - 'mediaconvert.us-west-1.amazonaws.com'
+                - 'mediaconvert.us-west-2.amazonaws.com'
+            Action:
+              - sts:AssumeRole
+      Path: '/'
+      Policies:
+        - PolicyName: !Sub '${AWS::StackName}-MediaConvertJobPolicy'
+          PolicyDocument:
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 's3:GetObject'
+                  - 's3:PutObject'
+                Resource:
+                  - !Sub 'arn:aws:s3:::${HlsMediaBucket}/*'
+                  - !Sub 'arn:aws:s3:::${SourceMediaBucket}/*'
+                  - !Sub 'arn:aws:s3:::${HlsMediaBucketDev}/*'
+                  - !Sub 'arn:aws:s3:::${SourceMediaBucketDev}/*'
+
+  LambdaEdgeOtfVideoConvertRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Path: '/'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: LimitedAllowGetS3AndCreateJobPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - 's3:GetObject'
+                  - 's3:ListBucket'
+                  - 'iam:PassRole'
+                  - 'mediaconvert:CreateJob'
+                  - 'mediaconvert:GetJob'
+                  - 'mediaconvert:CreateJobTemplate'
+                Resource:
+                  - !Sub 'arn:aws:s3:::${HlsMediaBucket}/*'
+                  - !Sub 'arn:aws:s3:::${HlsMediaBucket}'
+                  - !Sub 'arn:aws:s3:::${HlsMediaBucketDev}/*'
+                  - !Sub 'arn:aws:s3:::${HlsMediaBucketDev}'
+                  - !Sub 'arn:aws:mediaconvert:*:${AWS::AccountId}:jobTemplates/*'
+                  - !Sub 'arn:aws:mediaconvert:*:${AWS::AccountId}:queues/*'
+                  - !Sub 'arn:aws:mediaconvert:*:${AWS::AccountId}:jobs/*'
+                  - !GetAtt MediaConvertJobRole.Arn
+                Effect: Allow
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: 'AllowLambdaServiceToAssumeRole'
+            Effect: 'Allow'
+            Action:
+              - 'sts:AssumeRole'
+            Principal:
+              Service:
+                - 'lambda.amazonaws.com'
+                - 'edgelambda.amazonaws.com'
+
+  LambdaEdgeOtfVideoConvert:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: A Lambda function that returns a static string.
+      Handler: lambda-at-edge-otf-video-convert.handler
+      Role: !GetAtt LambdaEdgeOtfVideoConvertRole.Arn
+      CodeUri:
+        Bucket: !FindInMap ['RepoBucket', 'name', 'prefix']
+        Key: !FindInMap ['Lambda', 'code', 'LambdaEdgeOtfVideoConvert']
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 10
+      AutoPublishAlias: live
+
+  HelperFunctionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Path: '/'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: CustomPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - 'mediaconvert:describeEndpoints'
+                Resource: '*'
+                Effect: Allow
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: 'AllowLambdaServiceToAssumeRole'
+            Effect: 'Allow'
+            Action:
+              - 'sts:AssumeRole'
+            Principal:
+              Service:
+                - 'lambda.amazonaws.com'
+
+  HelperFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: 'A Lambda function that returns the MediaConvert endpoint'
+      Handler: index.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt HelperFunctionRole.Arn
+      InlineCode: |
+        var AWS = require('aws-sdk');
+        var mediaconvert = new AWS.MediaConvert({ apiVersion: '2017-08-29' });
+        var response = require('cfn-response');
+        exports.handler = function(event, context) {
+            // For Delete requests, immediately send a SUCCESS response.
+            if (event.RequestType == "Delete") {
+                response.send(event, context, "SUCCESS");
+                return;
+            }
+            var params = {
+              MaxResults: 0,
+            };
+
+            mediaconvert.describeEndpoints(params, function(err, data) {
+              var responseStatus = "FAILED";
+              var responseData = {};
+
+              if (err) {
+                console.log(err, err.stack); // an error occurred
+                responseData.error = "MediaConvert.describeEndpoints Invoke call failed";
+                responseData.endpoint = "ERROR";
+              }
+              else {
+                console.log(data);           // successful response
+                responseStatus = "SUCCESS";
+                responseData.endpoint = data.Endpoints[0].Url;
+              }
+              response.send(event, context, responseStatus, responseData);
+          });
+        };
+
+  HelperFunctionInvoke:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt HelperFunction.Arn
+      FunctionName: 'HelperFunction'
+
+Outputs:
+  SourceBucketName:
+    Value: !Ref SourceMediaBucket
+  HlsBucketName:
+    Value: !Ref HlsMediaBucket
+  SourceBucketNameDev:
+    Value: !Ref SourceMediaBucketDev
+  HlsBucketNameDev:
+    Value: !Ref HlsMediaBucketDev
+  LambdaEdgeOtfVideoConvertVersion:
+    Description: Lambda@Edge on-the-fly Video Convert
+    Value: !Ref LambdaEdgeOtfVideoConvert.Version
+  DistributionEndPoint:
+    Description: CloudFront Distribution Domain Name
+    Value: !Sub https://${CloudFrontDistribution.DomainName}
+  DistributionEndPointDev:
+    Description: CloudFront Distribution Development Domain Name
+    Value: !Sub https://${CloudFrontDistributionDev.DomainName}

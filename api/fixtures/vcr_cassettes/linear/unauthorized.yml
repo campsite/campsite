@@ -1,0 +1,58 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.linear.app/graphql
+    body:
+      encoding: UTF-8
+      string: '{"query":"{ viewer { id } }"}'
+    headers:
+      Content-type:
+      - application/json
+      Authorization:
+      - bad-token
+      User-Agent:
+      - Faraday v2.7.5
+  response:
+    status:
+      code: 400
+      message: Bad Request
+    headers:
+      date:
+      - Tue, 26 Sep 2023 16:35:35 GMT
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '250'
+      connection:
+      - keep-alive
+      etag:
+      - W/"fa-D6JWzDDRqIRUOk1O3gDRuI97VYE"
+      cache-control:
+      - private, no-cache, no-store, must-revalidate
+      x-request-id:
+      - 80ccebc17e7c08d5-LAX
+      via:
+      - 1.1 google
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      set-cookie:
+      - __cf_bm=g_zpS4iQCCI8lTEDqgOdlpuWoCvAPZULKH6g_ZqP6JM-1695746135-0-AddS+dxFZSRY9C2MUQsN1f9FlhNhTunzIYHMDpLkJNKvEiSoM9H2FE8ggSaMIlqs2KuKFK6W8FTyw1dMew5IYz0=;
+        path=/; expires=Tue, 26-Sep-23 17:05:35 GMT; domain=.linear.app; HttpOnly;
+        Secure; SameSite=None, _cfuvid=sOIzONTlm65rU6O9A.YyE2WzWlUGHXaQpJ1sg3nMGe0-1695746135364-0-604800000;
+        path=/; domain=.linear.app; HttpOnly; Secure; SameSite=None
+      server:
+      - cloudflare
+      cf-ray:
+      - 80ccebc17e7c08d5-LAX
+    body:
+      encoding: UTF-8
+      string: '{"errors":[{"message":"Authentication required, not authenticated","extensions":{"code":"AUTHENTICATION_ERROR","type":"authentication
+        error","userError":true,"userPresentableMessage":"You need to authenticate
+        to access this operation.","meta":{}}}]}
+
+        '
+  recorded_at: Tue, 26 Sep 2023 16:35:35 GMT
+recorded_with: VCR 6.1.0

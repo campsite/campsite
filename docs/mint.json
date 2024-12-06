@@ -1,0 +1,92 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Campsite",
+  "logo": {
+    "dark": "/campsite-icon.png",
+    "light": "/campsite-icon.png",
+    "href": "https://campsite.com"
+  },
+  "favicon": "/campsite-icon.png",
+  "colors": {
+    "primary": "#FF531B",
+    "light": "#FF531B",
+    "dark": "#FF531B",
+    "anchors": {
+      "from": "#FF671D",
+      "to": "#FF3628"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Support",
+      "url": "mailto:support@campsite.com"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Open Campsite",
+    "url": "https://app.campsite.com"
+  },
+  "anchors": [
+    {
+      "name": "API reference",
+      "url": "api-reference",
+      "icon": "square-terminal"
+    },
+    {
+      "name": "Examples",
+      "url": "https://github.com/campsite/examples",
+      "icon": "github"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Guides",
+      "pages": [
+        "api-reference/introduction",
+        "api-reference/guides/bot-dms",
+        "api-reference/guides/mentioning-users",
+        "api-reference/guides/webhooks"
+      ]
+    },
+    {
+      "group": "Posts",
+      "pages": [
+        "api-reference/list-posts",
+        "api-reference/get-post",
+        "api-reference/create-post",
+        "api-reference/resolve-post",
+        "api-reference/unresolve-post",
+        "api-reference/list-comments",
+        "api-reference/create-comment"
+      ]
+    },
+    {
+      "group": "Channels",
+      "pages": ["api-reference/list-channels"]
+    },
+    {
+      "group": "Messages",
+      "pages": [
+        "api-reference/create-thread",
+        "api-reference/list-messages",
+        "api-reference/create-message",
+        "api-reference/create-dm"
+      ]
+    },
+    {
+      "group": "Members",
+      "pages": ["api-reference/list-members"]
+    }
+  ],
+  "footerSocials": {
+    "x": "https://x.com/trycampsite",
+    "linkedin": "https://www.campsite.com/follow/linkedin",
+    "github": "https://www.campsite.com/follow/github"
+  },
+  "api": {
+    "playground": {
+      "mode": "hide"
+    }
+  },
+  "openapi": "/api-reference/openapi_schema.json"
+}

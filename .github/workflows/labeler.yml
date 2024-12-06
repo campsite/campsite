@@ -1,0 +1,23 @@
+name: Pull Request Labeler
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/labeler.yml'
+      - 'api/**'
+
+jobs:
+  labeler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtain a GitHub App Installation Access Token
+        id: githubAppAuth
+        run: |
+          TOKEN="$(npx obtain-github-app-installation-access-token ci ${{ secrets.LABELER_APP_CREDENTIALS_TOKEN }})"
+          echo "::add-mask::$TOKEN"
+          echo "::set-output name=token::$TOKEN"
+      - name: Migrations
+        uses: actions/labeler@v4
+        with:
+          configuration-path: ".github/labeler/migrations.yml"
+          repo-token: "${{ steps.githubAppAuth.outputs.token }}"

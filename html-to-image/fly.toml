@@ -1,0 +1,24 @@
+# fly.toml app configuration file generated for html-to-image on 2023-07-05T16:34:55-04:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "html-to-image"
+primary_region = "iad"
+kill_timeout = 60
+
+[env]
+  PORT = "9222"
+  NODE_ENV = "production"
+
+[experimental]
+  allowed_public_ports = []
+  auto_rollback = true
+
+[[services]]
+  internal_port = 9222
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]

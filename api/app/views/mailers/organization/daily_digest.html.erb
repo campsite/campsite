@@ -1,0 +1,31 @@
+<table class="w-full p-0 m-0" border="0" cellpadding="0" cellspacing="0">
+  <tr><td align="left" valign="top">
+    <%= render 'mailers/components/avatar', avatar_url: @organization.avatar_url(size: 40), href: @organization.url, name: @organization.name, size: 40, class_name: "rounded" %>
+  </td></tr>
+  <tr><td align="left" valign="top" class="pt-6">
+    Here’s everything you may have missed on Campsite.
+  </td></tr>
+  <% if @posts.size > 1 %>
+  <tr><td align="center" valign="top" class="pt-6">
+    <div class="separator" />
+  </td></tr>
+  <tr><td align="left" valign="top" class="pt-6 text-sm text-secondary">
+    <%= Time.current.strftime("%B %d, %Y") %>
+  </td></tr>
+  <tr><td align="left" valign="center" class="pt-4">
+    <%= render 'mailers/components/facepile', users: @posters, organization: @organization %>
+  </td></tr>
+  <tr><td align="left" valign="top" class="pt-4 text-sm text-secondary">
+    <%= @post_count_byline %>
+  </td></tr>
+  <tr><td align="center" valign="top" class="pt-6">
+    <div class="separator" />
+  </td></tr>
+  <% end %>
+  <% @posts.first(20).each do |post| %>
+  <tr><td align="left" valign="top" class="pt-6">
+    <%= render 'mailers/components/post', post: post %>
+  </td></tr>
+  <% end %>
+
+</table>

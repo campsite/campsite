@@ -1,0 +1,28 @@
+{
+  "name": "@campsite/sanity-studio",
+  "version": "1.0.0",
+  "private": true,
+  "main": "package.json",
+  "scripts": {
+    "build": "sanity build",
+    "deploy": "sanity deploy",
+    "deploy-graphql": "sanity graphql deploy",
+    "dev": "sanity dev",
+    "start": "sanity start"
+  },
+  "dependencies": {
+    "@sanity/vision": "catalog:",
+    "easymde": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "sanity": "catalog:",
+    "sanity-plugin-markdown": "catalog:",
+    "styled-components": "^6.1.8"
+  },
+  "devDependencies": {
+    "@campsite/eslint-config": "workspace:*",
+    "@sanity/eslint-config-studio": "catalog:",
+    "@types/react": "catalog:",
+    "typescript": "catalog:"
+  }
+}

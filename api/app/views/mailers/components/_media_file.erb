@@ -1,0 +1,11 @@
+<% if file.gif? %>
+  <img src="<%= file.url %>" class="block object-contain w-auto max-h-[500px]">
+<% end %>
+
+<% if file.image? && !file.gif? %>
+  <img src="<%= file.image_urls.email_url %>" class="block object-contain w-auto max-h-[500px]">
+<% end %>
+
+<% if file.previewable? %>
+  <img src="<%= file.resize_preview_url(600) %>" class="block object-contain w-auto max-h-[500px]">
+<% end %>

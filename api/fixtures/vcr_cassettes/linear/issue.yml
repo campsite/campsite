@@ -1,0 +1,81 @@
+---
+http_interactions:
+  - request:
+      method: post
+      uri: https://api.linear.app/graphql
+      body:
+        encoding: UTF-8
+        string: '{"query":"\n        query GetIssue {\n          issue(\n            id:
+          \"CAM-8735\",\n          ) {\n            identifier\n            description\n            state
+          {\n              id\n              color\n              name\n              type\n            }\n          }\n        }\n      "}'
+      headers:
+        Content-type:
+          - application/json
+        Authorization:
+          - '<LINEAR_TOKEN>'
+        User-Agent:
+          - Faraday v2.9.0
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        date:
+          - Sat, 13 Jul 2024 00:00:28 GMT
+        content-type:
+          - application/json; charset=utf-8
+        transfer-encoding:
+          - chunked
+        connection:
+          - keep-alive
+        cf-ray:
+          - 8a24fe318c299645-SJC
+        cf-cache-status:
+          - DYNAMIC
+        cache-control:
+          - private, no-cache, no-store, must-revalidate
+        etag:
+          - W/"189-vt1J85dG8NSmFrWl6YhmCEnaaYQ"
+        set-cookie:
+          - uploadsSig:73c413df-77d6-4a6b-a237-b6ac41a753d2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyQWNjb3VudElkIjoiNzNjNDEzZGYtNzdkNi00YTZiLWEyMzctYjZhYzQxYTc1M2QyIiwib3JnYW5pemF0aW9uSWRzIjpbImRlODY0NzcyLTJlZjUtNGZmNi1iZWE2LTgyYzkxY2VjMDViMyJdLCJpYXQiOjE3MjA4Mjg4MjgsImV4cCI6MTcyMTQzMzYyOH0.GxeLeMX5tC2CwuTXtiiFxpEFepp2p1rFu1gmJaPCDAU;
+            Domain=.linear.app; HttpOnly; Max-Age=604800; SameSite=None; Secure, __cf_bm=nzqq2Gh2Idpd0IeUAqY3Pa8bC4fQGDyQa6D9Sy2gbQE-1720828828-1.0.1.1-FflRiwFXRnm.1P7UhYhRQT.aUfAO62Pwzy93ei6.0NmhYfIp3Gq_UV3J31pafFvKJCNjdDPcn1VkSrBixG2Z3Q;
+            path=/; expires=Sat, 13-Jul-24 00:30:28 GMT; domain=.linear.app; HttpOnly;
+            Secure; SameSite=None, _cfuvid=N5V5Vi3yw.hhb9w5EhjumgUL23bgIOEE15emOSKCOZQ-1720828828780-0.0.1.1-604800000;
+            path=/; domain=.linear.app; HttpOnly; Secure; SameSite=None
+        via:
+          - 1.1 google
+        alt-svc:
+          - h3=":443"; ma=86400
+        x-complexity:
+          - '3'
+        x-ratelimit-complexity-limit:
+          - '1000000'
+        x-ratelimit-complexity-remaining:
+          - '999997'
+        x-ratelimit-complexity-reset:
+          - '1720832428690'
+        x-ratelimit-requests-limit:
+          - '1200'
+        x-ratelimit-requests-remaining:
+          - '1199'
+        x-ratelimit-requests-reset:
+          - '1720832428690'
+        x-request-id:
+          - 8a24fe32e6f79645-SJC
+        vary:
+          - Accept-Encoding
+        server:
+          - cloudflare
+        content-encoding:
+          - gzip
+      body:
+        encoding: UTF-8
+        string: '{"data":{"issue":{"identifier":"CAM-8735","title":"hello world","description":"If someone
+          mentions a Campsite URL in a Linear comment and that Campsite organization
+          has an active Linear integration, we should create a backlink for that post
+          or comment. \"Mentioned in a comment on \\[issue title\\]\"","state":{"id":"6209ad38-272d-4ae4-9c0a-43d785b2f75b","color":"#f2c94c","name":"In
+          Progress","type":"started"}}}}
+
+          '
+    recorded_at: Sat, 13 Jul 2024 00:00:28 GMT
+recorded_with: VCR 6.1.0

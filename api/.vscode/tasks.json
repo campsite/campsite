@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "rails test (current file)",
+      "type": "shell",
+      "command": "bin/editor-test ${file}",
+      "problemMatcher": [],
+      "presentation": {
+        "clear": true
+      }
+    },
+    {
+      "label": "repeat last test",
+      "type": "shell",
+      "command": "bin/editor-test run-last",
+      "problemMatcher": [],
+      "presentation": {
+        "clear": true
+      }
+    }
+  ]
+}

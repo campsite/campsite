@@ -1,0 +1,63 @@
+<%
+const { routeInfo, utils } = it;
+const {
+  operationId,
+  method,
+  route,
+  moduleName,
+  responsesTypes,
+  description,
+  tags,
+  summary,
+  pathArgs,
+} = routeInfo;
+const { _, fmtToJSDocLine, require } = utils;
+
+const methodAliases = {
+  get: (pathName, hasPathInserts) =>
+    _.camelCase(`${pathName}_${hasPathInserts ? "detail" : "list"}`),
+  post: (pathName, hasPathInserts) => _.camelCase(`${pathName}_create`),
+  put: (pathName, hasPathInserts) => _.camelCase(`${pathName}_update`),
+  patch: (pathName, hasPathInserts) => _.camelCase(`${pathName}_partial_update`),
+  delete: (pathName, hasPathInserts) => _.camelCase(`${pathName}_delete`),
+};
+
+const createOperationIdFromRoute = (method, route, moduleName) => {
+  const lowerModuleName = moduleName.toLowerCase();
+  const suffix = route.startsWith("/v2/") ? "V2" : "";
+
+  const removeUnnecessaryRouteSegments = (route) => {
+    if (route.startsWith("/v2/")) {
+      return route.replace("/v2", "");
+    } else if (route.startsWith("/v1/organizations") && route !== "/v1/organizations") {
+      return route.replace("/v1/organizations", "");
+    } else if (route.startsWith("/v1/users") && route !== "/v1/users") {
+      return route.replace("/v1/users", "");
+    } else {
+      return route.replace("/v1", "");
+    }
+  }
+
+  const parts = removeUnnecessaryRouteSegments(route.toLowerCase())
+    .split("/")
+    // strip module name and params from the route
+    .filter((part, idx, arr) => {
+      return part.length > 0 && (idx == arr.length - 1 || !part.startsWith("{"));
+    })
+    .map((part) => {
+      if (part.startsWith("{")) {
+        const param = part.replace("{", "").replace("}", "");
+        if (lowerModuleName.endsWith(`by${param}`)) return;
+
+        return `by_${param}`;
+      }
+      return part;
+    })
+  return _.camelCase((parts.length > 0
+      ? [method].concat(parts)
+      : [method, "index"]
+    ).join("_") + suffix);
+};
+
+return createOperationIdFromRoute(method, route, moduleName);
+%>

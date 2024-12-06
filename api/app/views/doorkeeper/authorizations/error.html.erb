@@ -1,0 +1,5 @@
+<h1 class="text-lg font-bold text-center dark:text-white">Error</h1>
+
+<div class="text-center">
+  <%= (respond_to?(:error_response) ? error_response : @pre_auth.error_response).body[:error_description] %>
+</div>

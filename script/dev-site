@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Start the pnpm command in the background
+pnpm dev -F @campsite/site --no-cache &
+# Get its PID
+PNPM_PID=$!
+
+# Define cleanup procedure
+cleanup() {
+    echo "Cleaning up."
+    kill $PNPM_PID
+    exit $?
+}
+
+# Trap CTRL+C
+trap cleanup SIGINT
+
+# Give the server a chance to start
+sleep 1
+
+# Open the default browser to the specified URL
+open "http://campsite.test:3003"
+
+# Wait for pnpm command to stop
+wait $PNPM_PID

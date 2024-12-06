@@ -1,0 +1,19 @@
+<div class="mb-4">
+  <%= render 'mailers/components/avatar', avatar_url: @organization.avatar_url(size: 40), href: "#{@organization.url}", name: @organization.name, size: 40, class_name: "rounded" %>
+</div>
+
+<div class="mb-6">
+  Your organization has grown since we last charged you. Next week, on <%= @scheduled_subscription_invoice.scheduled_for.strftime("%A, %B %e") %>, we'll charge you a prorated amount for your new members through the end of your billing cycle. Currently, we expect that charge to be <%= @formatted_proration_amount %>.
+</div>
+
+<div class="mb-6">
+  You can manage your organization's active members, payment method, and plan on the <a class="text-link" href="<%= @organization.billing_settings_url %>" target="_blank">billing settings page</a>.
+</div>
+
+<div class="mb-6">
+  If you have any questions or feedback, just reply to this email and we'll respond soon.
+</div>
+
+<div class="pt-6">
+  <div class="separator" />
+</div>

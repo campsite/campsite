@@ -1,0 +1,97 @@
+name: Generate client types
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/gen-client.yml'
+      - 'api/app/controllers/**'
+      - 'api/app/serializers/**'
+      - 'api/config/routes.rb'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  RAILS_ENV: test
+  RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+
+jobs:
+  test:
+    name: gen-client
+    runs-on:
+      labels: warp-ubuntu-latest-x64-8x
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: GitHub App token
+        id: gen-token
+        uses: tibdex/github-app-token@v2.1.0
+        with:
+          app_id: 290357
+          private_key: ${{ secrets.DEPLOYBOT_TOKEN }}
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.gen-token.outputs.token }}
+
+      - name: Cache Ruby gems
+        uses: actions/cache@v4
+        with:
+          path: api/vendor/bundle
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gems-
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          working-directory: api
+          bundler-cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.0.0
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - run: pnpm config set "@tiptap-pro:registry" https://registry.tiptap.dev/
+      - run: pnpm config set "//registry.tiptap.dev/:_authToken" ${{ secrets.TIPTAP_PRIVATE_REGISTRY_KEY }}
+      - run: pnpm install
+
+      - run: pnpm config set "@tiptap-pro:registry" https://registry.tiptap.dev/
+      - run: pnpm config set "//registry.tiptap.dev/:_authToken" ${{ secrets.TIPTAP_PRIVATE_REGISTRY_KEY }}
+      - run: pnpm install
+
+      - name: Generate API client types
+        run: script/gen-client
+
+      - name: Validate OpenAPI schema
+        uses: swaggerexpert/swagger-editor-validate@v1
+        with:
+          definition-file: docs/api-reference/openapi_schema.json
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 🤖 autofix API client types
+          branch: ${{ github.head_ref }}
+          disable_globbing: true
+          file_pattern: >
+            docs/api-reference/openapi_schema.json
+            packages/types/*

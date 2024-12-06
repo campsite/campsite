@@ -1,0 +1,39 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://localhost:3002/html_to_slack
+    body:
+      encoding: UTF-8
+      string: '{"html":"\u003cb\u003ehey\u003c/b\u003e"}'
+    headers:
+      User-Agent:
+      - Faraday v2.7.5
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer invalid-token
+  response:
+    status:
+      code: 401
+      message: Unauthorized
+    headers:
+      x-powered-by:
+      - Express
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '27'
+      etag:
+      - W/"1b-vdbCRHEl3J3b81u/YMssBiTkS2w"
+      date:
+      - Fri, 29 Mar 2024 00:32:50 GMT
+      connection:
+      - keep-alive
+      keep-alive:
+      - timeout=5
+    body:
+      encoding: UTF-8
+      string: '{"message":"invalid token"}'
+  recorded_at: Fri, 29 Mar 2024 00:32:50 GMT
+recorded_with: VCR 6.1.0

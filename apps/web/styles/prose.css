@@ -1,0 +1,373 @@
+@tailwind components;
+
+@layer components {
+  /* 
+  Any base-element override should be appended with :not(:where([class~='not-prose'] *) to support disabling prose
+  styles when embedded with .not-prose. The ":where" and "class~" selectors are used to avoid specificity conflicts.
+  */
+  .prose {
+    @apply text-primary max-w-full break-words leading-normal;
+    word-break: break-word;
+    word-wrap: break-word;
+
+    p:not(:where([class~='not-prose'] *)),
+    pre:not(:where([class~='not-prose'] *)),
+    ul:not(:where([class~='not-prose'] *)),
+    ol:not(:where([class~='not-prose'] *)),
+    blockquote:not(:where([class~='not-prose'] *)),
+    /* Covers all custom blocks or wrapping containers */
+    > div:not(:where([class~='not-prose'] *)) {
+      @apply my-[1em];
+    }
+
+    /* Override strong headers for consistent styling when bolded */
+    :where(h1, h2, h3, h1 strong, h2 strong, h3 strong):not(:where([class~='not-prose']) *) {
+      @apply text-primary mb-2.5 mt-0 font-semibold;
+
+      a.prose-link:not(.mention) {
+        @apply font-semibold;
+      }
+    }
+
+    h1:not(:where([class~='not-prose']) *) {
+      @apply text-xl;
+    }
+
+    h2:not(:where([class~='not-prose']) *) {
+      @apply text-lg;
+    }
+
+    h3:not(:where([class~='not-prose']) *) {
+      @apply text-base;
+    }
+
+    /* Code blocks */
+    pre:not(:where([class~='not-prose']) *) {
+      @apply bg-tertiary border p-4 dark:border-neutral-700 dark:bg-neutral-800;
+
+      code {
+        @apply text-primary whitespace-pre border-none bg-transparent p-0 dark:bg-transparent;
+      }
+    }
+
+    code:not(:where([class~='not-prose']) *) {
+      @apply text-primary bg-tertiary whitespace-pre-wrap rounded border px-1 py-px font-medium dark:border-neutral-700 dark:bg-neutral-800;
+
+      /* Hide tildes */
+      &:before,
+      &:after {
+        @apply hidden;
+      }
+    }
+
+    blockquote:not(:where([class~='not-prose']) *) {
+      @apply text-secondary border-primary font-normal;
+    }
+
+    blockquote p:first-of-type:not(:where([class~='not-prose']) *) {
+      /* Hide surrounding quotes added by Tailwind typography */
+      &:before,
+      &:after {
+        @apply hidden;
+      }
+    }
+
+    blockquote blockquote:not(:where([class~='not-prose']) *) {
+      /* Erase margins so nested blockquotes are tighter */
+      @apply my-0;
+    }
+
+    a.prose-link:not(.mention) {
+      @apply font-normal text-blue-500 hover:underline;
+    }
+
+    .mention {
+      @apply text-primary cursor-pointer font-semibold;
+    }
+
+    :where(ul, ol):not(:where([class~='not-prose']) *) {
+      /* Erase margins in nested lists */
+      ul,
+      ol {
+        @apply my-0;
+      }
+
+      p {
+        @apply m-0;
+      }
+    }
+
+    ul.task-list {
+      @apply list-none;
+
+      li.task-item {
+        @apply relative;
+
+        input[type='checkbox'] {
+          @apply bg-elevated dark:bg-quaternary -ml-1.5 mr-3 mt-0.5 h-5 w-5 max-w-xs cursor-pointer rounded border border-black/[0.12] bg-clip-border align-top checked:border-blue-500 checked:bg-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:ring-offset-0 disabled:cursor-default dark:border-white/[0.08] dark:checked:bg-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-600/20;
+          @apply absolute -left-5 top-0;
+        }
+
+        div:first-of-type:not(:where([class~='not-prose']) *) {
+          /* min width in order to show blinking cursor on empty task item */
+          @apply mb-0 min-w-[1em];
+        }
+
+        /* targeting the <p> avoids applying line-through to nested items */
+        &[data-checked='true'] > div > p {
+          @apply text-quaternary line-through decoration-2;
+
+          & > code {
+            display: inline-block; /* clear line-through style from parent */
+            @apply text-quaternary;
+          }
+        }
+
+        *:last-child:not(:where([class~='not-prose'] *)) {
+          /* override default TW prose styles that add extra mb to the last element of a list */
+          @apply mb-0;
+        }
+      }
+    }
+
+    .task-list-disabled {
+      @apply cursor-default outline-none focus:border-black/[0.12] focus:ring-0 dark:focus:border-white/[0.08];
+    }
+
+    strong:not(:where([class~='not-prose']) *) {
+      @apply text-inherit;
+    }
+
+    div[data-hr-wrapper] {
+      @apply py-2;
+
+      hr {
+        @apply my-0 border-t-2;
+      }
+
+      &.ProseMirror-selectednode hr {
+        @apply border-blue-500;
+      }
+    }
+
+    .note-comment {
+      @apply cursor-pointer border-b-2 border-yellow-300 bg-yellow-300/20 transition-colors dark:border-yellow-500;
+
+      &:hover {
+        @apply bg-yellow-300/50;
+      }
+    }
+
+    /* Add space above/below galleries at the edges to prevent focus outline clipping */
+    > .node-mediaGallery:first-child {
+      @apply mt-0;
+    }
+
+    > .node-mediaGallery:last-child {
+      @apply mb-1;
+    }
+
+    .collaboration-cursor__caret {
+      @apply relative -mx-px inline border-x;
+      word-break: normal;
+    }
+
+    @keyframes autohide-cursor {
+      to {
+        opacity: 0;
+      }
+    }
+
+    .collaboration-cursor__label {
+      @apply pointer-events-none absolute -left-px top-0 -translate-y-full select-none whitespace-nowrap rounded-md rounded-bl-none p-1 text-xs font-medium leading-none;
+      /* Peek cursor briefly when it moves */
+      animation: autohide-cursor 100ms ease-out 1500ms forwards;
+    }
+
+    .collaboration-cursor__caret:hover .collaboration-cursor__label {
+      @apply animate-none; /* cancel autohide */
+    }
+
+    /* Remove top margin from the first element except for custom blocks */
+    > :first-child:not(.not-prose) {
+      @apply mt-0;
+    }
+
+    /* Remove bottom margin from the last element except for custom blocks */
+    > :last-child:not(.not-prose) {
+      @apply mb-0;
+    }
+
+    &[data-reactions-only='true'] {
+      @apply text-4xl leading-none;
+
+      img[data-type='reaction'] {
+        @apply h-9 w-9;
+      }
+    }
+
+    &.note {
+      /* notes should default to 16px font size; posts default to 15px */
+      font-size: 1rem;
+
+      :where(h1, h2, h3, h4, h5, h6, h1 strong, h2 strong, h3 strong, h4 strong, h5 strong, h6 strong):not(
+          :where([class~='not-prose']) *
+        ) {
+        @apply font-bold leading-[1.3];
+      }
+
+      h1:not(:where([class~='not-prose']) *) {
+        @apply mb-2 mt-10 text-[clamp(1.575rem,_4vw,_1.875rem)];
+      }
+
+      h2:not(:where([class~='not-prose']) *) {
+        @apply mb-2 mt-8 text-[clamp(1.275rem,_4vw,_1.575rem)];
+      }
+
+      h3:not(:where([class~='not-prose']) *) {
+        @apply mb-1.5 mt-6 text-[clamp(1.175rem,_4vw,_1.275rem)];
+      }
+
+      &:not(.dragging) .ProseMirror-selectednode {
+        outline: none !important;
+        box-shadow: none;
+      }
+    }
+  }
+
+  /* 
+  NOTE: :not(:where([class~='not-prose']) *) is not applied under the assumption that chat does not render non-prose 
+  */
+  .chat-prose {
+    p {
+      word-break: break-word;
+      word-wrap: break-word;
+    }
+
+    .mention {
+      @apply cursor-pointer font-semibold;
+    }
+
+    a.prose-link:not(.mention) {
+      @apply underline;
+    }
+
+    code {
+      @apply whitespace-pre-wrap rounded-[3px] px-1 py-0.5 text-[15px] font-medium tracking-tight lg:text-[13px];
+    }
+
+    /* Respect empty paragraph line breaks in chat messages */
+    > p:empty::before {
+      content: '\a0';
+    }
+
+    /* code rendered in a gray bubble from the other person */
+    &:not(.viewer-chat-prose) code {
+      @apply bg-black/[0.08] dark:bg-white/10;
+    }
+
+    /* code rendered in a blue bubble sent by the current viewer */
+    &.viewer-chat-prose code {
+      @apply bg-blue-900/25;
+    }
+
+    /* code rendered in a reply preview bubble */
+    &.reply-prose code {
+      @apply inline-block py-px text-[11px] ring-0;
+    }
+
+    &[data-reactions-only='false'] {
+      @apply text-base lg:text-sm;
+
+      img[data-type='reaction'] {
+        @apply h-[15px] w-[15px];
+      }
+    }
+
+    &[data-reactions-only='true'] {
+      @apply text-5xl leading-none;
+
+      img[data-type='reaction'] {
+        @apply h-12 w-12;
+      }
+    }
+  }
+
+  /* Shared styles for .prose and .chat-prose */
+  .prose,
+  .chat-prose {
+    a:where(:not([class~='not-prose']) *) {
+      @apply break-words font-normal no-underline;
+      /*
+        Need these manually to prevent long links from breaking a container boundary
+        Ref https://css-tricks.com/snippets/css/prevent-long-urls-from-breaking-out-of-container/
+      */
+      word-break: break-word;
+      word-wrap: break-word;
+    }
+
+    a {
+      font-feature-settings: 'calt' 0;
+    }
+
+    img[data-type='reaction'] {
+      @apply my-0 inline-block h-4 w-4 cursor-text object-contain align-text-top [-webkit-touch-callout:_none];
+    }
+
+    span[data-type='reaction'] {
+      @apply font-[emoji] leading-none;
+    }
+
+    &.truncate-links a[data-truncated] span {
+      @apply hidden;
+    }
+  }
+}
+
+.drag-handle {
+  @apply pointer-events-none fixed cursor-grab opacity-0;
+
+  transition: opacity ease-in 0.1s;
+  border-radius: 0.25rem;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' style='fill: rgba(163, 163, 163, 1)'%3E%3Cpath d='M3,2 C2.44771525,2 2,1.55228475 2,1 C2,0.44771525 2.44771525,0 3,0 C3.55228475,0 4,0.44771525 4,1 C4,1.55228475 3.55228475,2 3,2 Z M3,6 C2.44771525,6 2,5.55228475 2,5 C2,4.44771525 2.44771525,4 3,4 C3.55228475,4 4,4.44771525 4,5 C4,5.55228475 3.55228475,6 3,6 Z M3,10 C2.44771525,10 2,9.55228475 2,9 C2,8.44771525 2.44771525,8 3,8 C3.55228475,8 4,8.44771525 4,9 C4,9.55228475 3.55228475,10 3,10 Z M7,2 C6.44771525,2 6,1.55228475 6,1 C6,0.44771525 6.44771525,0 7,0 C7.55228475,0 8,0.44771525 8,1 C8,1.55228475 7.55228475,2 7,2 Z M7,6 C6.44771525,6 6,5.55228475 6,5 C6,4.44771525 6.44771525,4 7,4 C7.55228475,4 8,4.44771525 8,5 C8,5.55228475 7.55228475,6 7,6 Z M7,10 C6.44771525,10 6,9.55228475 6,9 C6,8.44771525 6.44771525,8 7,8 C7.55228475,8 8,8.44771525 8,9 C8,9.55228475 7.55228475,10 7,10 Z'%3E%3C/path%3E%3C/svg%3E");
+  background-size: calc(0.5em + 0.375rem) calc(0.5em + 0.375rem);
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 1.2rem;
+  height: 1.5rem;
+
+  &:hover {
+    @apply bg-gray-100 dark:bg-gray-800;
+    transition: background-color 0.1s;
+  }
+
+  &.hide {
+    @apply pointer-events-none hidden;
+  }
+
+  .ProseMirror-focused + & {
+    @apply pointer-events-auto;
+  }
+
+  *:has(> .ProseMirror-focused):hover > &,
+  &:active {
+    @apply pointer-events-auto opacity-100;
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    @apply pointer-events-none hidden;
+  }
+}
+
+.ProseMirror:has(> *:only-child:not(ul):not(ol)) + .drag-handle {
+  @apply hidden;
+}
+
+.drag-node {
+  @apply absolute -top-[9999px];
+}
+
+.dark .drag-handle {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' style='fill: rgba(82, 82, 82, 1)'%3E%3Cpath d='M3,2 C2.44771525,2 2,1.55228475 2,1 C2,0.44771525 2.44771525,0 3,0 C3.55228475,0 4,0.44771525 4,1 C4,1.55228475 3.55228475,2 3,2 Z M3,6 C2.44771525,6 2,5.55228475 2,5 C2,4.44771525 2.44771525,4 3,4 C3.55228475,4 4,4.44771525 4,5 C4,5.55228475 3.55228475,6 3,6 Z M3,10 C2.44771525,10 2,9.55228475 2,9 C2,8.44771525 2.44771525,8 3,8 C3.55228475,8 4,8.44771525 4,9 C4,9.55228475 3.55228475,10 3,10 Z M7,2 C6.44771525,2 6,1.55228475 6,1 C6,0.44771525 6.44771525,0 7,0 C7.55228475,0 8,0.44771525 8,1 C8,1.55228475 7.55228475,2 7,2 Z M7,6 C6.44771525,6 6,5.55228475 6,5 C6,4.44771525 6.44771525,4 7,4 C7.55228475,4 8,4.44771525 8,5 C8,5.55228475 7.55228475,6 7,6 Z M7,10 C6.44771525,10 6,9.55228475 6,9 C6,8.44771525 6.44771525,8 7,8 C7.55228475,8 8,8.44771525 8,9 C8,9.55228475 7.55228475,10 7,10 Z'%3E%3C/path%3E%3C/svg%3E");
+}

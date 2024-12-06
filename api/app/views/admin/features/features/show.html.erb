@@ -1,0 +1,223 @@
+<% @page_title = "#{feature.name} - Features - Campsite" %>
+
+<h1 class="page-title mb-6"><%= feature.name %></h1>
+
+<% if feature.enabled? %>
+  <div class="notice mb-6">
+    <%= feature.name %> is fully enabled for everyone
+  </div>
+
+  <div class="mt-12">
+    <%=
+      button_to(
+        "Fully disable",
+        feature_enablement_path(feature.name),
+        class: "btn btn-secondary mb-6",
+        method: :delete,
+        data: { confirm: Rails.env.production? ? "You are in PRODUCTION. Are you sure you want to fully disable the #{feature.name} feature?" : nil }
+      )
+    %>
+
+    <%=
+      button_to(
+        "Delete",
+        feature_path(feature.name),
+        class: "btn btn-danger",
+        method: :delete,
+        data: { confirm: Rails.env.production? ? "You are in PRODUCTION. Are you sure you want to delete the #{feature.name} feature?" : nil }
+      )
+    %>
+  </div>
+<% else %>
+  <% if notice %>
+    <div class="notice mb-6">
+      <%= notice %>
+    </div>
+  <% end %>
+
+  <% if alert %>
+    <div class="error mb-6">
+      <%= alert %>
+    </div>
+  <% end %>
+
+  <div class="w-full">
+    <h2 class="text-lg md:text-xl text-primary font-medium mb-3">Enabled users</h2>
+
+    <div class="mb-4">
+      <% if enabled_users.any? %>
+        <% enabled_users.each do |user| %>
+          <div class="flex items-center mt-2 text-primary">
+            <% disable_user_path = user.is_a?(Admin::Features::NullUser) ? feature_actor_path(feature.name, user.flipper_id) : feature_user_path(feature.name, user) %>
+            <%= button_to disable_user_path, method: :delete, class: "mr-1 flex items-center" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            <% end %>
+            <%= user.email %>
+          </div>
+        <% end %>
+        </ul>
+      <% else %>
+        <div class="text-sm text-secondary">Not enabled for any users.</div>
+      <% end %>
+    </div>
+
+    <%= form_with url: feature_users_path(feature.name) do |f| %>
+      <div class="form-group mb-2">
+        <%= f.label(:email, "Add user by email", class: "mb-1") %>
+          <auto-complete src="<%= feature_user_search_path(feature.name) %>" for="users-popup">
+            <%= f.search_field(:email, class: "autocomplete-input", required: true) %>
+            <ul id="users-popup"></ul>
+          </auto-complete>
+      </div>
+      <%= f.submit("Enable", class: "btn btn-secondary") %>
+    <% end %>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="w-full">
+    <h2 class="text-lg md:text-xl text-primary font-medium mb-3">Enabled organizations</h2>
+
+    <div class="mb-4">
+      <% if enabled_orgs.any? %>
+        <% enabled_orgs.each do |org| %>
+          <div class="flex items-center mt-2 text-primary">
+            <% disable_org_path = org.is_a?(Admin::Features::NullOrganization) ? feature_actor_path(feature.name, org.flipper_id) : feature_organization_path(feature.name, org) %>
+            <%= button_to disable_org_path, method: :delete, class: "mr-1 flex items-center" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            <% end %>
+            <%= org.name %>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="text-sm text-secondary">Not enabled for any organizations.</div>
+      <% end %>
+    </div>
+
+    <%= form_with url: feature_organizations_path(feature.name) do |f| %>
+      <div class="form-group mb-2">
+        <%= f.label(:slug, "Add organization by slug", class: "mb-1") %>
+        <auto-complete src="<%= feature_organization_search_path(feature.name) %>" for="orgs-popup">
+          <%= f.search_field(:slug, class: "autocomplete-input", required: true) %>
+          <ul id="orgs-popup"></ul>
+        </auto-complete>
+      </div>
+      <%= f.submit("Enable", class: "btn btn-secondary") %>
+    <% end %>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="w-full mb-6">
+    <h2 class="text-lg md:text-xl text-primary font-medium mb-3">Enabled groups</h2>
+
+    <div class="mb-4">
+      <% if enabled_groups.any? %>
+        <% enabled_groups.each do |group| %>
+          <div class="flex items-center mt-2 text-primary">
+            <%= button_to feature_group_path(feature.name, group.name), method: :delete, class: "mr-1 flex items-center" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            <% end %>
+            <%= group.name %>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="text-sm text-secondary">Not enabled for any groups.</div>
+      <% end %>
+    </div>
+
+    <% if enablable_groups.any? %>
+      <%= form_with url: feature_groups_path(feature.name) do |f| %>
+        <div class="form-group mb-2">
+          <%= label(:name, "Add group by name") %>
+          <%= f.select :name, enablable_groups.map(&:name) %>
+        </div>
+        <%= f.submit("Enable", class: "btn btn-secondary") %>
+      <% end %>
+    <% else %>
+      <div class="text-sm text-secondary">No more enablable groups.</div>
+    <% end %>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="mt-12">
+    <%=
+      button_to(
+        "Fully enable",
+        feature_enablement_path(feature.name),
+        class: "btn btn-secondary mb-6",
+        data: { confirm: Rails.env.production? ? "You are in PRODUCTION. Are you sure you want to fully enable the #{feature.name} feature?" : nil }
+      )
+    %>
+
+    <%=
+      button_to(
+        "Fully disable",
+        feature_enablement_path(feature.name),
+        class: "btn btn-secondary",
+        method: :delete,
+        data: { confirm: Rails.env.production? ? "You are in PRODUCTION. Are you sure you want to fully disable the #{feature.name} feature?" : nil }
+      )
+    %>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="w-full mb-6">
+    <h2 class="text-lg md:text-xl text-primary font-medium mb-3">Delete feature</h2>
+    <%=
+      button_to(
+        "Delete",
+        feature_path(feature.name),
+        class: "btn btn-danger",
+        method: :delete,
+        data: { confirm: Rails.env.production? ? "You are in PRODUCTION. Are you sure you want to delete the #{feature.name} feature?" : nil }
+      )
+    %>
+  </div>
+<% end %>
+
+<div class="divider"></div>
+
+<div class="w-full mb-6">
+  <h2 class="text-lg md:text-xl text-primary font-medium mb-3">History</h2>
+  <ul class="flex flex-col gap-4">
+    <% logs.each_with_index do |log, i| %>
+      <li class="flex gap-2">
+        <div><%= log.accessory %></div>
+        <div class="flex flex-col gap-0.5">
+          <div>
+            <span class="whitespace-nowrap"><%= log.user_display_name %></span>
+            <%= log.action %>
+            the <span class="whitespace-nowrap"><%= log.feature_name %></span> feature flag
+            <% if log.target_display_name %>
+              for <span class="whitespace-nowrap"><%= log.target_display_name %></span>
+            <% end %>
+          </div>
+          <div class="flex gap-1 text-sm text-secondary">
+            <relative-time datetime="<%= log.created_at.iso8601 %>"><%= l(log.created_at) %></relative-time>
+            <% unless i == 0 %>
+              ∙
+              <%=
+                button_to(
+                  "Rollback to here",
+                  feature_log_rollback_path(feature.name, log.id),
+                  class: "text-link hover:underline",
+                  method: :post,
+                  data: { confirm: Rails.env.production? ? "You are in PRODUCTION. Are you sure you want to rollback to this point in time?" : nil }
+                )
+              %>
+            <% end %>
+          </div>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+</div>

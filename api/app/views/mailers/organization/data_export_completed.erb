@@ -1,0 +1,9 @@
+<div class="mb-6">
+  Your data export is ready to download. This link will be available for 2 days.
+</div>
+
+<div class="mb-6">
+  <%= render 'mailers/components/cta_button', url: @data_export.zip_url, text: "Download" %>
+</div>
+
+<div class="separator" />

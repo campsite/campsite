@@ -1,0 +1,92 @@
+#!/bin/sh
+
+set -e
+
+RUBY_VERSION=$(cat .ruby-version)
+
+# Returns true(0) if OSX.
+# Standard usage:
+#    if is_osx ; then
+#        do_something
+#    fi
+is_osx() {
+  if [[ "${OSTYPE}" == darwin* ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+if is_osx; then
+  if ! command -v brew &> /dev/null
+  then
+      echo "\nInstalling homebrew...\n============================================================"
+      # Install Homebrew
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  else
+      echo "\nUpdating homebrew...\n============================================================"
+      brew update
+  fi
+
+  brew bundle
+  brew services
+
+  echo "\nInstalling chruby...\n============================================================"
+  source $(brew --prefix)/opt/chruby/share/chruby/chruby.sh && chruby
+
+  for i in .zprofile .bash_profile .profile .config/fish/config.fish; do
+    if [ -f "$HOME/$i" ]; then
+      FILE="$HOME/$i"
+      echo "SETTING FILE TO $FILE"
+      break
+    fi
+  done
+  if [ -z "$FILE" ]; then
+    echo "Could not find a shell config file"
+    exit 1
+  fi
+
+  echo "\nAdding chruby configuration to $FILE...\n============================================================"
+  if [ -n "$(sed -e 's/#.*//' < "$FILE" | grep -wF "chruby.sh")" ]
+  then
+      echo "\033[1;32msource $(brew --prefix)/opt/chruby/share/chruby/chruby.sh is already added to $FILE.\033[0m"
+  else
+      if [ $FILE = "$HOME/.config/fish/config.fish" ]; then
+          echo 'status --is-interactive; and source (rbenv init -|psub)' >> $FILE
+      else
+          echo 'source $(brew --prefix)/opt/chruby/share/chruby/chruby.sh' >> $FILE
+          echo 'source $(brew --prefix)/opt/chruby/share/chruby/auto.sh' >> $FILE
+          echo 'chruby_auto' >> $FILE
+      fi
+      echo "\033[1;32mchruby configuration added to your profile.\033[0m"
+  fi
+else
+  echo "\nPlease make sure to have all dependencies and rbenv installed"
+  echo "\nOn Ubuntu 20.04, you can use the instructions at:\n"
+  echo "\nhttps://www.digitalocean.com/community/tutorials/how-to-install-ruby-on-rails-with-rbenv-on-ubuntu-20-04"
+  echo "\nYou also need to make sure to install automake, gmp, libffi, libtool, mysql, openssl & pkg-config"
+fi
+
+echo "\nInstalling Ruby $RUBY_VERSION...\n============================================================"
+if [ -n "$(source $(brew --prefix)/opt/chruby/share/chruby/chruby.sh && chruby | grep $RUBY_VERSION)" ] ; then
+    echo "\033[1;32mRuby $RUBY_VERSION already installed.\033[0m"
+else
+    ruby-install ruby $RUBY_VERSION -- --enable-shared --with-openssl-dir="$(brew --prefix openssl)"
+    source $(brew --prefix)/opt/chruby/share/chruby/chruby.sh && chruby $RUBY_VERSION
+    echo "\033[1;32mInstalled Ruby $RUBY_VERSION.\033[0m"
+fi
+
+echo "\nInstalling bundler and gems...\n============================================================"
+gem install bundler --no-document
+bundle config build.mysql2 --with-opt-dir=$(brew --prefix zstd)
+bundle install --local
+echo "\033[1;32mDone installing gems!\033[0m"
+
+echo "\nInstalling yarn dependendies...\n============================================================"
+yarn install --offline
+echo "\033[1;32mDone installing yarn deps!\033[0m"
+
+echo "\nAdding *campsite.com addresses to your /etc/hosts file...\n============================================================"
+script/hostnames
+
+echo "\n🎉 Finished bootstrapping!"

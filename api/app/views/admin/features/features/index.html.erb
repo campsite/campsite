@@ -1,0 +1,54 @@
+<% @page_title = "Features - Campsite" %>
+
+<h1 class="page-title mb-6">Features</h1>
+
+<% if notice %>
+  <div class="notice mb-6">
+    <%= notice %>
+  </div>
+<% end %>
+
+<% if alert %>
+  <div class="error mb-6">
+    <%= alert %>
+  </div>
+<% end %>
+
+<% if Flipper.features.any? %>
+  <ul class="mb-6">
+    <% Flipper.features.each do |feature| %>
+      <li class="mb-1">
+        <%= link_to(feature.name, feature_path(feature.name), class: "hover:underline text-link") %> <span class="text-gray-500">
+        <% if [:on, :conditional].include?(feature.state) %>
+          Enabled
+        <% end %>
+
+        <% if feature.groups.any? || feature.actors_value.any? %>
+          <span class="text-gray-400">for</span>
+        <% end %>
+        <% if feature.groups.any? %>
+          <%= feature.groups.map(&:name).to_sentence %>
+        <% end %>
+        <% if feature.groups.any? && feature.actors_value.any? %>
+          <span class="text-gray-400">and</span>
+        <% end %>
+        <% if feature.actors_value.any? %>
+          <%= pluralize feature.actors_value.count, "actor" %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% else%>
+  <div class="text-sm text-secondary mb-5 text-center">No features, yet!</div>
+<% end %>
+
+<%= form_with url: features_path do |f| %>
+  <div class="form-group mb-3">
+    <%= f.label(:name, "New feature name", class: "mb-1") %>
+    <%= f.text_field(:name, required: true, class: "mb-1") %>
+    <div class="text-xs text-secondary">
+      Name should be lower case and snake case.
+    </div>
+  </div>
+  <%= f.submit("Create", class: "btn btn-secondary") %>
+<% end %>

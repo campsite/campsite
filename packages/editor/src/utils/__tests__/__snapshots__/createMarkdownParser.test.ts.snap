@@ -1,0 +1,1361 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`createMarkdownParser > converts HTML blocks with markdown inside 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "content": [
+            {
+              "text": "Heading",
+              "type": "text",
+            },
+          ],
+          "type": "detailsSummary",
+        },
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "content": [
+                    {
+                      "content": [
+                        {
+                          "text": "List item",
+                          "type": "text",
+                        },
+                      ],
+                      "type": "paragraph",
+                    },
+                  ],
+                  "type": "listItem",
+                },
+                {
+                  "content": [
+                    {
+                      "content": [
+                        {
+                          "text": "List item",
+                          "type": "text",
+                        },
+                      ],
+                      "type": "paragraph",
+                    },
+                  ],
+                  "type": "listItem",
+                },
+              ],
+              "type": "bulletList",
+            },
+            {
+              "content": [
+                {
+                  "text": "This is some ",
+                  "type": "text",
+                },
+                {
+                  "marks": [
+                    {
+                      "type": "italic",
+                    },
+                  ],
+                  "text": "bold",
+                  "type": "text",
+                },
+                {
+                  "text": " text.",
+                  "type": "text",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "detailsContent",
+        },
+      ],
+      "type": "details",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > converts known HTML 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "This is ",
+          "type": "text",
+        },
+        {
+          "marks": [
+            {
+              "type": "bold",
+            },
+          ],
+          "text": "bold",
+          "type": "text",
+        },
+        {
+          "text": " and this is a mention ",
+          "type": "text",
+        },
+        {
+          "attrs": {
+            "id": "abcdefabcdef",
+            "label": "User Name",
+            "role": "member",
+            "username": "username",
+          },
+          "type": "mention",
+        },
+        {
+          "text": " and a member mention ",
+          "type": "text",
+        },
+        {
+          "attrs": {
+            "id": "abcdefabcdef",
+            "label": "User Name",
+            "role": "member",
+            "username": "username",
+          },
+          "type": "mention",
+        },
+        {
+          "text": ".",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > converts marks in HTML 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "This is ",
+          "type": "text",
+        },
+        {
+          "marks": [
+            {
+              "type": "bold",
+            },
+          ],
+          "text": "bold",
+          "type": "text",
+        },
+        {
+          "text": ".",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > converts self-closing HTML 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "Hey ",
+          "type": "text",
+        },
+        {
+          "attrs": {
+            "id": "abcdefabcdef",
+            "label": "User Name",
+            "role": "member",
+            "username": "username",
+          },
+          "type": "mention",
+        },
+        {
+          "text": ".",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > converts softbreaks to hardbreaks with markdown 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "Foo",
+          "type": "text",
+        },
+        {
+          "type": "hardBreak",
+        },
+        {
+          "text": "Bar",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > converts softbreaks to hardbreaks with note 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "Foo",
+          "type": "text",
+        },
+        {
+          "type": "hardBreak",
+        },
+        {
+          "text": "Bar",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > handles ending with supported HTML 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "Foo bar baz",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "attrs": {
+            "id": "abcdefabcdef",
+            "label": "User Name",
+            "role": "member",
+            "username": "username",
+          },
+          "type": "mention",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > handles supported closing tag with no open 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "Foo bar baz",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "</p>
+",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > handles supported closing tag with no open in middle of paragraph 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "Foo bar baz",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "</p>
+",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "Cat dog fish",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > handles supported opening tag with no close 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "Foo bar baz",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > handles task lists 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "attrs": {
+            "checked": false,
+          },
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "Task one",
+                  "type": "text",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "taskItem",
+        },
+        {
+          "attrs": {
+            "checked": true,
+          },
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "Task two",
+                  "type": "text",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "taskItem",
+        },
+      ],
+      "type": "taskList",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > handles unsupported closing tag with no open 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "Foo bar baz",
+          "type": "text",
+        },
+        {
+          "type": "hardBreak",
+        },
+        {
+          "text": "</prompt>",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > handles unsupported opening tag with no close 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "<prompt>
+Foo bar baz
+",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > handles unsupported self-closing tag 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "What should we do with this ?",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > ignores API mentions 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "Hey <@U123456> thanks for letting me know!",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > parses chat extensions 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "Heading 1",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "Heading 2",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "Heading 3",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "Heading 4",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "Heading 5",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "Heading 6",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "This is a paragraph with ",
+          "type": "text",
+        },
+        {
+          "marks": [
+            {
+              "type": "bold",
+            },
+          ],
+          "text": "bold",
+          "type": "text",
+        },
+        {
+          "text": " and italics.",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "Bullet one",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "Bullet two",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "Number one",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "Number two",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "const foo = "bar"",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "Hard breakSoft break",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "HeaderHeaderHeaderCellCellCellCellCellCell",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "And ",
+          "type": "text",
+        },
+        {
+          "marks": [
+            {
+              "attrs": {
+                "class": "prose-link",
+                "href": "https://linear.app/campsite/issue/CAM-6845/normalize-notes",
+                "rel": "noopener noreferrer nofollow",
+                "target": "_blank",
+                "truncated": false,
+              },
+              "type": "link",
+            },
+          ],
+          "text": "here",
+          "type": "text",
+        },
+        {
+          "text": " is a link. With a ",
+          "type": "text",
+        },
+        {
+          "marks": [
+            {
+              "attrs": {
+                "spellcheck": false,
+              },
+              "type": "code",
+            },
+          ],
+          "text": "inline code",
+          "type": "text",
+        },
+        {
+          "text": " mark.",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > parses markdown extensions 1`] = `
+{
+  "content": [
+    {
+      "attrs": {
+        "level": 1,
+      },
+      "content": [
+        {
+          "text": "Heading 1",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "level": 2,
+      },
+      "content": [
+        {
+          "text": "Heading 2",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "level": 3,
+      },
+      "content": [
+        {
+          "text": "Heading 3",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "level": 4,
+      },
+      "content": [
+        {
+          "text": "Heading 4",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "level": 5,
+      },
+      "content": [
+        {
+          "text": "Heading 5",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "level": 6,
+      },
+      "content": [
+        {
+          "text": "Heading 6",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "content": [
+        {
+          "text": "This is a paragraph with ",
+          "type": "text",
+        },
+        {
+          "marks": [
+            {
+              "type": "bold",
+            },
+          ],
+          "text": "bold",
+          "type": "text",
+        },
+        {
+          "text": " and italics.",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "Bullet one",
+                  "type": "text",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "listItem",
+        },
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "Bullet two",
+                  "type": "text",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "listItem",
+        },
+      ],
+      "type": "bulletList",
+    },
+    {
+      "attrs": {
+        "start": 1,
+        "type": undefined,
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "Number one",
+                  "type": "text",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "listItem",
+        },
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "Number two",
+                  "type": "text",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "listItem",
+        },
+      ],
+      "type": "orderedList",
+    },
+    {
+      "attrs": {
+        "language": null,
+        "spellcheck": false,
+      },
+      "content": [
+        {
+          "text": "const foo = "bar"",
+          "type": "text",
+        },
+      ],
+      "type": "codeBlock",
+    },
+    {
+      "content": [
+        {
+          "text": "Hard break",
+          "type": "text",
+        },
+        {
+          "type": "hardBreak",
+        },
+        {
+          "text": "Soft break",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "type": "horizontalRule",
+    },
+    {
+      "content": [
+        {
+          "marks": [
+            {
+              "attrs": {
+                "class": "prose-link",
+                "href": "https://github.com/campsite/campsite/assets/739696/49b398b1-8c03-4255-a759-21b8b53a3f5d",
+                "rel": "noopener noreferrer nofollow",
+                "target": "_blank",
+                "truncated": false,
+              },
+              "type": "link",
+            },
+          ],
+          "text": "CleanShot 2024-03-22 at 16 42 23@2x",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "HeaderHeaderHeaderCellCellCellCellCellCell",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "content": [
+            {
+              "text": "Ullamco eiusmod laborum minim nulla adipisicing incididunt occaecat consequat non ipsum ex qui excepteur culpa.",
+              "type": "text",
+            },
+          ],
+          "type": "paragraph",
+        },
+      ],
+      "type": "blockquote",
+    },
+    {
+      "content": [
+        {
+          "text": "And ",
+          "type": "text",
+        },
+        {
+          "marks": [
+            {
+              "attrs": {
+                "class": "prose-link",
+                "href": "https://linear.app/campsite/issue/CAM-6845/normalize-notes",
+                "rel": "noopener noreferrer nofollow",
+                "target": "_blank",
+                "truncated": false,
+              },
+              "type": "link",
+            },
+          ],
+          "text": "here",
+          "type": "text",
+        },
+        {
+          "text": " is a link. With a ",
+          "type": "text",
+        },
+        {
+          "marks": [
+            {
+              "attrs": {
+                "spellcheck": false,
+              },
+              "type": "code",
+            },
+          ],
+          "text": "inline code",
+          "type": "text",
+        },
+        {
+          "text": " mark.",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > parses note extensions 1`] = `
+{
+  "content": [
+    {
+      "attrs": {
+        "level": 1,
+      },
+      "content": [
+        {
+          "text": "Heading 1",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "level": 2,
+      },
+      "content": [
+        {
+          "text": "Heading 2",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "level": 3,
+      },
+      "content": [
+        {
+          "text": "Heading 3",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "level": 4,
+      },
+      "content": [
+        {
+          "text": "Heading 4",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "level": 5,
+      },
+      "content": [
+        {
+          "text": "Heading 5",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "level": 6,
+      },
+      "content": [
+        {
+          "text": "Heading 6",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "content": [
+        {
+          "text": "This is a paragraph with ",
+          "type": "text",
+        },
+        {
+          "marks": [
+            {
+              "type": "bold",
+            },
+          ],
+          "text": "bold",
+          "type": "text",
+        },
+        {
+          "text": " and italics.",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "Bullet one",
+                  "type": "text",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "listItem",
+        },
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "Bullet two",
+                  "type": "text",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "listItem",
+        },
+      ],
+      "type": "bulletList",
+    },
+    {
+      "attrs": {
+        "start": 1,
+        "type": undefined,
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "Number one",
+                  "type": "text",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "listItem",
+        },
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "Number two",
+                  "type": "text",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "listItem",
+        },
+      ],
+      "type": "orderedList",
+    },
+    {
+      "attrs": {
+        "language": null,
+        "spellcheck": false,
+      },
+      "content": [
+        {
+          "text": "const foo = "bar"",
+          "type": "text",
+        },
+      ],
+      "type": "codeBlock",
+    },
+    {
+      "content": [
+        {
+          "text": "Hard break",
+          "type": "text",
+        },
+        {
+          "type": "hardBreak",
+        },
+        {
+          "text": "Soft break",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "type": "horizontalRule",
+    },
+    {
+      "content": [
+        {
+          "marks": [
+            {
+              "attrs": {
+                "class": "prose-link",
+                "href": "https://github.com/campsite/campsite/assets/739696/49b398b1-8c03-4255-a759-21b8b53a3f5d",
+                "rel": "noopener noreferrer nofollow",
+                "target": "_blank",
+                "truncated": false,
+              },
+              "type": "link",
+            },
+          ],
+          "text": "CleanShot 2024-03-22 at 16 42 23@2x",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "HeaderHeaderHeaderCellCellCellCellCellCell",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "content": [
+            {
+              "text": "Ullamco eiusmod laborum minim nulla adipisicing incididunt occaecat consequat non ipsum ex qui excepteur culpa.",
+              "type": "text",
+            },
+          ],
+          "type": "paragraph",
+        },
+      ],
+      "type": "blockquote",
+    },
+    {
+      "content": [
+        {
+          "text": "And ",
+          "type": "text",
+        },
+        {
+          "marks": [
+            {
+              "attrs": {
+                "class": "prose-link",
+                "href": "https://linear.app/campsite/issue/CAM-6845/normalize-notes",
+                "rel": "noopener noreferrer nofollow",
+                "target": "_blank",
+                "truncated": false,
+              },
+              "type": "link",
+            },
+          ],
+          "text": "here",
+          "type": "text",
+        },
+        {
+          "text": " is a link. With a ",
+          "type": "text",
+        },
+        {
+          "marks": [
+            {
+              "attrs": {
+                "spellcheck": false,
+              },
+              "type": "code",
+            },
+          ],
+          "text": "inline code",
+          "type": "text",
+        },
+        {
+          "text": " mark.",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > retains unknown block HTML 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "Bad prompt:",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "content": [
+        {
+          "text": "<prompt>"Help me with a presentation."</prompt>",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > retains unknown inline HTML 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "Bad prompt:",
+          "type": "text",
+        },
+        {
+          "type": "hardBreak",
+        },
+        {
+          "text": "<prompt>",
+          "type": "text",
+        },
+        {
+          "type": "hardBreak",
+        },
+        {
+          "text": ""Help me with a presentation."",
+          "type": "text",
+        },
+        {
+          "type": "hardBreak",
+        },
+        {
+          "text": "</prompt>",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;
+
+exports[`createMarkdownParser > strips unsupported link attribute values 1`] = `
+{
+  "content": [
+    {
+      "content": [
+        {
+          "text": "This is ",
+          "type": "text",
+        },
+        {
+          "marks": [
+            {
+              "attrs": {
+                "class": "prose-link",
+                "href": "https://campsite.com",
+                "rel": "noopener noreferrer nofollow",
+                "target": "_blank",
+                "truncated": false,
+              },
+              "type": "link",
+            },
+          ],
+          "text": "link",
+          "type": "text",
+        },
+        {
+          "text": ".",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "doc",
+}
+`;

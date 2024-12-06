@@ -1,0 +1,35 @@
+<% @page_title = "Single sign-on authentication - Campsite" %>
+
+<main class="outer-container">
+  <div class="inner-container">
+    <div class="page-title-container">
+      <svg width="49" height="20" viewBox="0 0 49 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0.201982 21.9532L13.7942 0.654571C14.0531 0.248924 14.5245 0 15.0338 0H37.1765C38.2907 0 38.9824 1.12038 38.4161 2.00776L24.8238 23.3064C24.565 23.7121 24.0936 23.961 23.5843 23.961H1.44157C0.327401 23.961 -0.364321 22.8406 0.201982 21.9532Z" fill="currentColor"/>
+        <path d="M32.0309 23.9609H47.4978C48.5832 23.9609 49.2781 22.8922 48.7691 22.0055L41.4653 9.28149C40.9386 8.36398 39.5292 8.33304 38.9561 9.22642L30.793 21.9505C30.2237 22.8378 30.9152 23.9609 32.0309 23.9609Z" fill="currentColor"/>
+      </svg>
+
+      <h2 class="page-title">Single sign-on</h2>
+    </div>
+
+    <div class="w-full mt-5 text-sm text-primary">
+      Enter your email to authenticate.
+    </div>
+
+    <%= form_with(scope: :user, url: sign_in_sso_path, html: { class: "w-full space-y-5" }) do |f| %>
+      <%= render "users/shared/errors" %>
+
+      <div class="form-group">
+        <%= f.label(:email, "Email") %>
+        <%= f.text_field(:email, autofocus: true, required: true, value: @email) %>
+      </div>
+
+      <%= f.button("Continue", class: "btn btn-primary") %>
+
+      <div>
+        <div class="w-full text-sm text-tertiary">
+          Having trouble logging in? <a class="hover:underline font-medium text-link" href="mailto:support@campsite.com">Contact support</a> or <a href="<%= new_user_session_path %>" class="hover:underline font-medium text-link">go back</a>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</main>

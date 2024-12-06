@@ -1,0 +1,14 @@
+version: '2'
+tunnels:
+  campsite:
+    addr: 3000
+    proto: http
+    hostname: ${NGROK_APP_SUBDOMAIN}.campsite.co
+  campsite-api:
+    addr: 3001
+    proto: http
+    hostname: ${NGROK_API_SUBDOMAIN}.campsite.co
+  campsite-sync:
+    addr: 9000
+    proto: http
+    hostname: ${NGROK_SYNC_SUBDOMAIN}.campsite.co

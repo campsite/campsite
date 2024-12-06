@@ -1,0 +1,31 @@
+<div class="mb-4">
+  <%= render 'mailers/components/avatar', avatar_url: @organization.avatar_url(size: 40), href: "#{@organization.url}", name: @organization.name, size: 40, class_name: "rounded" %>
+</div>
+
+<div class="mb-6">
+  <b><%= @sender.display_name %></b> invited you to join
+  <% if @invitation.projects.size == 1 %>
+    <b><%= @invitation.projects.first.name %></b> in
+  <% elsif @invitation.projects.size == 2 %>
+    <b><%= @invitation.projects.first.name %></b> and <b><%= @invitation.projects.second.name %></b> in
+  <% elsif @invitation.projects.size > 2 %>
+    <b><%= @invitation.projects.first.name %></b> and <%= @invitation.projects.size - 1 %> other spaces in
+  <% end %>
+  the <b><%= @organization.name %></b> organization on Campsite.
+</div>
+
+<%= render 'mailers/components/cta_button', url: @invitation_url, text: "Accept invitation" %>
+
+<div class="pt-6 mb-4 text-sm text-secondary">
+  Campsite is where teams share work-in-progress — prototypes, screenshots, code, and everything in-between. Accept the invitation above to get started.
+</div>
+
+<div>
+  <a href="https://campsite.com/" target="_blank" class="text-sm text-secondary">
+    Learn more
+  </a>
+</div>
+
+<div class="pt-6">
+  <div class="separator" />
+</div>

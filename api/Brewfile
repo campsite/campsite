@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+brew "chruby"
+brew "redis"
+brew "ruby-install"
+brew "yarn"
+brew "mysql@8.0"
+brew "mailhog"
+brew "openssl"
+brew "coreutils"

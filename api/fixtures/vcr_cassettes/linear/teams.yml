@@ -1,0 +1,30 @@
+---
+http_interactions:
+  - request:
+      method: post
+      uri: https://api.linear.app/graphql
+      body:
+        encoding: UTF-8
+        string: '{"query":"query {\n  teams(first: 100) {\n    nodes {\n      id\n      name\n      private\n    }\n  }\n}\n"}'
+      headers:
+        Content-type:
+          - application/json
+        Authorization:
+          - '<LINEAR_TOKEN>'
+        User-Agent:
+          - Faraday v2.9.0
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        content-type:
+          - application/json; charset=utf-8
+      body:
+        encoding: UTF-8
+        string:
+          '{"data":{"teams":{"pageInfo":{"endCursor":"1","hasNextPage":true},"nodes":[{"id":"0","name":"Frontier Forest","private":false,"key":"FOR"},{"id":"1","name":"Deserted Dunes","private":false,"key":"DUN"}]}}}
+
+          '
+    recorded_at: Sun, 30 Jun 2024 14:48:43 GMT
+recorded_with: VCR 6.1.0

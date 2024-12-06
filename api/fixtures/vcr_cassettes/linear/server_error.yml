@@ -1,0 +1,57 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.linear.app/graphql
+    body:
+      encoding: UTF-8
+      string: '{"query":"{nope}"}'
+    headers:
+      Content-type:
+      - application/json
+      Authorization:
+      - "<LINEAR_TOKEN>"
+      User-Agent:
+      - Faraday v2.7.5
+  response:
+    status:
+      code: 400
+      message: Bad Request
+    headers:
+      date:
+      - Tue, 26 Sep 2023 16:35:35 GMT
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '210'
+      connection:
+      - keep-alive
+      etag:
+      - W/"d2-MOxc7ajzoHuruQzyM8QiSEOuWac"
+      cache-control:
+      - private, no-cache, no-store, must-revalidate
+      x-request-id:
+      - 80ccebc299182b94-LAX
+      via:
+      - 1.1 google
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      set-cookie:
+      - __cf_bm=S0HNrziaKboXT2QhpY9fVLsiRb.LEdGT02gQAp8mSqw-1695746135-0-Aej3d0MoptxsGQKVwGPqx8IOdjGGF55ZyvNCSYGWq1TnKXOdgtQuebKS9cqijROJNmP0yrP+vaP2H3qcxPqVg4Y=;
+        path=/; expires=Tue, 26-Sep-23 17:05:35 GMT; domain=.linear.app; HttpOnly;
+        Secure; SameSite=None, _cfuvid=j8LoJcLZA0dpKvk9TImLiAxdSHCOcAv_5svDFyO5lE4-1695746135599-0-604800000;
+        path=/; domain=.linear.app; HttpOnly; Secure; SameSite=None
+      server:
+      - cloudflare
+      cf-ray:
+      - 80ccebc299182b94-LAX
+    body:
+      encoding: UTF-8
+      string: '{"errors":[{"message":"Cannot query field \"nope\" on type \"Query\".","locations":[{"line":1,"column":2}],"extensions":{"code":"GRAPHQL_VALIDATION_FAILED","type":"graphql
+        error","userError":true,"meta":{}}}]}
+
+        '
+  recorded_at: Tue, 26 Sep 2023 16:35:35 GMT
+recorded_with: VCR 6.1.0

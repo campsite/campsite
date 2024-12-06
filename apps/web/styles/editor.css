@@ -1,0 +1,96 @@
+.ProseMirror {
+  p.is-editor-empty:first-child:not(:has(post-search))::before {
+    @apply text-quaternary pointer-events-none float-left h-0 content-[attr(data-placeholder)];
+    content: attr(data-placeholder);
+  }
+
+  .details {
+    @apply my-2.5 flex rounded-lg;
+
+    > button {
+      @apply -ml-1 mr-1 h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 hover:opacity-70 dark:hover:bg-gray-700 dark:hover:text-gray-200;
+
+      &::before {
+        @apply relative -top-px block -rotate-90 transition-transform;
+        content: '\25BC';
+        font-size: 0.9em;
+      }
+    }
+
+    &.is-open > button::before {
+      @apply rotate-0;
+    }
+
+    > button + div {
+      @apply flex-1;
+    }
+
+    :last-child {
+      margin-bottom: 0;
+    }
+
+    summary::marker {
+      content: none;
+    }
+
+    summary {
+      @apply font-semibold;
+    }
+
+    summary:not([data-placeholder]) > br.ProseMirror-trailingBreak:only-child {
+      content: '';
+
+      &:before {
+        @apply text-neutral-400;
+        content: 'Section title';
+      }
+    }
+
+    div[data-type='detailsContent']:not([hidden]) {
+      @apply mt-1;
+
+      /* TipTap DetailsContent doesn't support a custom placeholder attribute */
+      > p:not([data-placeholder]):only-child > br.ProseMirror-trailingBreak:only-child {
+        content: '';
+
+        &:before {
+          @apply text-neutral-400;
+          content: "Write, type '/' for commands, or paste/drag files";
+        }
+      }
+    }
+  }
+}
+
+.ProseMirror.new-posts {
+  .is-empty-prompt:not(:has(post-search))::before {
+    @apply pointer-events-none float-left h-0 text-neutral-400 content-[attr(data-placeholder)];
+    content: attr(data-placeholder);
+  }
+
+  .ProseMirror-widget:not(.collaboration-cursor__caret) {
+    @apply flex;
+  }
+
+  .is-empty-prompt:has(post-search) {
+    @apply flex;
+  }
+
+  /* hide standard placeholder inside a details element. TipTap should handle this, but it does not. */
+  .is-empty-prompt.details::before {
+    @apply hidden;
+  }
+
+  /* align placeholder with the caret inside lists */
+  ul.is-empty-prompt::before,
+  ol.is-empty-prompt::before {
+    @apply pl-1.5;
+  }
+}
+
+/* Hides the bubble menu when the reference is hidden OR the popover has completely escaped its parent */
+.tippy-box[data-reference-hidden],
+.tippy-box[data-escaped] {
+  opacity: 0;
+  pointer-events: none;
+}

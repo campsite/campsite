@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "kaiwood.endwise",
+    "github.copilot",
+    "koichisasada.vscode-rdbg",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "shopify.ruby-lsp",
+    "github.vscode-github-actions"
+  ]
+}

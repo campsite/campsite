@@ -1,0 +1,55 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.imgix.com/api/v1/sources/62b4f72dffcbff616be192da/assets/add/o/foklwviisxc1/p/6c6c54a9-e7ad-4a73-b990-62fd4f8a2e1c.png
+    body:
+      encoding: UTF-8
+      string: "{}"
+    headers:
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer <IMGIX_API_KEY>
+      User-Agent:
+      - Faraday v2.7.5
+  response:
+    status:
+      code: 202
+      message: Accepted
+    headers:
+      content-type:
+      - text/html; charset=UTF-8
+      content-security-policy:
+      - script-src 'self'
+      x-content-security-policy:
+      - script-src 'self'
+      x-frame-options:
+      - DENY
+      strict-transport-security:
+      - max-age=31536000, subdomains
+      x-content-type-options:
+      - no-sniff
+      x-xss-protection:
+      - 1; mode=block
+      x-request-id:
+      - 5b1adffad359444d9f26b2ab190b48c1
+      vary:
+      - Accept-Encoding
+      x-cloud-trace-context:
+      - fb4f017ba90f91000154426020c5f3e2
+      date:
+      - Sat, 03 Feb 2024 01:16:37 GMT
+      server:
+      - Google Frontend
+      content-length:
+      - '0'
+      via:
+      - 1.1 google, 1.1 google
+      alt-svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+    body:
+      encoding: UTF-8
+      string: ''
+  recorded_at: Sat, 03 Feb 2024 01:16:37 GMT
+recorded_with: VCR 6.1.0

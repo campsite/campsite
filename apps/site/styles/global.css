@@ -1,0 +1,389 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-color) transparent;
+  }
+
+  #__next {
+    @apply isolate flex min-h-[100svh];
+  }
+
+  :root,
+  .light,
+  .dark .invert-color-theme,
+  .light .dark .invert-color-theme {
+    @apply text-primary;
+
+    --text-light: theme(colors.gray.50);
+    --text-dark: theme(colors.gray.900);
+    --text-light-secondary: theme(colors.gray.600);
+    --text-dark-secondary: theme(colors.gray.400);
+
+    --text-primary-action: theme(colors.white);
+
+    --text-primary: theme(colors.gray.900);
+    --text-secondary: theme(colors.gray.600);
+    --text-tertiary: theme(colors.gray.500);
+    --text-quaternary: theme(colors.gray.400);
+
+    --bg-main: theme(colors.gray.50);
+
+    --bg-primary-action: theme(colors.gray.900);
+    --bg-primary-action-hover: theme(colors.gray.750);
+    --bg-secondary-action: theme(colors.gray.200);
+    --bg-tertiary-action: theme(colors.white);
+
+    --bg-button: theme(colors.white);
+    --scrollbar-color: theme(colors.gray.400 / 0.8);
+
+    --bg-primary: theme(colors.white);
+    --bg-secondary: theme(colors.gray.50);
+    --bg-tertiary: theme(colors.gray.100);
+    --bg-quaternary: theme(colors.gray.150);
+    --bg-elevated: theme(colors.white);
+    --bg-react-select: theme(colors.white);
+
+    --grad-primary-rgb: 255, 255, 255;
+
+    --border-primary: theme(colors.black / 0.1);
+    --border-secondary: theme(colors.black / 0.07);
+    --border-tertiary: theme(colors.black / 0.04);
+
+    --base-shadow-color: rgb(0 0 0 / 0.05);
+
+    --button-drop-shadow: rgb(0 0 0 / 0);
+    --button-shadow: inset 0px 1px 0px 0px rgb(255 255 255 / 1), 0px 0px 0px 1px rgb(0 0 0 / 0.06),
+      0px 1px 0px 0px rgb(0 0 0 / 0.08), 0px 2px 2px 0px rgb(0 0 0 / 0.04), 0px 3px 3px 0px rgb(0 0 0 / 0.02),
+      0px 4px 4px 0px rgb(0 0 0 / 0.01);
+    --popover-shadow: 0px 0px 3.6px rgba(0, 0, 0, 0.04), 0px 0px 10px rgba(0, 0, 0, 0.04),
+      0px 0px 24.1px rgba(0, 0, 0, 0.05), 0px 0px 80px rgba(0, 0, 0, 0.08);
+    --dropdown-item-shadow: inset 0px 1px 0px rgb(255 255 255 / 0.02), inset 0px 0px 0px 1px rgb(255 255 255 / 0.02),
+      0px 1px 2px rgb(0 0 0 / 0.12), 0px 2px 4px rgb(0 0 0 / 0.08), 0px 0px 0px 0.5px rgb(0 0 0 / 0.24);
+    --button-base-shadow: 0px 1px 1px -1px rgb(0 0 0 / 0.08), 0px 2px 2px -1px rgb(0 0 0 / 0.08),
+      0px 0px 0px 1px rgb(0 0 0 / 0.06), inset 0px 1px 0px #fff, inset 0px 1px 2px 1px #fff,
+      inset 0px 1px 2px rgb(0 0 0 / 0.06);
+  }
+
+  ::selection {
+    @apply bg-black/10;
+  }
+
+  .dark {
+    ::selection {
+      @apply bg-white/20;
+    }
+  }
+
+  .dark,
+  .light .invert-color-theme,
+  .dark .light .invert-color-theme {
+    @apply text-primary;
+
+    --text-primary: theme(colors.gray.100);
+    --text-secondary: theme(colors.gray.300);
+    --text-tertiary: theme(colors.gray.400);
+    --text-quaternary: theme(colors.gray.500);
+    --text-primary-action: theme(colors.gray.900);
+
+    --bg-main: theme(colors.gray.950);
+
+    --bg-primary-action: theme(colors.white);
+    --bg-primary-action-hover: theme(colors.gray.150);
+    --bg-secondary-action: theme(colors.gray.700);
+    --bg-tertiary-action: theme(colors.gray.800);
+
+    --bg-button: theme(colors.gray.750);
+    --scrollbar-color: theme(colors.gray.500);
+
+    --bg-primary: theme(colors.gray.950);
+    --bg-secondary: theme(colors.gray.900);
+    --bg-tertiary: theme(colors.gray.800);
+    --bg-quaternary: theme(colors.gray.750);
+    --bg-elevated: theme(colors.gray.850);
+    --bg-react-select: theme(colors.gray.750);
+
+    --grad-primary-rgb: 13, 13, 13;
+
+    --border-primary: theme(colors.white / 0.12);
+    --border-secondary: theme(colors.white / 0.08);
+    --border-tertiary: theme(colors.white / 0.06);
+
+    --base-shadow-color: rgb(0 0 0 / 0.16);
+
+    --button-drop-shadow: rgb(0 0 0 / 0.4);
+    --danger-drop-shadow: rgb(127 29 29 / 0.8);
+    --button-shadow: 0px -1px 0px 0px rgb(255 255 255 / 0.04), 0px 0px 0px 1px rgb(255 255 255 / 0.12),
+      0px 0px 1px 0px rgb(0 0 0 / 0.04), 0px 2px 2px 0px rgb(0 0 0 / 0.04), 0px 4px 2px 0px rgb(0 0 0 / 0.04),
+      0px 6px 3px 0px rgb(0 0 0 / 0.04);
+    --popover-shadow: 0px 0px 4px rgba(0, 0, 0, 0.08), 0px 0px 10px rgba(0, 0, 0, 0.12),
+      0px 0px 24px rgba(0, 0, 0, 0.16), 0px 0px 80px rgba(0, 0, 0, 0.2);
+    --button-base-shadow: 0px 0px 0px 0.5px rgb(0 0 0 / 0.4), 0px 1px 1px -1px rgb(0 0 0 / 0.12),
+      0px 2px 2px -1px rgb(0 0 0 / 0.12), inset 0px 0.5px 0px rgb(255 255 255 / 0.06),
+      inset 0px 0px 1px 0px rgb(255 255 255 / 0.16), inset 0px -6px 12px -4px rgb(0 0 0 / 0.16);
+    --button-primary-shadow: 0px 1px 1px -1px rgb(0 0 0 / 0.08), 0px 2px 2px -1px rgb(0 0 0 / 0.08),
+      0px 0px 0px 1px rgb(0 0 0 / 0.06), inset 0px 1px 0px #fff, inset 0px 0px 2px 1px #fff,
+      inset 0px 1px 2px rgb(0 0 0 / 0.06), inset 0px -4px 8px -4px rgb(0 0 0 / 0.06);
+  }
+}
+
+@layer components {
+  .prose {
+    @apply text-secondary max-w-full break-words;
+    word-break: break-word;
+    word-wrap: break-word;
+  }
+
+  .prose ol,
+  .prose ul {
+    @apply marker:text-quaternary;
+  }
+
+  .prose img {
+    @apply my-4 rounded-lg ring-1 ring-black ring-opacity-5 dark:ring-white/10;
+  }
+
+  .underline-link {
+    @apply underline decoration-gray-200 underline-offset-2 hover:decoration-gray-400 dark:decoration-gray-800 dark:hover:decoration-gray-600;
+  }
+
+  .prose a {
+    @apply text-primary font-normal decoration-gray-200 underline-offset-2 hover:decoration-gray-400 dark:decoration-gray-800 dark:hover:decoration-gray-600;
+  }
+
+  .prose strong {
+    @apply text-primary font-semibold;
+  }
+
+  .prose pre > code {
+    @apply text-primary border-none bg-transparent p-0 dark:bg-transparent;
+  }
+
+  .prose code {
+    @apply text-primary bg-tertiary whitespace-pre-wrap rounded border px-1 py-px font-medium dark:border-neutral-700 dark:bg-neutral-800;
+
+    &:before,
+    &:after {
+      @apply hidden;
+    }
+  }
+
+  .prose kbd {
+    @apply text-secondary bg-primary rounded-md border px-2 py-1 font-mono leading-none dark:border dark:border-white/20;
+    font-size: 88%;
+  }
+
+  .prose blockquote {
+    @apply text-tertiary mb-2.5 mt-0 font-normal;
+  }
+
+  .prose blockquote p:first-of-type {
+    @apply !my-1 min-w-[1em];
+
+    &:before,
+    &:after {
+      @apply hidden;
+    }
+  }
+
+  .glitch {
+    color: var(--text-primary);
+    position: relative;
+  }
+
+  .glitch::before,
+  .glitch::after {
+    @apply bg-primary text-primary absolute top-0 h-full w-full overflow-hidden;
+    content: 'broken';
+  }
+
+  .glitch::before {
+    left: 3px;
+    text-shadow: -2px 0 red;
+    animation-name: glitch-animation-1;
+    animation-duration: 3s;
+    animation-timing-function: linear;
+    animation-delay: 0s;
+    animation-iteration-count: infinite;
+    animation-direction: reverse-alternate;
+  }
+
+  .glitch::after {
+    left: -3px;
+    text-shadow: -2px 0 blue;
+    animation-name: glitch-animation-2;
+    animation-duration: 3s;
+    animation-timing-function: linear;
+    animation-delay: 0s;
+    animation-iteration-count: infinite;
+    animation-direction: reverse-alternate;
+  }
+
+  .prose-changelog {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      @apply text-primary mt-2 font-semibold;
+    }
+
+    h1,
+    h2 {
+      @apply mt-4 text-2xl;
+    }
+
+    h3 {
+      @apply mt-6 text-xl;
+    }
+
+    h4,
+    h5,
+    h6 {
+      @apply text-lg;
+    }
+
+    li {
+      @apply leading-relaxed;
+    }
+
+    mark {
+      @apply -mx-0.5 rounded-sm bg-amber-100 px-0.5 text-amber-950 dark:bg-amber-500/30 dark:text-amber-200;
+    }
+  }
+
+  @keyframes glitch-animation-1 {
+    0% {
+      clip: rect(13px, 140px, 15px, 0px);
+    }
+    5% {
+      clip: rect(5px, 140px, 16px, 0px);
+    }
+    10% {
+      clip: rect(16px, 140px, 6px, 0px);
+    }
+    15% {
+      clip: rect(19px, 140px, 13px, 0px);
+    }
+    20% {
+      clip: rect(6px, 140px, 18px, 0px);
+    }
+    25% {
+      clip: rect(12px, 140px, 5px, 0px);
+    }
+    30% {
+      clip: rect(4px, 140px, 20px, 0px);
+    }
+    35% {
+      clip: rect(6px, 140px, 8px, 0px);
+    }
+    40% {
+      clip: rect(17px, 140px, 7px, 0px);
+    }
+    45% {
+      clip: rect(19px, 140px, 3px, 0px);
+    }
+    50% {
+      clip: rect(6px, 140px, 5px, 0px);
+    }
+    55% {
+      clip: rect(3px, 140px, 13px, 0px);
+    }
+    60% {
+      clip: rect(15px, 140px, 14px, 0px);
+    }
+    65% {
+      clip: rect(14px, 140px, 14px, 0px);
+    }
+    70% {
+      clip: rect(8px, 140px, 15px, 0px);
+    }
+    75% {
+      clip: rect(14px, 140px, 14px, 0px);
+    }
+    80% {
+      clip: rect(12px, 140px, 19px, 0px);
+    }
+    85% {
+      clip: rect(2px, 140px, 14px, 0px);
+    }
+    90% {
+      clip: rect(12px, 140px, 5px, 0px);
+    }
+    95% {
+      clip: rect(7px, 140px, 1px, 0px);
+    }
+    100% {
+      clip: rect(19px, 140px, 2px, 0px);
+    }
+  }
+  @keyframes glitch-animation-2 {
+    0% {
+      clip: rect(17px, 140px, 11px, 0px);
+    }
+    5% {
+      clip: rect(11px, 140px, 5px, 0px);
+    }
+    10% {
+      clip: rect(15px, 140px, 9px, 0px);
+    }
+    15% {
+      clip: rect(9px, 140px, 13px, 0px);
+    }
+    20% {
+      clip: rect(13px, 140px, 6px, 0px);
+    }
+    25% {
+      clip: rect(9px, 140px, 8px, 0px);
+    }
+    30% {
+      clip: rect(7px, 140px, 4px, 0px);
+    }
+    35% {
+      clip: rect(10px, 140px, 14px, 0px);
+    }
+    40% {
+      clip: rect(17px, 140px, 15px, 0px);
+    }
+    45% {
+      clip: rect(13px, 140px, 5px, 0px);
+    }
+    50% {
+      clip: rect(18px, 140px, 9px, 0px);
+    }
+    55% {
+      clip: rect(6px, 140px, 17px, 0px);
+    }
+    60% {
+      clip: rect(3px, 140px, 1px, 0px);
+    }
+    65% {
+      clip: rect(13px, 140px, 15px, 0px);
+    }
+    70% {
+      clip: rect(13px, 140px, 5px, 0px);
+    }
+    75% {
+      clip: rect(11px, 140px, 20px, 0px);
+    }
+    80% {
+      clip: rect(3px, 140px, 20px, 0px);
+    }
+    85% {
+      clip: rect(8px, 140px, 12px, 0px);
+    }
+    90% {
+      clip: rect(8px, 140px, 19px, 0px);
+    }
+    95% {
+      clip: rect(11px, 140px, 19px, 0px);
+    }
+    100% {
+      clip: rect(4px, 140px, 18px, 0px);
+    }
+  }
+}

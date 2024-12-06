@@ -1,0 +1,38 @@
+{
+  "settings": {
+    "terminal.integrated.scrollback": 10000,
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "rubyLsp.enabledFeatures": {
+      "codeActions": true,
+      "diagnostics": true,
+      "documentHighlights": true,
+      "documentLink": true,
+      "documentSymbols": true,
+      "foldingRanges": true,
+      "formatting": true,
+      "hover": true,
+      "inlayHint": true,
+      "onTypeFormatting": true,
+      "selectionRanges": true,
+      "semanticHighlighting": true,
+      "completion": true,
+      "codeLens": true
+    },
+    "rubyLsp.formatter": "rubocop",
+    "rubyLsp.rubyVersionManager": {
+      "identifier": "chruby"
+    },
+    "files.associations": {
+      "*.css": "tailwindcss"
+    }
+  },
+  "folders": [
+    {
+      "path": ".."
+    },
+    {
+      "path": "../api"
+    }
+  ]
+}

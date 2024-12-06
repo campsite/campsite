@@ -1,0 +1,8 @@
+# See https://git-scm.com/docs/gitattributes for more about git attribute files.
+
+# Mark any vendored files as having been vendored.
+api/vendor/* linguist-vendored
+vendor/* linguist-vendored
+
+# Mark the database schema as generated.
+packages/types/generated.ts linguist-generated

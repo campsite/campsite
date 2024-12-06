@@ -1,0 +1,42 @@
+<% @page_title = "Demo Orgs - Campsite" %>
+
+<h1 class="page-title mb-6">Demo orgs</h1>
+
+<% if notice %>
+  <div class="notice mb-6">
+    <%= notice %>
+  </div>
+<% end %>
+
+<% if @demo_orgs.any? %>
+  <ul class="mb-6 space-y-8">
+    <% @demo_orgs.each do |org| %>
+      <li class="mb-4 flex items-center justify-between">
+        <div class="flex-1">
+          <span class="font-medium"><%= org.name %></span>
+          <span class="text-gray-500 text-sm block">
+            <%= org.slug %>
+          </span>
+        </div>
+        <div>
+          <%= link_to("Visit", Campsite.app_url(path: "/" + org.slug), class: "btn btn-secondary px-4") %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+<% else%>
+  <div class="text-sm text-secondary mb-5 text-center">No demo orgs yet!</div>
+<% end %>
+
+<hr />
+
+<h1 class="page-title mb-4">Create demo org</h1>
+
+<%= form_with url: demo_orgs_path do |f| %>
+  <%= f.label(:slug, "Org slug", class: "mb-1") %>
+  <%= f.text_field(:slug, required: true, class: "mb-1", value: @new_org_slug) %>
+  <div class="form-group mb-3 text-sm">
+    <p>A new organization will be created and assigned to <%= @current_user.email %>.
+  </div>
+  <%= f.submit("Create demo org", class: "btn btn-secondary") %>
+<% end %>

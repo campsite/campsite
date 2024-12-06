@@ -1,0 +1,3 @@
+boto3>=1.26.0
+requests==2.31.0
+sentry-sdk==2.18.0

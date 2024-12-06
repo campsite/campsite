@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+DRY_RUN=${DRY_RUN:-false}
+
+# get the message and trim to the first line
+GIT_MESSAGE=$(git log -1 --pretty=%B HEAD | head -n 1)
+ECHO_MESSAGE_OUTPUT="git-message=$GIT_MESSAGE"
+ESCAPED_GIT_MESSAGE=$(echo "$GIT_MESSAGE" | sed 's/"/\\"/g')
+ECHO_ESCAPED_MESSAGE_OUTPUT="escaped-git-message=$ESCAPED_GIT_MESSAGE"
+
+SHA_SHORT=$(git rev-parse --short HEAD)
+ECHO_SHA_OUTPUT="git-sha=$SHA_SHORT"
+
+if [[ $DRY_RUN == "true" ]]; then
+  echo $ECHO_MESSAGE_OUTPUT
+  echo $ECHO_ESCAPED_MESSAGE_OUTPUT
+  echo $ECHO_SHA_OUTPUT
+else
+  echo $ECHO_MESSAGE_OUTPUT >> $GITHUB_OUTPUT
+  echo $ECHO_ESCAPED_MESSAGE_OUTPUT >> $GITHUB_OUTPUT
+  echo $ECHO_SHA_OUTPUT >> $GITHUB_OUTPUT
+fi

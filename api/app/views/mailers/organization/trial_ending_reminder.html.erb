@@ -1,0 +1,21 @@
+<div class="mb-4">
+  <%= render 'mailers/components/avatar', avatar_url: @organization.avatar_url(size: 40), href: "#{@organization.url}", name: @organization.name, size: 40, class_name: "rounded" %>
+</div>
+
+<div class="mb-6">
+  Hi there!
+</div>
+
+<div class="mb-6">
+  Your Campsite trial ends on <%= @formatted_trial_ends_at %>. To continue using Campsite, upgrade on the <a class="text-link" href="<%= @organization.billing_settings_url %>" target="_blank">billing settings page</a>.
+</div>
+
+<div class="mb-6">
+  <%= render 'mailers/components/cta_button', url: @organization.billing_settings_url, text: "Upgrade now" %>
+</div>
+
+<div class="mb-6">
+  Excited about Campsite but not ready to make the switch? We’ve helped teams like yours make a seamless migration to Campsite. Reply to this email and let us know how we can help.
+</div>
+
+<div class="separator" />

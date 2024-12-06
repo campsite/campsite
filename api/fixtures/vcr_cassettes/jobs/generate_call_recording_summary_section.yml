@@ -1,0 +1,150 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.openai.com/v1/chat/completions
+    body:
+      encoding: UTF-8
+      string: '{"model":"gpt-4o","messages":[{"role":"system","content":"You are an
+        expert at summarizing transcripts. Your task is to write a brief summary from
+        the provided meeting transcript. Include the key topics, takeaways, and decisions
+        in the summary. Each line of the transcript begins with the speaker''s name,
+        followed by a colon, and then the text of what they said.\n\nWhen formatting
+        your response:\n- The summary MUST be a single paragraph with no more than
+        3 sentences.\n- The first sentence must describe the type and purpose of the
+        meeting. Examples include \"team sync\", \"project planning\", \"retrospective\",
+        or \"one on one\". Do not limit yourself to these examples.\n- Each sentence
+        must cover important parts of the conversation. Do not use extra sentences
+        to fill space.\n- Each sentence MUST NOT EXCEED 10 words.\n- Format each sentence
+        in plain text.\n- Write in an active voice, using clear and concise sentences.
+        Avoid using forms of \"be\" verbs and rearrange sentences to ensure the subject
+        is acting, not being acted upon."},{"role":"user","content":"Jane Doe: What
+        should we have for breakfast today?\nJohn Smith: I would love to have some
+        pancakes.\nSpongebob Squarepants: I love pancakes, John, but I''m craving
+        some Krabby Patties.\nJohn Smith: I''m down for some Krabby Patties too.\nJane
+        Doe: Then it''s decided, Krabby Patties it is!"}],"temperature":0.0}'
+    headers:
+      Content-Type:
+      - application/json
+      Authorization:
+      - Bearer <OPENAI_API_KEY>
+      OpenAI-Organization:
+      - "<OPENAI_ORGANIZATION>"
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      date:
+      - Thu, 20 Jun 2024 02:08:30 GMT
+      content-type:
+      - application/json
+      transfer-encoding:
+      - chunked
+      connection:
+      - keep-alive
+      openai-organization:
+      - campsite
+      openai-processing-ms:
+      - '833'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '500'
+      x-ratelimit-limit-tokens:
+      - '30000'
+      x-ratelimit-remaining-requests:
+      - '499'
+      x-ratelimit-remaining-tokens:
+      - '29670'
+      x-ratelimit-reset-requests:
+      - 120ms
+      x-ratelimit-reset-tokens:
+      - 660ms
+      x-request-id:
+      - req_c66af31d7a03abea1d533436e88bdbab
+      cf-cache-status:
+      - DYNAMIC
+      set-cookie:
+      - __cf_bm=78KBA1CnS_oCHFuPc2.rpXOXdyjzlZ73BJjsQEE_uDA-1718849310-1.0.1.1-XPpZR3yVbF9BrqUXRGHzIRryTXwm4Q3DppTAzmEm0iILbOhZzReFUDEpqF8rPT_HJKXvPfmJLFr8f_bOXhbBnA;
+        path=/; expires=Thu, 20-Jun-24 02:38:30 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None, _cfuvid=bExcj6rmaLhooLFWq1J0hcnkJtqoExl47sNRdWVnLUY-1718849310494-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      server:
+      - cloudflare
+      cf-ray:
+      - 8968361808040c76-EWR
+      content-encoding:
+      - gzip
+      alt-svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: |
+        {
+          "id": "chatcmpl-9c1VtBgZWLtFBFJMDNumWDAeTfV0Y",
+          "object": "chat.completion",
+          "created": 1718849309,
+          "model": "gpt-4o-2024-05-13",
+          "choices": [
+            {
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": "Breakfast planning meeting to decide the meal. John and Spongebob suggest pancakes and Krabby Patties. Jane finalizes Krabby Patties for breakfast."
+              },
+              "logprobs": null,
+              "finish_reason": "stop"
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 286,
+            "completion_tokens": 32,
+            "total_tokens": 318
+          },
+          "system_fingerprint": "fp_f4e629d0a5"
+        }
+  recorded_at: Thu, 20 Jun 2024 02:08:30 GMT
+- request:
+    method: post
+    uri: http://localhost:3002/markdown_to_html
+    body:
+      encoding: UTF-8
+      string: '{"markdown":"Breakfast planning meeting to decide the meal. John and
+        Spongebob suggest pancakes and Krabby Patties. Jane finalizes Krabby Patties
+        for breakfast.","editor":"markdown"}'
+    headers:
+      User-Agent:
+      - Faraday v2.9.0
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer d8c0a2827589659ff292a8999b024f24a185ed82
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      x-powered-by:
+      - Express
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '165'
+      etag:
+      - W/"a5-BkvRa1pIwyZ4Hh+ymusFtAWTXCg"
+      date:
+      - Thu, 20 Jun 2024 02:08:30 GMT
+      connection:
+      - keep-alive
+      keep-alive:
+      - timeout=5
+    body:
+      encoding: UTF-8
+      string: '{"html":"<p>Breakfast planning meeting to decide the meal. John and
+        Spongebob suggest pancakes and Krabby Patties. Jane finalizes Krabby Patties
+        for breakfast.</p>"}'
+  recorded_at: Thu, 20 Jun 2024 02:08:30 GMT
+recorded_with: VCR 6.1.0

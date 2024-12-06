@@ -1,0 +1,29 @@
+<main class="outer-container">
+  <div class="inner-container">
+    <div class="flex w-full flex-1 flex-col items-center justify-center gap-6">
+      <div class="group relative h-24 w-20">
+        <div class="border-secondary bg-primary absolute inset-0 flex rotate-[-5deg] items-center justify-center rounded-md border shadow-sm transition-transform group-hover:rotate-[-7deg] group-hover:scale-105">
+          <span class="text-2xl">📛</span>
+        </div>
+      </div>
+      <div class="text-center">
+        <p class="font-semibold">Something went wrong</p>
+        <p class="text-neutral-400"><%= @error_message %></p>
+      </div>
+      <a
+        class="btn btn-secondary"
+        href=<%= Campsite.base_app_url %>
+      >
+        Back home
+      </a>
+      <a
+        class="text-sm hover:underline font-medium text-link"
+        target="_blank"
+        rel="noopener noreferrer"
+        href="mailto:support@campsite.com"
+      >
+        Get help
+      </a>
+    </div>
+  </div>
+</main>

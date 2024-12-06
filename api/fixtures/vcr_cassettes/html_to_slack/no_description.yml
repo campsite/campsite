@@ -1,0 +1,39 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://localhost:3002/html_to_slack
+    body:
+      encoding: UTF-8
+      string: '{"html":""}'
+    headers:
+      User-Agent:
+      - Faraday v2.7.5
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer d8c0a2827589659ff292a8999b024f24a185ed82
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      x-powered-by:
+      - Express
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '2'
+      etag:
+      - W/"2-l9Fw4VUO7kr8CvBlt4zaMCqXZ0w"
+      date:
+      - Fri, 29 Mar 2024 17:42:58 GMT
+      connection:
+      - keep-alive
+      keep-alive:
+      - timeout=5
+    body:
+      encoding: UTF-8
+      string: "[]"
+  recorded_at: Fri, 29 Mar 2024 17:42:58 GMT
+recorded_with: VCR 6.1.0

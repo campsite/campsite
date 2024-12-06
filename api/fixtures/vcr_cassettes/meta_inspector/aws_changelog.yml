@@ -1,0 +1,651 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://aws.amazon.com/about-aws/whats-new/2023/11/cost-optimization-hub
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Faraday v2.9.0
+  response:
+    status:
+      code: 301
+      message: ''
+    headers:
+      content-length:
+      - '0'
+      connection:
+      - keep-alive
+      server:
+      - Server
+      date:
+      - Wed, 05 Jun 2024 21:25:46 GMT
+      x-amz-rid:
+      - D41VDPXXPMW2WKCQQBS5
+      set-cookie:
+      - aws-priv=eyJ2IjoxLCJldSI6MCwic3QiOjB9; Version=1; Comment="Anonymous cookie
+        for privacy regulations"; Domain=.aws.amazon.com; Max-Age=31536000; Expires=Thu,
+        05 Jun 2025 21:25:46 GMT; Path=/; Secure
+      x-frame-options:
+      - SAMEORIGIN
+      x-xss-protection:
+      - 1; mode=block
+      strict-transport-security:
+      - max-age=63072000
+      x-amz-id-1:
+      - D41VDPXXPMW2WKCQQBS5
+      location:
+      - "/about-aws/whats-new/2023/11/cost-optimization-hub/"
+      cache-control:
+      - no-store, no-cache, must-revalidate
+      x-content-type-options:
+      - nosniff
+      vary:
+      - Content-Type,Accept-Encoding,User-Agent
+      x-cache:
+      - Miss from cloudfront
+      via:
+      - 1.1 6152d4e35099aaa5ec23aec50cd7a8c4.cloudfront.net (CloudFront)
+      x-amz-cf-pop:
+      - LAX50-C2
+      x-amz-cf-id:
+      - FLkd4FujspIfOIxlHCfUMcCfDjjZLSuvIz1cIlbcUstYJXBxqNZ_-Q==
+    body:
+      encoding: UTF-8
+      string: ''
+  recorded_at: Wed, 05 Jun 2024 21:25:46 GMT
+- request:
+    method: get
+    uri: https://aws.amazon.com/about-aws/whats-new/2023/11/cost-optimization-hub/
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Faraday v2.9.0
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      content-type:
+      - text/html;charset=UTF-8
+      transfer-encoding:
+      - chunked
+      connection:
+      - keep-alive
+      server:
+      - Server
+      date:
+      - Wed, 05 Jun 2024 21:25:46 GMT
+      x-amz-rid:
+      - XJB0XT7JR8Y2DX96KAZ4
+      set-cookie:
+      - aws-priv=eyJ2IjoxLCJldSI6MCwic3QiOjB9; Version=1; Comment="Anonymous cookie
+        for privacy regulations"; Domain=.aws.amazon.com; Max-Age=31536000; Expires=Thu,
+        05 Jun 2025 21:25:46 GMT; Path=/; Secure, aws_lang=en; Domain=.amazon.com;
+        Path=/
+      x-frame-options:
+      - SAMEORIGIN
+      x-xss-protection:
+      - 1; mode=block
+      strict-transport-security:
+      - max-age=63072000
+      x-amz-id-1:
+      - XJB0XT7JR8Y2DX96KAZ4
+      last-modified:
+      - Sat, 25 May 2024 12:58:56 GMT
+      content-encoding:
+      - gzip
+      x-content-type-options:
+      - nosniff
+      vary:
+      - accept-encoding,Content-Type,Accept-Encoding,User-Agent
+      x-cache:
+      - Miss from cloudfront
+      via:
+      - 1.1 f70a58ce7ab3276e2d4987075b643aea.cloudfront.net (CloudFront)
+      x-amz-cf-pop:
+      - LAX50-C2
+      x-amz-cf-id:
+      - K3fAUORu3IyjJG-52CHSwmL0eX3pFh8l4iBoVPA7Mm5lbDmlRpdGUA==
+    body:
+      encoding: UTF-8
+      string: "<!doctype html>\n<html class=\"no-js aws-v1-page aws-lng-en_US aws-with-target\"
+        lang=\"en-US\" data-aws-assets=\"https://a0.awsstatic.com\" data-js-version=\"1.0.678\"
+        data-css-version=\"2.0.0\">\n <head> \n  <meta http-equiv=\"Content-Security-Policy\"
+        content=\"default-src 'self' data: https://a0.awsstatic.com https://prod.us-east-1.ui.gcr-chat.marketing.aws.dev;
+        connect-src 'self' https://*.analytics.console.aws.a2z.com https://*.prod.chc-features.uxplatform.aws.dev
+        https://112-tzm-766.mktoresp.com https://112-tzm-766.mktoutil.com https://a0.awsstatic.com
+        https://a0.p.awsstatic.com https://a1.awsstatic.com https://amazonwebservices.d2.sc.omtrdc.net
+        https://amazonwebservicesinc.tt.omtrdc.net https://api.regional-table.region-services.aws.a2z.com
+        https://api.us-west-2.prod.pricing.aws.a2z.com https://auth.aws.amazon.com
+        https://aws.amazon.com https://aws.amazon.com/p/sf/ https://aws.demdex.net
+        https://b0.p.awsstatic.com https://c0.b0.p.awsstatic.com https://calculator.aws
+        https://chat.us-east-1.prod.mrc-sunrise.marketing.aws.dev https://chatbot-api.us-east-1.prod.mrc-sunrise.marketing.aws.dev
+        https://cm.everesttech.net https://csml-plc-prod.us-west-2.api.aws/plc/csml/logging
+        https://d0.awsstatic.com https://d1.awsstatic.com https://d1fgizr415o1r6.cloudfront.net
+        https://d2c.aws.amazon.com https://d3borx6sfvnesb.cloudfront.net https://dftu77xade0tc.cloudfront.net
+        https://dpm.demdex.net https://fls-na.amazon.com https://i18n-string.us-west-2.prod.pricing.aws.a2z.com
+        https://infra-api.us-east-1.prod.mrc-sunrise.marketing.aws.dev https://livechat-api.us-east-1.prod.mrc-sunrise.marketing.aws.dev
+        https://pricing-table.us-west-2.prod.site.p.awsstatic.com https://prod-us-west-2.csp-report.marketing.aws.dev
+        https://prod.log.shortbread.aws.dev https://prod.tools.shortbread.aws.dev
+        https://prod.us-east-1.api.gcr-chat.marketing.aws.dev https://prod.us-east-1.rest-bot.gcr-chat.marketing.aws.dev
+        https://prod.us-east-1.ui.gcr-chat.marketing.aws.dev https://prod2.clientlogger.cn-northwest-1.marketplace.aws.a2z.org.cn
+        https://public.lotus.awt.aws.a2z.com https://s0.awsstatic.com https://s3.amazonaws.com/aws-messaging-pricing-information/
+        https://s3.amazonaws.com/public-pricing-agc/ https://spot-bid-advisor.s3.amazonaws.com
+        https://t0.m.awsstatic.com https://target.aws.amazon.com https://token.us-west-2.prod.site.p.awsstatic.com
+        https://view-stage.us-west-2.prod.pricing.aws.a2z.com https://view-staging.us-east-1.prod.plc1-prod.pricing.aws.a2z.com
+        https://vs.aws.amazon.com https://webchat-aws.clink.cn https://wrp.aws.amazon.com
+        https://www.youtube-nocookie.com wss://*.transport.connect.us-east-1.amazonaws.com
+        wss://prod.us-east-1.wss-bot.gcr-chat.marketing.aws.dev wss://webchat-aws.clink.cn;
+        font-src 'self' data: https://a0.awsstatic.com https://f0.awsstatic.com https://fonts.gstatic.com
+        https://prod.us-east-1.ui.gcr-chat.marketing.aws.dev; frame-src 'self' https://aws.demdex.net
+        https://c0.b0.p.awsstatic.com https://calculator.aws https://conversational-experience-worker.widget.console.aws.amazon.com/lotus/isolatedIFrame
+        https://dpm.demdex.net https://pricing-table.us-west-2.prod.site.p.awsstatic.com
+        https://token.us-west-2.prod.site.p.awsstatic.com https://www.youtube-nocookie.com;
+        img-src 'self' data: https://*.vidyard.com https://*.ytimg.com https://a0.awsstatic.com
+        https://amazonwebservices.d2.sc.omtrdc.net https://aws-clink2-resource.s3.cn-northwest-1.amazonaws.com.cn
+        https://aws-quickstart.s3.amazonaws.com https://aws.amazon.com https://aws.demdex.net
+        https://awsmedia.s3.amazonaws.com https://chat.us-east-1.prod.mrc-sunrise.marketing.aws.dev
+        https://cm.everesttech.net https://d1.awsstatic.com https://d1d1et6laiqoh9.cloudfront.net
+        https://d2908q01vomqb2.cloudfront.net https://d2c.aws.amazon.com https://d2cpw7vd6a2efr.cloudfront.net
+        https://d36cz9buwru1tt.cloudfront.net https://docs.aws.amazon.com https://dpm.demdex.net
+        https://fls-na.amazon.com https://google.ca https://google.co.in https://google.co.jp
+        https://google.co.th https://google.co.uk https://google.com https://google.com.ar
+        https://google.com.au https://google.com.br https://google.com.hk https://google.com.mx
+        https://google.com.tr https://google.com.tw https://google.de https://google.es
+        https://google.fr https://google.it https://google.nl https://google.pl https://google.ru
+        https://img.youtube.com https://marketingplatform.google.com https://media.amazonwebservices.com
+        https://p.adsymptotic.com https://pages.awscloud.com https://prod.us-east-1.ui.gcr-chat.marketing.aws.dev
+        https://s3.amazonaws.com/aws-quickstart/ https://ssl-static.libsyn.com https://static-cdn.jtvnw.net
+        https://webchat-aws.clink.cn https://www.google.com https://www.linkedin.com
+        https://yt3.ggpht.com; media-src 'self' blob: https://*.libsyn.com https://a0.awsstatic.com
+        https://anchor.fm https://awsmedia.s3.amazonaws.com https://awspodcastsiberiaent.s3.eu-west-3.amazonaws.com
+        https://chat.us-east-1.prod.mrc-sunrise.marketing.aws.dev https://chtbl.com
+        https://content.production.cdn.art19.com https://d1.awsstatic.com https://d1hemuljm71t2j.cloudfront.net
+        https://d1le29qyzha1u4.cloudfront.net https://d1oqpvwii7b6rh.cloudfront.net
+        https://d1vo51ubqkiilx.cloudfront.net https://d1yyh5dhdgifnx.cloudfront.net
+        https://d2908q01vomqb2.cloudfront.net https://d2a6igt6jhaluh.cloudfront.net
+        https://d3ctxlq1ktw2nl.cloudfront.net https://d3h2ozso0dirfl.cloudfront.net
+        https://dgen8gghn3u86.cloudfront.net https://dk261l6wntthl.cloudfront.net
+        https://download.stormacq.com/aws/podcast/ https://dts.podtrac.com https://media.amazonwebservices.com
+        https://mktg-apac.s3-ap-southeast-1.amazonaws.com https://rss.art19.com https://s3-ap-northeast-1.amazonaws.com/aws-china-media/
+        https://www.buzzsprout.com; object-src 'none'; script-src 'sha256-ghBVHRzgRzhMwBt3OmfHw+wb138BIP2IntrCTNdez5o='
+        blob: 'nonce-XIhDQjA/g4fx2TDJl0xKhwMKo+tI4Tu+6PTH8ltMEf4=' 'self' https://*.cdn.console.awsstatic.com/
+        https://*.cdn.uis.awsstatic.com/ https://a.b.cdn.console.awsstatic.com https://a0.awsstatic.com
+        https://amazonwebservicesinc.tt.omtrdc.net https://chat.us-east-1.prod.mrc-sunrise.marketing.aws.dev
+        https://d2c.aws.amazon.com https://googleads.g.doubleclick.net https://loader.us-east-1.prod.mrc-sunrise.marketing.aws.dev
+        https://prod.us-east-1.ui.gcr-chat.marketing.aws.dev https://spot-price.s3.amazonaws.com
+        https://static.doubleclick.net https://t0.m.awsstatic.com https://website.spot.ec2.aws.a2z.com
+        https://www.google.com https://www.gstatic.com https://www.youtube.com/iframe_api
+        https://www.youtube.com/s/player/; style-src 'self' 'unsafe-inline' https://a0.awsstatic.com
+        https://prod.us-east-1.ui.gcr-chat.marketing.aws.dev\" data-report-uri=\"https://prod-us-west-2.csp-report.marketing.aws.dev/submit\">
+        \n  <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">
+        \n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+        \n  <link rel=\"preconnect\" href=\"https://a0.awsstatic.com\" crossorigin=\"anonymous\">
+        \n  <link rel=\"dns-prefetch\" href=\"https://a0.awsstatic.com\"> \n  <link
+        rel=\"dns-prefetch\" href=\"https://d1.awsstatic.com\"> \n  <link rel=\"dns-prefetch\"
+        href=\"https://amazonwebservicesinc.tt.omtrdc.net\"> \n  <link rel=\"dns-prefetch\"
+        href=\"https://s0.awsstatic.com\"> \n  <title>Introducing Cost Optimization
+        Hub</title> \n  <meta name=\"robots\" content=\"index, follow\"> \n  <meta
+        property=\"twitter:title\" content=\"Introducing Cost Optimization Hub\">
+        \n  <meta property=\"twitter:description\" content=\"\"> \n  <meta property=\"og:title\"
+        content=\"Introducing Cost Optimization Hub\"> \n  <meta http-equiv=\"X-UA-Compatible\"
+        content=\"IE=edge,chrome=1\"> \n  <link rel=\"canonical\" href=\"https://aws.amazon.com/about-aws/whats-new/2023/11/cost-optimization-hub/\">
+        \n  <link rel=\"alternate\" href=\"https://aws.amazon.com/de/about-aws/whats-new/2023/11/cost-optimization-hub/\"
+        hreflang=\"de-de\"> \n  <link rel=\"alternate\" href=\"https://aws.amazon.com/about-aws/whats-new/2023/11/cost-optimization-hub/\"
+        hreflang=\"en-us\"> \n  <link rel=\"alternate\" href=\"https://aws.amazon.com/es/about-aws/whats-new/2023/11/cost-optimization-hub/\"
+        hreflang=\"es-es\"> \n  <link rel=\"alternate\" href=\"https://aws.amazon.com/fr/about-aws/whats-new/2023/11/cost-optimization-hub/\"
+        hreflang=\"fr-fr\"> \n  <link rel=\"alternate\" href=\"https://aws.amazon.com/jp/about-aws/whats-new/2023/11/cost-optimization-hub/\"
+        hreflang=\"ja-jp\"> \n  <link rel=\"alternate\" href=\"https://aws.amazon.com/ko/about-aws/whats-new/2023/11/cost-optimization-hub/\"
+        hreflang=\"ko-kr\"> \n  <link rel=\"alternate\" href=\"https://aws.amazon.com/pt/about-aws/whats-new/2023/11/cost-optimization-hub/\"
+        hreflang=\"pt-br\"> \n  <link rel=\"alternate\" href=\"https://aws.amazon.com/cn/about-aws/whats-new/2023/11/cost-optimization-hub/\"
+        hreflang=\"zh-cn\"> \n  <script src=\"https://a0.awsstatic.com/libra/1.0.582/csp/csp-report.js\"
+        async=\"true\"></script> \n  <meta property=\"twitter:card\" content=\"summary\">
+        \n  <meta property=\"twitter:image\" content=\"https://a0.awsstatic.com/libra-css/images/logos/aws_logo_smile_179x109.png\">
+        \n  <meta property=\"twitter:site\" content=\"@awscloud\"> \n  <meta property=\"fb:pages\"
+        content=\"153063591397681\"> \n  <meta name=\"baidu-site-verification\" content=\"pjxJUyWxae\">
+        \n  <meta name=\"360-site-verification\" content=\"cbe5c6f0249e273e71fffd6d6580ce09\">
+        \n  <meta name=\"shenma-site-verification\" content=\"79b94bb338f010af876605819a332e19_1617844070\">
+        \n  <meta name=\"sogou_site_verification\" content=\"Ow8cCy3Hgq\"> \n  <link
+        rel=\"icon\" type=\"image/ico\" href=\"https://a0.awsstatic.com/libra-css/images/site/fav/favicon.ico\">
+        \n  <link rel=\"shortcut icon\" type=\"image/ico\" href=\"https://a0.awsstatic.com/libra-css/images/site/fav/favicon.ico\">
+        \n  <link rel=\"apple-touch-icon\" sizes=\"57x57\" href=\"https://a0.awsstatic.com/libra-css/images/site/touch-icon-iphone-114-smile.png\">
+        \n  <link rel=\"apple-touch-icon\" sizes=\"72x72\" href=\"https://a0.awsstatic.com/libra-css/images/site/touch-icon-ipad-144-smile.png\">
+        \n  <link rel=\"apple-touch-icon\" sizes=\"114x114\" href=\"https://a0.awsstatic.com/libra-css/images/site/touch-icon-iphone-114-smile.png\">
+        \n  <link rel=\"apple-touch-icon\" sizes=\"144x144\" href=\"https://a0.awsstatic.com/libra-css/images/site/touch-icon-ipad-144-smile.png\">
+        \n  <meta property=\"og:type\" content=\"company\"> \n  <meta property=\"og:url\"
+        content=\"https://aws.amazon.com/about-aws/whats-new/2023/11/cost-optimization-hub/\">
+        \n  <meta property=\"og:image\" content=\"https://a0.awsstatic.com/libra-css/images/logos/aws_logo_smile_1200x630.png\">
+        \n  <meta property=\"og:site_name\" content=\"Amazon Web Services, Inc.\">
+        \n  <meta name=\"facebook-domain-verification\" content=\"ucogvbvio3zpukhjxw4pcprci7qylr\">
+        \n  <meta name=\"google-site-verification\" content=\"XHghG81ulgiW-3EylGcF48sG28tBW5EH0bNUhgo_DrU\">
+        \n  <meta name=\"msvalidate.01\" content=\"6F92E52A288E266E30C2797ECB5FCCF3\">
+        \n  <link rel=\"stylesheet\" href=\"https://a0.awsstatic.com/main/css/2.0.0/style.css\">
+        \n  <script type=\"application/json\" id=\"aws-page-settings\">\n  {\n    \"supportedLanguages\":
+        [\"ar\",\"cn\",\"de\",\"en\",\"es\",\"fr\",\"id\",\"it\",\"jp\",\"ko\",\"pt\",\"ru\",\"th\",\"tr\",\"tw\",\"vi\"],\n
+        \   \"defaultLanguage\": \"en\",\n    \"logDataSet\": \"LIVE:PROD\",\n    \"logInstance\":
+        \"PUB\",\n    \"csdsEndpoint\": \"https://aws.amazon.com/\",\n    \"framework\":
+        \"v1\",\n    \"g11nLibPath\": \"https://a0.awsstatic.com/g11n-lib/2.0.104\",\n
+        \   \"i18nStringPath\": \"https://i18n-string.us-west-2.prod.pricing.aws.a2z.com\",\n
+        \   \"libraCSSPath\": \"https://a0.awsstatic.com/libra-css/css/1.0.496\",\n
+        \   \"isLoggingEnabled\": true,\n    \"currentLanguage\": \"en-US\",\n    \"isBJS\":
+        false,\n    \"isRTL\": false,\n    \"requireBaseUrl\": \"https://a0.awsstatic.com/chrome/js/1.0.678\",\n
+        \   \"requirePaths\": {\n      \"jquery\": \"jquery-amd\",\n      \"directories\":
+        \"https://a0.awsstatic.com/libra/1.0.582/directories\",\n      \"libra\":
+        \"https://a0.awsstatic.com/libra/1.0.582\",\n      \"libra-cardsui\": \"https://a0.awsstatic.com/libra/1.0.582/libra-cardsui\",\n
+        \     \"librastandardlib\": \"https://a0.awsstatic.com/libra/1.0.582/librastandardlib\",\n
+        \     \"plc\": \"https://a0.awsstatic.com/plc/js/1.0.138/plc\",\n      \"pricing-savings-plan\":
+        \"https://a0.awsstatic.com/pricing-savings-plan/js/1.0.21\"\n    },\n    \"requireDeps\":
+        [\"scripts\"],\n    \"requireShim\": {\n      \"pricing-table\": [\"scripts\"]\n
+        \   }\n  }\n</script> \n  <script src=\"https://a0.awsstatic.com/chrome/js/1.0.678/head.2.0.js\"></script>
+        \n  <script src=\"https://a0.awsstatic.com/s_code/js/3.0/awshome_s_code.js\"></script>
+        \n  <script src=\"https://d2c.aws.amazon.com/client/loader/v1/d2c-load.js\"></script>
+        \n  <script type=\"application/json\" id=\"target-mediator\">{\"pageLanguage\":\"en\",\"supportedLanguages\":[\"ar\",\"cn\",\"de\",\"en\",\"es\",\"fr\",\"id\",\"it\",\"jp\",\"ko\",\"pt\",\"ru\",\"th\",\"tr\",\"tw\",\"vi\"],\"holdJqueryReady\":\"true\",\"offerOrigin\":\"https://s0.awsstatic.com\"}</script>
+        \n  <script data-js-script=\"target-mediator\" src=\"https://a0.awsstatic.com/target/1.0.122/aws-target-mediator.js\"
+        async=\"true\"></script> \n </head> \n <body> \n  <script id=\"awsc-panorama-bundle\"
+        type=\"text/javascript\" src=\"https://prod.pa.cdn.uis.awsstatic.com/panorama-nav-init.js\"
+        data-config=\"{&quot;appEntity&quot;:&quot;aws-marketing&quot;,&quot;region&quot;:&quot;us-west-1&quot;,&quot;service&quot;:&quot;global-site&quot;,&quot;trackerConstants&quot;:{&quot;cookieDomain&quot;:&quot;aws.amazon.com&quot;}}\"
+        async=\"true\"></script> \n  <a id=\"aws-page-skip-to-main\" class=\"lb-sr-only
+        lb-sr-only-focusable lb-bold lb-skip-el\" href=\"#aws-page-content-main\">
+        Skip to main content</a> \n  <header id=\"aws-page-header\" class=\"awsm m-page-header
+        lb-with-mobile-subrow\" role=\"banner\"> \n   <div id=\"m-nav\" class=\"m-nav\"
+        role=\"navigation\"> \n    <div class=\"m-nav-header lb-clearfix\" data-menu-url=\"https://s0.awsstatic.com/en_US/nav/v3/panel-content/desktop/index.html\">
+        \n     <div class=\"m-nav-logo\"> \n      <div class=\"lb-bg-logo aws-amazon_web_services_smile-header-desktop-en\">
+        \n       <a href=\"https://aws.amazon.com/?nc2=h_lg\"><span>Click here to
+        return to Amazon Web Services homepage</span></a> \n      </div> \n     </div>
+        \n     <nav class=\"m-nav-secondary-links\" style=\"min-width: 620px\" aria-label=\"Secondary
+        navigation\"> \n      <a href=\"/about-aws/?nc2=h_header\">About AWS</a> \n
+        \     <a href=\"/contact-us/?nc2=h_header\">Contact Us</a> \n      <a class=\"lb-txt-none
+        lb-tiny-iblock lb-txt-13 lb-txt lb-has-trigger-indicator\" href=\"#\" data-mbox-ignore=\"true\"
+        data-lb-popover-trigger=\"popover-support-selector\" role=\"button\" aria-expanded=\"false\"
+        aria-label=\"Explore support options\" id=\"popover-popover-support-selector-trigger\"
+        aria-controls=\"popover-support-selector\" aria-haspopup=\"true\"> Support&nbsp;
+        <i class=\"icon-caret-down lb-trigger-mount\"></i></a> \n      <a id=\"m-nav-language-selector\"
+        class=\"lb-tiny-iblock lb-txt lb-has-trigger-indicator\" href=\"#\" data-lb-popover-trigger=\"popover-language-selector\"
+        data-language=\"en\" aria-label=\"Set site language\" role=\"button\" aria-controls=\"popover-language-selector\"
+        aria-expanded=\"false\" aria-haspopup=\"true\">English&nbsp;<i class=\"icon-caret-down
+        lb-trigger-mount\"></i></a> \n      <a class=\"lb-tiny-iblock lb-txt lb-has-trigger-indicator\"
+        href=\"#\" data-lb-popover-trigger=\"popover-my-account\" aria-label=\"Access
+        account options\" role=\"button\" aria-controls=\"popover-my-account\" aria-expanded=\"false\"
+        aria-haspopup=\"true\">My Account&nbsp;<i class=\"icon-caret-down lb-trigger-mount\"></i></a>
+        \n      <div class=\"m-nav-cta-btn\"> \n       <div class=\"lb-mbox js-mbox\"
+        data-lb-comp=\"mbox\" data-lb-comp-ignore=\"true\" data-mbox=\"en_header_nav_cta\">
+        \n        <div class=\"lb-data-attr-wrapper data-attr-wrapper\" data-da-type=\"so\"
+        data-da-so-type=\"viewport\" data-da-so-language=\"en\" data-da-so-category=\"monitoring\"
+        data-da-so-name=\"nav-buttons\" data-da-so-version=\"sign-up-sign-in-all\"
+        data-da-so-url=\"nav\"> \n         <div class=\"data-attr-wrapper lb-tiny-iblock
+        lb-none-pad lb-box\" data-da-type=\"so\" data-da-so-type=\"viewport\" data-da-so-language=\"en\"
+        data-da-so-category=\"monitoring\" data-da-so-name=\"nav-buttons\" data-da-so-version=\"prospect-sign-in\"
+        data-da-so-url=\"all\"> \n          <a class=\"lb-txt-none lb-tiny-iblock
+        lb-txt-13 lb-txt\" style=\"padding-top:8px; padding-right:13px;\" href=\"https://console.aws.amazon.com/console/home?nc2=h_ct&amp;src=header-signin\">
+        Sign In</a> \n         </div> \n         <div class=\"data-attr-wrapper lb-tiny-iblock
+        lb-none-v-margin lb-btn\" data-da-type=\"so\" data-da-so-type=\"viewport\"
+        data-da-so-language=\"en\" data-da-so-category=\"monitoring\" data-da-so-name=\"nav-buttons\"
+        data-da-so-version=\"prospect-signup\" data-da-so-url=\"all\"> \n          <a
+        class=\"lb-btn-p-primary\" href=\"https://portal.aws.amazon.com/gp/aws/developer/registration/index.html?nc2=h_ct&amp;src=header_signup\"
+        data-trk-params=\"{&quot;trkOverrideWithQs&quot;:true}\" role=\"button\">
+        <span> Create an AWS Account</span> </a> \n         </div> \n        </div>
+        \n       </div> \n      </div> \n     </nav> \n     <div class=\"m-nav-primary-group\">
+        \n      <nav class=\"m-nav-primary-links\" aria-label=\"Primary navigation\">
+        \n       <i class=\"m-nav-angle-left-icon\" aria-hidden=\"true\"></i> \n       <ul>
+        \n        <li aria-expanded=\"false\"><span><a href=\"/products/?nc2=h_ql_prod\"
+        data-panel=\"m-nav-panel-products\">Products</a></span></li> \n        <li
+        aria-expanded=\"false\"><span><a href=\"/solutions/?nc2=h_ql_sol\" data-panel=\"m-nav-panel-solutions\">Solutions</a></span></li>
+        \n        <li aria-expanded=\"false\"><span><a href=\"/pricing/?nc2=h_ql_pr\"
+        data-panel=\"m-nav-panel-pricing\">Pricing</a></span></li> \n        <li aria-expanded=\"false\"><span><a
+        href=\"https://aws.amazon.com/documentation-overview/?nc2=h_ql_doc_do\" data-panel=\"m-nav-panel-documentation\">Documentation</a></span></li>
+        \n        <li aria-expanded=\"false\"><span><a href=\"/getting-started/?nc2=h_ql_le\"
+        data-panel=\"m-nav-panel-learn\">Learn</a></span></li> \n        <li aria-expanded=\"false\"><span><a
+        href=\"/partners/?nc2=h_ql_pn\" data-panel=\"m-nav-panel-partner\">Partner
+        Network</a></span></li> \n        <li aria-expanded=\"false\"><span><a href=\"https://aws.amazon.com/marketplace/?nc2=h_ql_mp\"
+        data-panel=\"m-nav-panel-marketplace\">AWS Marketplace</a></span></li> \n
+        \       <li aria-expanded=\"false\"><span><a href=\"/customer-enablement/?nc2=h_ql_ce\"
+        data-panel=\"m-nav-panel-customer\">Customer Enablement</a></span></li> \n
+        \       <li aria-expanded=\"false\"><span><a href=\"/events/?nc2=h_ql_ev\"
+        data-panel=\"m-nav-panel-events\">Events</a></span></li> \n        <li aria-expanded=\"false\"><span><a
+        href=\"/contact-us/?nc2=h_ql_exm\" data-panel=\"m-nav-panel-more\">Explore
+        More </a></span></li> \n       </ul> \n       <div class=\"m-nav-icon-group\">
+        \n        <i class=\"m-nav-angle-right-icon\" aria-hidden=\"true\"></i> \n
+        \       <i class=\"m-nav-search-icon\" tabindex=\"0\" role=\"button\" aria-expanded=\"false\"
+        aria-label=\"Search\"></i> \n       </div> \n      </nav> \n      <div id=\"m-nav-desktop-search\"
+        class=\"m-nav-search\"> \n       <form action=\"https://aws.amazon.com/search/\"
+        role=\"search\"> \n        <div class=\"m-typeahead\" data-directory-id=\"typeahead-suggestions\"
+        data-lb-comp=\"typeahead\"> \n         <input class=\"m-nav-search-field\"
+        placeholder=\"Search\" autocomplete=\"off\" spellcheck=\"false\" dir=\"auto\"
+        type=\"text\" name=\"searchQuery\"> \n        </div> \n       </form> \n       <i
+        class=\"m-nav-close-icon\" role=\"button\" aria-label=\"Close\"></i> \n      </div>
+        \n     </div> \n    </div> \n    <div class=\"lb-popover lb-popover-aui lb-popover-tiny\"
+        data-lb-comp=\"popover\" data-id=\"popover-language-selector\" id=\"popover-language-selector\"
+        aria-modal=\"false\" aria-labelledby=\"popover-popover-language-selector-trigger\"
+        data-action=\"hover\" data-position=\"top\"> \n     <a class=\"lb-popover-close\"
+        role=\"button\" tabindex=\"0\" aria-label=\"Close\" title=\"Close\"> <span
+        class=\"lb-sr-only\">Close</span> </a> \n     <div class=\"lb-grid lb-row
+        lb-row-max-large lb-snap\"> \n      <div class=\"lb-col lb-tiny-24 lb-mid-12\">
+        \n       <ul class=\"lb-txt-none lb-ul lb-list-style-none lb-tiny-ul-block\">
+        \n        <li lang=\"ar-SA\" translate=\"no\" data-language=\"ar\"><a href=\"https://aws.amazon.com/ar/?nc1=h_ls\">عربي</a></li>
+        \n        <li lang=\"id-ID\" translate=\"no\" data-language=\"id\"><a href=\"https://aws.amazon.com/id/?nc1=h_ls\">Bahasa
+        Indonesia</a></li> \n        <li lang=\"de-DE\" translate=\"no\" data-language=\"de\"><a
+        href=\"https://aws.amazon.com/de/?nc1=h_ls\">Deutsch</a></li> \n        <li
+        lang=\"en-US\" translate=\"no\" data-language=\"en\"><a href=\"https://aws.amazon.com/?nc1=h_ls\">English</a></li>
+        \n        <li lang=\"es-ES\" translate=\"no\" data-language=\"es\"><a href=\"https://aws.amazon.com/es/?nc1=h_ls\">Español</a></li>
+        \n        <li lang=\"fr-FR\" translate=\"no\" data-language=\"fr\"><a href=\"https://aws.amazon.com/fr/?nc1=h_ls\">Français</a></li>
+        \n        <li lang=\"it-IT\" translate=\"no\" data-language=\"it\"><a href=\"https://aws.amazon.com/it/?nc1=h_ls\">Italiano</a></li>
+        \n        <li lang=\"pt-BR\" translate=\"no\" data-language=\"pt\"><a href=\"https://aws.amazon.com/pt/?nc1=h_ls\">Português</a></li>
+        \n       </ul> \n      </div> \n      <div class=\"lb-col lb-tiny-24 lb-mid-12\">
+        \n       <ul class=\"lb-txt-none lb-ul lb-list-style-none lb-tiny-ul-block\">
+        \n        <li lang=\"vi-VN\" translate=\"no\" data-language=\"vi\"><a href=\"https://aws.amazon.com/vi/?nc1=f_ls\">Tiếng
+        Việt</a></li> \n        <li lang=\"tr-TR\" translate=\"no\" data-language=\"tr\"><a
+        href=\"https://aws.amazon.com/tr/?nc1=h_ls\">Türkçe</a></li> \n        <li
+        lang=\"ru-RU\" translate=\"no\" data-language=\"ru\"><a href=\"https://aws.amazon.com/ru/?nc1=h_ls\">Ρусский</a></li>
+        \n        <li lang=\"th-TH\" translate=\"no\" data-language=\"th\"><a href=\"https://aws.amazon.com/th/?nc1=f_ls\">ไทย</a></li>
+        \n        <li lang=\"ja-JP\" translate=\"no\" data-language=\"jp\"><a href=\"https://aws.amazon.com/jp/?nc1=h_ls\">日本語</a></li>
+        \n        <li lang=\"ko-KR\" translate=\"no\" data-language=\"ko\"><a href=\"https://aws.amazon.com/ko/?nc1=h_ls\">한국어</a></li>
+        \n        <li lang=\"zh-CN\" translate=\"no\" data-language=\"cn\"><a href=\"https://aws.amazon.com/cn/?nc1=h_ls\">中文
+        (简体)</a></li> \n        <li lang=\"zh-TW\" translate=\"no\" data-language=\"tw\"><a
+        href=\"https://aws.amazon.com/tw/?nc1=h_ls\">中文 (繁體)</a></li> \n       </ul>
+        \n      </div> \n     </div> \n    </div> \n    <div class=\"lb-popover lb-popover-aui
+        lb-popover-tiny\" data-lb-comp=\"popover\" data-id=\"popover-my-account\"
+        id=\"popover-my-account\" aria-modal=\"false\" aria-labelledby=\"popover-popover-my-account-trigger\"
+        data-action=\"hover\" data-position=\"top\"> \n     <a class=\"lb-popover-close\"
+        role=\"button\" tabindex=\"0\" aria-label=\"Close\" title=\"Close\"> <span
+        class=\"lb-sr-only\">Close</span> </a> \n     <ul class=\"lb-txt-none lb-ul
+        lb-list-style-none lb-tiny-ul-block\"> \n      <li class=\"m-no-auth\" data-myaws-auth-only=\"true\"><a
+        href=\"/profile/?nc2=h_m_mc\">My Profile</a></li> \n      <li class=\"m-no-auth\"
+        data-myaws-auth-only=\"true\"><a href=\"https://auth.aws.amazon.com/sign-out/?nc2=h_m_mc\">Sign
+        out of AWS Builder ID</a></li> \n      <li><a href=\"https://console.aws.amazon.com/?nc2=h_m_mc\">AWS
+        Management Console</a></li> \n      <li><a href=\"https://console.aws.amazon.com/billing/home#/account?nc2=h_m_ma\">Account
+        Settings</a></li> \n      <li><a href=\"https://console.aws.amazon.com/billing/home?nc2=h_m_bc\">Billing
+        &amp; Cost Management</a></li> \n      <li><a href=\"https://console.aws.amazon.com/iam/home?nc2=h_m_sc#security_credential\">Security
+        Credentials</a></li> \n      <li><a href=\"https://phd.aws.amazon.com/?nc2=h_m_sc\">AWS
+        Personal Health Dashboard</a></li> \n     </ul> \n    </div> \n    <div class=\"lb-popover
+        lb-popover-aui lb-popover-tiny\" data-lb-comp=\"popover\" data-id=\"popover-support-selector\"
+        id=\"popover-support-selector\" aria-modal=\"false\" aria-labelledby=\"popover-popover-support-selector-trigger\"
+        data-action=\"hover\" data-position=\"top\"> \n     <a class=\"lb-popover-close\"
+        role=\"button\" tabindex=\"0\" aria-label=\"Close\" title=\"Close\"> <span
+        class=\"lb-sr-only\">Close</span> </a> \n     <ul class=\"lb-txt-none lb-ul
+        lb-list-style-none lb-tiny-ul-block\"> \n      <li><a href=\"https://console.aws.amazon.com/support/home/?nc2=h_ql_cu\">Support
+        Center</a></li> \n      <li><a href=\"https://iq.aws.amazon.com/?utm=mkt.nav\">Expert
+        Help</a></li> \n      <li><a href=\"https://repost.aws/knowledge-center/?nc2=h_m_ma\">Knowledge
+        Center</a></li> \n      <li><a href=\"/premiumsupport/?nc2=h_m_bc\">AWS Support
+        Overview</a></li> \n      <li><a href=\"https://repost.aws/\">AWS re:Post</a></li>
+        \n     </ul> \n    </div> \n    <script type=\"text/x-handlebars-template\"
+        data-hbs-template-path=\"nav-desktop/suggestions\" data-hbs-context=\"{&quot;pricingText&quot;:&quot;Pricing&quot;,&quot;documentationText&quot;:&quot;Documentation&quot;,&quot;calculatorText&quot;:&quot;Calculator&quot;}\"></script>
+        \n    <script type=\"text/x-handlebars-template\" data-hbs-template-path=\"nav-desktop/products-head\"
+        data-hbs-context=\"{&quot;productsText&quot;:&quot;Products&quot;}\"></script>
+        \n    <script type=\"text/x-handlebars-template\" data-hbs-template-path=\"nav-desktop/keypages-head\"
+        data-hbs-context=\"{&quot;relatedPagesText&quot;:&quot;Related Pages&quot;}\"></script>
+        \n    <script type=\"text/x-handlebars-template\" data-hbs-template-path=\"nav-desktop/tutorials-head\"
+        data-hbs-context=\"{&quot;tutorialsText&quot;:&quot;Tutorials&quot;}\"></script>
+        \n    <script type=\"text/x-handlebars-template\" data-hbs-template-path=\"nav-desktop/blogs-head\"
+        data-hbs-context=\"{&quot;blogsText&quot;:&quot;Blogs&quot;}\"></script> \n
+        \   <script type=\"text/x-handlebars-template\" data-hbs-template-path=\"nav-desktop/see-all\"
+        data-hbs-context=\"{&quot;resultsText&quot;:&quot;See more results for&quot;}\"></script>
+        \n   </div> \n   <div id=\"m-nav-mobile\" class=\"m-nav-mobile\"> \n    <div
+        id=\"m-nav-mobile-header\" class=\"m-nav-mobile-header m-nav-mobile-with-sub-row\"
+        data-menu-url=\"https://s0.awsstatic.com/en_US/nav/v3/panel-content/mobile/index.html\">
+        \n     <div class=\"lb-bg-logo aws-amazon_web_services_smile-header-mobile-en\">
+        \n      <a href=\"https://aws.amazon.com/?nc2=h_lg\"><span>Click here to return
+        to Amazon Web Services homepage</span></a> \n     </div> \n     <div class=\"m-nav-mobile-button-group\">
+        \n      <i class=\"m-nav-mobile-button icon-search\" tabindex=\"0\" role=\"button\"
+        aria-expanded=\"false\" aria-label=\"Search\"></i> \n      <i class=\"m-nav-mobile-button
+        icon-reorder\" tabindex=\"0\" role=\"button\" aria-expanded=\"false\" aria-label=\"Menu\"></i>
+        \n     </div> \n     <div id=\"m-nav-mobile-sub-row\" class=\"m-nav-mobile-sub-row\">
+        \n      <div class=\"data-attr-wrapper lb-btn\" data-da-type=\"so\" data-da-so-category=\"monitoring\"
+        data-da-so-language=\"en\" data-da-so-name=\"global-mobile-sticky-cta-buttons\"
+        data-da-so-type=\"viewport\" data-da-so-version=\"get-started-for-free-cta\"
+        data-da-so-url=\"all\"> \n       <a class=\"lb-btn-p-primary\" href=\"https://portal.aws.amazon.com/gp/aws/developer/registration/index.html?nc2=h_mobile\"
+        role=\"button\"> <span> Get Started for Free</span> </a> \n      </div> \n
+        \     <div class=\"data-attr-wrapper lb-btn\" data-da-type=\"so\" data-da-so-category=\"monitoring\"
+        data-da-so-language=\"en\" data-da-so-name=\"global-mobile-sticky-cta-buttons\"
+        data-da-so-type=\"viewport\" data-da-so-version=\"contact-us\"> \n       <a
+        class=\"lb-btn-p\" href=\"https://aws.amazon.com/contact-us/?nc2=h_mobile\"
+        role=\"button\"> <span> Contact Us</span> </a> \n      </div> \n     </div>
+        \n    </div> \n    <div id=\"m-nav-mobile-search\" class=\"m-nav-mobile-search\">
+        \n     <form action=\"https://aws.amazon.com/search\" role=\"search\"> \n
+        \     <div class=\"m-typeahead\"> \n       <input class=\"m-nav-search-field\"
+        placeholder=\"Search\" autocomplete=\"off\" spellcheck=\"false\" dir=\"auto\"
+        type=\"text\" name=\"searchQuery\"> \n      </div> \n     </form> \n    </div>
+        \n    <nav id=\"m-nav-trimdown\" role=\"navigation\"> \n     <ul class=\"m-nav-mobile-menu-group\">
+        \n      <li> <a href=\"/products/?nc2=h_mo\">Products</a> </li> \n      <li>
+        <a href=\"/solutions/?nc2=h_mo\">Solutions</a> </li> \n      <li> <a href=\"/pricing/?nc2=h_mo\">Pricing</a>
+        </li> \n      <li> <a href=\"/what-is-aws/?nc2=h_mo\">Introduction to AWS</a>
+        </li> \n      <li> <a href=\"/getting-started/?nc2=h_mo\">Getting Started</a>
+        </li> \n      <li> <a href=\"https://aws.amazon.com/documentation-overview/?nc2=h_mo\">Documentation</a>
+        </li> \n      <li> <a href=\"/training/?nc2=h_mo\">Training and Certification</a>
+        </li> \n      <li> <a href=\"/developer/?nc2=h_mo\">Developer Center</a> </li>
+        \n      <li> <a href=\"/solutions/case-studies/?nc2=h_mo\">Customer Success</a>
+        </li> \n      <li> <a href=\"/partners/?nc2=h_mo\">Partner Network</a> </li>
+        \n      <li> <a href=\"https://aws.amazon.com/marketplace/?nc2=h_mo\">AWS
+        Marketplace</a> </li> \n      <li> <a href=\"https://console.aws.amazon.com/support/home?nc2=h_ql_cu\">Support</a>
+        </li> \n      <li> <a href=\"https://repost.aws/\">AWS re:Post</a> </li> \n
+        \     <li> <a href=\"https://console.aws.amazon.com/console/home\">Log into
+        Console</a> </li> \n      <li> <a href=\"/console/mobile/\">Download the Mobile
+        App</a> </li> \n     </ul> \n    </nav> \n   </div> \n  </header> \n  <div
+        id=\"aws-page-content\" class=\"page-content\"> \n   <div class=\"wrapper
+        row\"> \n    <aside class=\"three columns leftnavcontainer\" role=\"complementary\">
+        \n     <div class=\"leftnav\"> \n      <div class=\"section\"></div> \n      <div
+        class=\"iparys_inherited\"></div> \n     </div> \n    </aside> \n    <div
+        class=\"nine columns content-with-nav\"> \n     <main id=\"aws-page-content-main\"
+        role=\"main\" tabindex=\"-1\"> \n      <section data-page-alert-target=\"true\">
+        \n       <div class=\"title-wrapper\"> \n        <div class=\"row title\">
+        \n         <div class=\"twelve columns\"> \n          <h1 id=\"Introducing_Cost_Optimization_Hub\">
+        <a name=\"Introducing_Cost_Optimization_Hub\"> Introducing Cost Optimization
+        Hub</a> </h1> \n         </div> \n        </div> \n       </div> \n       <p>
+        Posted On: <span class=\"date\"> Nov 26, 2023</span> </p> \n       <div class=\"aws-text-box\">
+        \n        <div> \n         <p>Today we are announcing Cost Optimization Hub,
+        a new AWS Billing and Cost Management feature that helps you consolidate and
+        prioritize cost optimization recommendations across your AWS Organizations
+        member accounts and AWS Regions, so that you can get the most out of your
+        AWS spend.</p> \n        </div> \n       </div> \n       <div class=\"aws-text-box\">
+        \n        <div> \n         <p>Cost Optimization Hub allows you to easily identify,
+        filter, and aggregate over 15 types of AWS cost optimization recommendations,
+        such as EC2 instance rightsizing recommendations, Graviton migration recommendations,
+        idle resource recommendations, and Savings Plans recommendations, across your
+        AWS accounts and AWS Regions through a single dashboard. Cost Optimization
+        Hub helps you quantify estimated savings of these recommendations, taking
+        your specific discounts with AWS, such as Reserved Instances and Savings Plans,
+        into consideration, so you can easily compare and prioritize recommendations.
+        Cost Optimization Hub also allows you to aggregate savings among different
+        types of recommendations, and deduplicates savings from overlapping recommendations
+        (such as rightsizing recommendation and idle resource recommendation for the
+        same EC2 instance), so you can understand the total savings you can achieve.
+        After you enable Cost Optimization Hub, you can also see estimated monthly
+        savings in AWS Compute Optimizer consistent with the savings estimates in
+        Cost Optimization Hub.</p> \n        </div> \n       </div> \n       <div
+        class=\"aws-text-box\"> \n        <div> \n         <p>Cost Optimization Hub
+        is available at no additional charge in all AWS Regions, except for the AWS
+        China Regions and AWS GovCloud (US) Regions.</p> \n        </div> \n       </div>
+        \n       <div class=\"aws-text-box\"> \n        <div> \n         <p>You can
+        start using Cost Optimization Hub through the AWS Management Console, AWS
+        CLI, or AWS SDK. Visit <a href=\"/aws-cost-management/cost-optimization-hub/\"
+        target=\"_blank\" rel=\"noopener\">product details page</a> and <a href=\"https://docs.aws.amazon.com/cost-management/latest/userguide/cost-optimization-hub.html\"
+        target=\"_blank\" rel=\"noopener\">user guides</a> to learn more.</p> \n        </div>
+        \n       </div> \n       <div style=\"display: none;\"> \n        <div class=\"view-all\">
+        \n         <a href=\"\"> »</a> \n        </div> \n       </div> \n      </section>
+        \n     </main> \n    </div> \n   </div> \n  </div> \n  <footer id=\"aws-page-footer\"
+        class=\"m-page-footer\" role=\"contentinfo\"> \n   <div class=\"data-attr-wrapper
+        lb-none-v-margin lb-xb-grid-wrap\" style=\"background-color:#242F3E;\" data-da-type=\"so\"
+        data-da-so-type=\"viewport\" data-da-so-language=\"en\" data-da-so-category=\"monitoring\"
+        data-da-so-name=\"footer\" data-da-so-version=\"a\"> \n    <div class=\"lb-xb-grid
+        lb-row-max-large lb-snap lb-tiny-xb-1 lb-small-xb-3 lb-large-xb-5\"> \n     <div
+        class=\"lb-xbcol\"> \n      <div class=\"data-attr-wrapper lb-small-hide lb-btn\"
+        data-da-type=\"so\" data-da-so-type=\"viewport\" data-da-so-language=\"en\"
+        data-da-so-category=\"monitoring\" data-da-so-name=\"footer_buttons\" data-da-so-url=\"all\"
+        data-da-so-version=\"footer_signin-mobile-default\"> \n       <a class=\"lb-btn-p-primary\"
+        href=\"https://console.aws.amazon.com/console/home?nc1=f_ct&amp;src=footer-signin-mobile\"
+        role=\"button\"> <span> Sign In to the Console</span> </a> \n      </div>
+        \n      <h3 class=\"lb-txt-none lb-txt-white lb-tiny-v-margin lb-h3 lb-title\">
+        Learn About AWS</h3> \n      <ul class=\"lb-txt-white lb-ul lb-list-style-none
+        lb-li-micro-v-margin lb-tiny-ul-block\" style=\"margin-bottom:0px;\"> \n       <li><a
+        href=\"/what-is-aws/?nc1=f_cc\" target=\"_blank\" rel=\"noopener noreferrer\">What
+        Is AWS?</a></li> \n       <li><a href=\"/what-is-cloud-computing/?nc1=f_cc\"
+        target=\"_blank\" rel=\"noopener noreferrer\">What Is Cloud Computing?</a></li>
+        \n       <li><a href=\"/accessibility/?nc1=f_cc\" target=\"_blank\" rel=\"noopener
+        noreferrer\">AWS Accessibility</a></li> \n       <li><a href=\"/diversity-inclusion/?nc1=f_cc\"
+        target=\"_blank\" rel=\"noopener noreferrer\">AWS Inclusion, Diversity &amp;
+        Equity</a></li> \n       <li><a href=\"/devops/what-is-devops/?nc1=f_cc\"
+        target=\"_blank\" rel=\"noopener noreferrer\">What Is DevOps?</a></li> \n
+        \      <li><a href=\"/containers/?nc1=f_cc\" target=\"_blank\" rel=\"noopener
+        noreferrer\">What Is a Container?</a></li> \n       <li><a href=\"/what-is/data-lake/?nc1=f_cc\"
+        target=\"_blank\" rel=\"noopener noreferrer\">What Is a Data Lake?</a></li>
+        \n       <li><a href=\"/what-is/generative-ai/?nc1=f_cc\" target=\"_blank\"
+        rel=\"noopener noreferrer\">What is Generative AI?</a></li> \n       <li><a
+        href=\"/security/?nc1=f_cc\" target=\"_blank\" rel=\"noopener noreferrer\">AWS
+        Cloud Security</a></li> \n       <li><a href=\"/new/?nc1=f_cc\" target=\"_blank\"
+        rel=\"noopener noreferrer\">What's New</a></li> \n       <li><a href=\"/blogs/?nc1=f_cc\"
+        target=\"_blank\" rel=\"noopener noreferrer\">Blogs</a></li> \n       <li><a
+        href=\"https://press.aboutamazon.com/press-releases/aws\" target=\"_blank\"
+        rel=\"noopener noreferrer\" title=\"Press Releases\">Press Releases</a></li>
+        \n      </ul> \n     </div> \n     <div class=\"lb-xbcol\"> \n      <h3 class=\"lb-txt-none
+        lb-txt-white lb-tiny-v-margin lb-h3 lb-title\"> Resources for AWS</h3> \n
+        \     <ul class=\"lb-txt-white lb-ul lb-list-style-none lb-li-micro-v-margin
+        lb-tiny-ul-block\" style=\"margin-bottom:0px;\"> \n       <li><a href=\"/getting-started/?nc1=f_cc\"
+        target=\"_blank\" rel=\"noopener noreferrer\">Getting Started</a></li> \n
+        \      <li><a href=\"/training/?nc1=f_cc\" target=\"_blank\" rel=\"noopener
+        noreferrer\">Training and Certification</a></li> \n       <li><a href=\"/solutions/?nc1=f_cc\"
+        target=\"_blank\" rel=\"noopener noreferrer\">AWS Solutions Library</a></li>
+        \n       <li><a href=\"/architecture/?nc1=f_cc\" target=\"_blank\" rel=\"noopener
+        noreferrer\">Architecture Center</a></li> \n       <li><a href=\"/faqs/?nc1=f_dr\"
+        target=\"_blank\" rel=\"noopener noreferrer\">Product and Technical FAQs</a></li>
+        \n       <li><a href=\"/resources/analyst-reports/?nc1=f_cc\" target=\"_blank\"
+        rel=\"noopener noreferrer\">Analyst Reports</a></li> \n       <li><a href=\"/partners/work-with-partners/?nc1=f_dr\"
+        target=\"_blank\" rel=\"noopener noreferrer\">AWS Partners</a></li> \n      </ul>
+        \n     </div> \n     <div class=\"lb-xbcol\"> \n      <h3 class=\"lb-txt-none
+        lb-txt-white lb-tiny-v-margin lb-h3 lb-title\"> Developers on AWS</h3> \n
+        \     <ul class=\"lb-txt-white lb-ul lb-list-style-none lb-li-micro-v-margin
+        lb-tiny-ul-block\" style=\"margin-bottom:0px;\"> \n       <li><a href=\"/developer/?nc1=f_dr\"
+        target=\"_blank\" rel=\"noopener noreferrer\">Developer Center</a></li> \n
+        \      <li><a href=\"/developer/tools/?nc1=f_dr\" target=\"_blank\" rel=\"noopener
+        noreferrer\">SDKs &amp; Tools</a></li> \n       <li><a href=\"/developer/language/net/?nc1=f_dr\"
+        target=\"_blank\" rel=\"noopener noreferrer\">.NET on AWS</a></li> \n       <li><a
+        href=\"/developer/language/python/?nc1=f_dr\" target=\"_blank\" rel=\"noopener
+        noreferrer\">Python on AWS</a></li> \n       <li><a href=\"/developer/language/java/?nc1=f_dr\"
+        target=\"_blank\" rel=\"noopener noreferrer\">Java on AWS</a></li> \n       <li><a
+        href=\"/developer/language/php/?nc1=f_cc\" target=\"_blank\" rel=\"noopener
+        noreferrer\">PHP on AWS</a></li> \n       <li><a href=\"/developer/language/javascript/?nc1=f_dr\"
+        target=\"_blank\" rel=\"noopener noreferrer\">JavaScript on AWS</a></li> \n
+        \     </ul> \n     </div> \n     <div class=\"lb-xbcol\"> \n      <h3 class=\"lb-txt-none
+        lb-txt-white lb-tiny-v-margin lb-h3 lb-title\"> Help</h3> \n      <ul class=\"lb-txt-white
+        lb-ul lb-list-style-none lb-li-micro-v-margin lb-tiny-ul-block\" style=\"margin-bottom:0px;\">
+        \n       <li><a href=\"/contact-us/?nc1=f_m\" target=\"_blank\" rel=\"noopener
+        noreferrer\">Contact Us</a></li> \n       <li><a href=\"https://iq.aws.amazon.com/?utm=mkt.foot/?nc1=f_m\"
+        target=\"_blank\" rel=\"noopener noreferrer\">Get Expert Help</a></li> \n
+        \      <li><a href=\"https://console.aws.amazon.com/support/home/?nc1=f_dr\"
+        target=\"_blank\" rel=\"noopener noreferrer\">File a Support Ticket</a></li>
+        \n       <li><a href=\"https://repost.aws/?nc1=f_dr\" target=\"_blank\" rel=\"noopener
+        noreferrer\">AWS re:Post</a></li> \n       <li><a href=\"https://repost.aws/knowledge-center/?nc1=f_dr\"
+        target=\"_blank\" rel=\"noopener noreferrer\">Knowledge Center</a></li> \n
+        \      <li><a href=\"/premiumsupport/?nc1=f_dr\" target=\"_blank\" rel=\"noopener
+        noreferrer\">AWS Support Overview</a></li> \n       <li><a href=\"/legal/?nc1=f_cc\"
+        target=\"_blank\" rel=\"noopener noreferrer\">Legal</a></li> \n       <li><a
+        href=\"/careers/\">AWS Careers</a></li> \n      </ul> \n      <div class=\"lb-mbox
+        js-mbox\" data-lb-comp=\"mbox\" data-lb-comp-ignore=\"true\" data-mbox=\"en_footer-v3_addl-help\">
+        \n      </div> \n     </div> \n     <div class=\"lb-xbcol\"> \n      <div
+        class=\"lb-mbox js-mbox\" data-lb-comp=\"mbox\" data-lb-comp-ignore=\"true\"
+        data-mbox=\"en_footer-v3_cta\"> \n       <div class=\"data-attr-wrapper lb-tiny-hide
+        lb-small-show lb-btn\" data-da-type=\"so\" data-da-so-type=\"viewport\" data-da-so-language=\"en\"
+        data-da-so-category=\"monitoring\" data-da-so-name=\"footer_buttons\" data-da-so-url=\"all\"
+        data-da-so-version=\"footer_signup-default\"> \n        <a class=\"lb-btn-p-primary\"
+        href=\"https://portal.aws.amazon.com/gp/aws/developer/registration/index.html?nc1=f_ct&amp;src=default\"
+        role=\"button\"> <span> Create an AWS Account</span> </a> \n       </div>
+        \n      </div> \n      <div class=\"lb-xb-grid-wrap\" style=\"padding-left:0px;
+        margin-top:20px; margin-bottom:0px;\"> \n       <div class=\"lb-xb-grid lb-row-max-large
+        lb-xb-equal-height lb-snap lb-gutter-collapse lb-vgutter-collapse lb-tiny-xb-4\">
+        \n        <div class=\"lb-xbcol\"> \n         <a class=\"lb-txt-none lb-txt-white
+        lb-none-pad lb-txt\" style=\"padding-left:0px; padding-right:5px;\" href=\"https://twitter.com/awscloud\"
+        target=\"_blank\" rel=\"noopener noreferrer\" title=\"Twitter\"> <i class=\"icon-twitter\"></i></a>
+        \n        </div> \n        <div class=\"lb-xbcol\"> \n         <a class=\"lb-txt-none
+        lb-txt-white lb-none-pad lb-none-v-margin lb-txt\" style=\"padding-right:5px;\"
+        href=\"https://www.facebook.com/amazonwebservices\" target=\"_blank\" rel=\"noopener
+        noreferrer\" title=\"Facebook\"> <i class=\"icon-facebook\"></i></a> \n        </div>
+        \n        <div class=\"lb-xbcol\"> \n         <a class=\"lb-txt-none lb-txt-white
+        lb-none-pad lb-txt\" style=\"padding-right:5px;\" href=\"https://www.linkedin.com/company/amazon-web-services/\"
+        target=\"_blank\" rel=\"noopener noreferrer\" title=\"Linkedin\"> <i class=\"icon-linkedin\"></i></a>
+        \n        </div> \n        <div class=\"lb-xbcol\"> \n         <a class=\"lb-txt-none
+        lb-txt-white lb-none-pad lb-txt\" style=\"padding-right:5px;\" href=\"https://www.instagram.com/amazonwebservices/\"
+        target=\"_blank\" rel=\"noopener noreferrer\" title=\"Instagram\"> <i class=\"icon-instagram\"></i></a>
+        \n        </div> \n       </div> \n      </div> \n      <div class=\"lb-xb-grid-wrap\"
+        style=\"padding-left:0px; margin-top:10px;\"> \n       <div class=\"lb-xb-grid
+        lb-row-max-large lb-xb-equal-height lb-snap lb-gutter-collapse lb-vgutter-collapse
+        lb-tiny-xb-4\"> \n        <div class=\"lb-xbcol\"> \n         <a class=\"lb-txt-none
+        lb-txt-white lb-none-pad lb-txt\" style=\"padding-right:5px;\" href=\"https://www.twitch.tv/aws\"
+        target=\"_blank\" rel=\"noopener noreferrer\" title=\"Twitch\"> <i class=\"icon-twitch\"></i></a>
+        \n        </div> \n        <div class=\"lb-xbcol\"> \n         <a class=\"lb-txt-none
+        lb-txt-white lb-none-pad lb-txt\" style=\"padding-right:5px;\" href=\"https://www.youtube.com/user/AmazonWebServices/Cloud/\"
+        target=\"_blank\" rel=\"noopener noreferrer\" title=\"YouTube\"> <i class=\"icon-youtube\"></i></a>
+        \n        </div> \n        <div class=\"lb-xbcol\"> \n         <a class=\"lb-txt-none
+        lb-txt-white lb-none-pad lb-txt\" style=\"padding-right:5px;\" href=\"/podcasts/\"
+        target=\"_blank\" rel=\"noopener noreferrer\" title=\"Podcast\"> <i class=\"icon-podcast\"></i></a>
+        \n        </div> \n        <div class=\"lb-xbcol\"> \n         <a class=\"lb-txt-none
+        lb-txt-white lb-none-pad lb-txt\" style=\"padding-right:5px;\" href=\"https://pages.awscloud.com/communication-preferences?trk=homepage\"
+        target=\"_blank\" rel=\"noopener noreferrer\" title=\"Email\"> <i class=\"icon-envelope-o\"></i></a>
+        \n        </div> \n       </div> \n      </div> \n      <div class=\"lb-txt-normal
+        lb-txt-white lb-txt-14 lb-rtxt\" style=\"color:#eaeded; margin-top:0px;\">
+        \n       <div>\n         Amazon is an Equal Opportunity Employer: \n        <i>
+        Minority / Women / Disability / Veteran / Gender Identity / Sexual Orientation
+        / Age.</i> \n       </div> \n      </div> \n     </div> \n    </div> \n   </div>
+        \n   <div class=\"lb-none-pad lb-none-v-margin lb-xb-grid-wrap\" style=\"background-color:#242F3E;\">
+        \n    <div class=\"lb-xb-grid lb-row-max-large lb-snap lb-tiny-xb-1\"> \n
+        \    <div class=\"lb-xbcol\"> \n      <ul class=\"lb-txt-white lb-tiny-iblock
+        lb-none-v-margin lb-ul lb-list-style-none lb-li-micro-v-margin lb-tiny-ul-iblock\">
+        \n       <li class=\"lb-txt-bold\">Language</li> \n       <li data-language=\"ar\"
+        lang=\"ar-SA\" translate=\"no\"><a href=\"https://aws.amazon.com/ar/?nc1=h_ls\">عربي</a></li>
+        \n       <li data-language=\"id\" lang=\"id-ID\" translate=\"no\"><a href=\"https://aws.amazon.com/id/?nc1=h_ls\">Bahasa
+        Indonesia</a></li> \n       <li data-language=\"de\" lang=\"de-DE\" translate=\"no\"><a
+        href=\"https://aws.amazon.com/de/?nc1=h_ls\">Deutsch</a></li> \n       <li
+        data-language=\"en\" lang=\"en-US\" translate=\"no\"><a href=\"https://aws.amazon.com/?nc1=h_ls\">English</a></li>
+        \n       <li data-language=\"es\" lang=\"es-ES\" translate=\"no\"><a href=\"https://aws.amazon.com/es/?nc1=h_ls\">Español</a></li>
+        \n       <li data-language=\"fr\" lang=\"fr-FR\" translate=\"no\"><a href=\"https://aws.amazon.com/fr/?nc1=h_ls\">Français</a></li>
+        \n       <li data-language=\"it\" lang=\"it-IT\" translate=\"no\"><a href=\"https://aws.amazon.com/it/?nc1=h_ls\">Italiano</a></li>
+        \n       <li data-language=\"pt\" lang=\"pt-BR\" translate=\"no\"><a href=\"https://aws.amazon.com/pt/?nc1=h_ls\">Português</a></li>
+        \n       <li data-language=\"vi\" lang=\"vi-VN\" translate=\"no\"><a href=\"https://aws.amazon.com/vi/?nc1=f_ls\">Tiếng
+        Việt</a></li> \n       <li data-language=\"tr\" lang=\"tr-TR\" translate=\"no\"><a
+        href=\"https://aws.amazon.com/tr/?nc1=h_ls\">Türkçe</a></li> \n       <li
+        data-language=\"ru\" lang=\"ru-RU\" translate=\"no\"><a href=\"https://aws.amazon.com/ru/?nc1=h_ls\">Ρусский</a></li>
+        \n       <li data-language=\"th\" lang=\"th-TH\" translate=\"no\"><a href=\"https://aws.amazon.com/th/?nc1=f_ls\">ไทย</a></li>
+        \n       <li data-language=\"jp\" lang=\"ja-JP\" translate=\"no\"><a href=\"https://aws.amazon.com/jp/?nc1=h_ls\">日本語</a></li>
+        \n       <li data-language=\"ko\" lang=\"ko-KR\" translate=\"no\"><a href=\"https://aws.amazon.com/ko/?nc1=h_ls\">한국어</a></li>
+        \n       <li data-language=\"cn\" lang=\"zh-CN\" translate=\"no\"><a href=\"https://aws.amazon.com/cn/?nc1=h_ls\">中文
+        (简体)</a></li> \n       <li data-language=\"tw\" lang=\"zh-TW\" translate=\"no\"><a
+        href=\"https://aws.amazon.com/tw/?nc1=h_ls\">中文 (繁體)</a></li> \n      </ul>
+        \n     </div> \n    </div> \n   </div> \n   <div class=\"lb-none-pad lb-none-v-margin
+        lb-xb-grid-wrap\" style=\"background-color:#EAEDED; padding-top:5px;\"> \n
+        \   <div class=\"lb-xb-grid lb-row-max-large lb-snap lb-tiny-xb-1\"> \n     <div
+        class=\"lb-xbcol\"> \n      <ul class=\"lb-txt-squid lb-none-v-margin lb-ul
+        lb-list-style-none lb-li-none-v-margin lb-tiny-ul-iblock\"> \n       <li><a
+        href=\"https://aws.amazon.com/privacy/?nc1=f_pr\">Privacy</a></li> \n       <li>|</li>
+        \n       <li><a href=\"https://aws.amazon.com/accessibility/?nc1=f_acc\">Accessibility</a></li>
+        \n       <li>|</li> \n       <li><a href=\"https://aws.amazon.com/terms/?nc1=f_pr\">Site
+        Terms</a></li> \n       <li>|</li> \n       <li data-cookie-consent-modal=\"1\"><a
+        href=\"#\"> Cookie Preferences </a></li> \n       <li>|</li> \n       <li>©
+        2024, Amazon Web Services, Inc. or its affiliates. All rights reserved.</li>
+        \n      </ul> \n     </div> \n    </div> \n   </div> \n  </footer> \n  <div
+        id=\"aws-page-end\"></div> \n  <div id=\"lb-page-end\"></div> \n  <script
+        src=\"https://a0.awsstatic.com/da/js/1.0.50/aws-da.js\"></script> \n  <div
+        id=\"mrc-sunrise-chat\"></div> \n  <script defer id=\"mrc-sunrise-chat-loader\"
+        src=\"https://loader.us-east-1.prod.mrc-sunrise.marketing.aws.dev/loader.js\"></script>
+        \n  <!--[if lte IE 9]>\n  <p class=\"deprecated-browser-support-message\">\n
+        \   You are using an outdated browser. Please upgrade to a modern browser
+        to improve your experience.<img src=\"https://fls-na.amazon.com/1/action-impressions/1/OE/aws-mktg/action/awsm_:comp_DeprecatedBrowser@v=1:u=c?dataset=LIVE:PROD&instance=PUB&client=dsk&marketplaceId=A12QK8IU0H0XW5&requestId=ABCDEFGHIJKLMNOPQRST&session=123-1234567-1234567\"\n
+        \          alt=\"deprecated-browser pixel tag\" />\n      </p>\n<![endif]-->
+        \n  <div class=\"lb-skt-overlay lb-modal lb-comp-content-container\" data-lb-comp=\"modal\"
+        data-lb-modal-id=\"ie-deprecation-msg\" data-ie10-deprecation-msg=\"You are
+        using an outdated browser. Please upgrade to a modern browser to improve your
+        experience.\"> \n   <div class=\"lb-modal-dialog\"> \n    <div class=\"lb-modal-content\">
+        \n     <div class=\"lb-modal-header\"> \n      <h4 class=\"lb-h4\"> Ending
+        Support for Internet Explorer</h4> \n      <a class=\"lb-modal-close\" role=\"button\"
+        href=\"#\" title=\"Close\"> <span class=\"lb-sr-only\">Got it</span> </a>
+        \n     </div> \n     <div class=\"lb-modal-body\">\n       AWS support for
+        Internet Explorer ends on 07/31/2022. Supported browsers are Chrome, Firefox,
+        Edge, and Safari. \n      <a href=\"https://aws.amazon.com/blogs/aws/heads-up-aws-support-for-internet-explorer-11-is-ending/\"
+        rel=\"noopener\">Learn more »</a> \n     </div> \n     <div class=\"lb-modal-footer\">
+        \n      <a class=\"lb-btn-p-primary lb-modal-close lb-modal-action\" role=\"button\">Got
+        it</a> \n     </div> \n    </div> \n   </div> \n  </div> \n  <a data-lb-modal-trigger=\"ie-deprecation-msg\"
+        style=\"display: none;\"></a> \n  <!-- cms_updated_at: 2024-05-25T05:58:55.090-0700
+        -->  \n </body>\n</html>"
+  recorded_at: Wed, 05 Jun 2024 21:25:46 GMT
+recorded_with: VCR 6.1.0

@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json.schemastore.org/prettierrc",
+  "overrides": [{ "files": ".nvmrc", "options": { "parser": "yaml" } }],
+  "useTabs": false,
+  "semi": false,
+  "trailingComma": "none",
+  "singleQuote": true,
+  "tabWidth": 2,
+  "printWidth": 120,
+  "jsxSingleQuote": true,
+  "bracketSpacing": true,
+  "importOrder": [
+    "<BUILTIN_MODULES>",
+    "^react$",
+    "<THIRD_PARTY_MODULES>",
+    "",
+    "^@campsite/(.*)$",
+    "",
+    "^@/(.*)$",
+    "",
+    "^[.]"
+  ],
+  "plugins": ["@ianvs/prettier-plugin-sort-imports", "prettier-plugin-tailwindcss", "prettier-plugin-packagejson"]
+}

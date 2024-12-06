@@ -1,0 +1,138 @@
+.prose {
+  @apply text-primary break-words leading-normal;
+  word-break: break-word;
+  word-wrap: break-word;
+}
+
+/* the MarkdownEditor component doesn't render html the same way as the HTMLRenderer component */
+.prose.editing :where(p):not(:where([class~='not-prose'] *)),
+.prose :where(p):not(:where([class~='not-prose'] *)),
+.prose :where(img):not(:where([class~='not-prose'] *)),
+.prose.editing :where(ol):not(:where([class~='not-prose'] *)),
+.prose.editing :where(ul):not(:where([class~='not-prose'] *)),
+.prose.editing :where(pre):not(:where([class~='not-prose'] *)) {
+  @apply mb-2.5 mt-0;
+}
+
+.prose :where(h1):not(:where([class~='not-prose'] *)),
+.prose :where(h2):not(:where([class~='not-prose'] *)),
+.prose :where(h3):not(:where([class~='not-prose'] *)),
+.prose :where(h4):not(:where([class~='not-prose'] *)),
+.prose :where(h5):not(:where([class~='not-prose'] *)),
+.prose :where(h6):not(:where([class~='not-prose'] *)),
+.prose :where(h1 strong):not(:where([class~='not-prose'] *)),
+.prose :where(h2 strong):not(:where([class~='not-prose'] *)),
+.prose :where(h3 strong):not(:where([class~='not-prose'] *)),
+.prose :where(h4 strong):not(:where([class~='not-prose'] *)),
+.prose :where(h5 strong):not(:where([class~='not-prose'] *)),
+.prose :where(h6 strong):not(:where([class~='not-prose'] *)) {
+  @apply text-primary text-base font-bold;
+}
+
+.prose pre {
+  @apply bg-tertiary border-primary border dark:border-neutral-700 dark:bg-neutral-800;
+}
+
+.prose pre > code {
+  @apply text-primary border-none bg-transparent p-0 dark:bg-transparent;
+}
+
+.prose code {
+  @apply text-primary bg-tertiary border-primary whitespace-pre-wrap rounded border px-1 py-px font-medium dark:border-neutral-700 dark:bg-neutral-800;
+
+  &:before,
+  &:after {
+    @apply hidden;
+  }
+}
+
+.prose.editing blockquote {
+  @apply mb-1.5;
+}
+
+.prose blockquote {
+  @apply text-secondary border-primary mb-2.5 mt-0 inline-block border-l-2 font-normal italic;
+}
+
+.prose blockquote p:first-of-type {
+  @apply mt-0;
+
+  &:before,
+  &:after {
+    @apply hidden;
+  }
+}
+
+.prose li:not(.task-item) > *:first-of-type {
+  @apply my-2;
+}
+
+.prose li.task-item > label {
+  /* override flex from base */
+  @apply mt-0 inline;
+}
+
+.prose li.task-item > label > :not([hidden]) ~ :not([hidden]) {
+  /* override label child margins from base */
+  @apply mx-0;
+}
+
+.prose *:last-child {
+  @apply mb-0;
+}
+
+.prose a {
+  @apply break-words font-normal no-underline;
+  /* 
+    Need these manually to prevent long links from breaking a container boundary
+    Ref https://css-tricks.com/snippets/css/prevent-long-urls-from-breaking-out-of-container/
+  */
+  word-break: break-word;
+  word-wrap: break-word;
+}
+
+.prose a:not(.mention) {
+  @apply font-normal text-blue-500 hover:underline;
+}
+
+.prose .mention {
+  @apply text-primary cursor-pointer font-semibold;
+}
+
+.prose ul.task-list {
+  @apply mt-0 list-none pl-0;
+}
+
+.prose li.task-item {
+  @apply flex pl-0;
+}
+
+.prose li.task-item p {
+  @apply m-0;
+}
+
+.prose li.task-item input[type='checkbox'] {
+  @apply bg-elevated dark:bg-quaternary border-primary mr-2 mt-0.5 h-5 w-5 max-w-xs cursor-pointer rounded border bg-clip-border align-top checked:border-blue-500 checked:bg-blue-500 focus:border-blue-500 dark:checked:bg-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-600/20;
+}
+
+.task-list-disabled input[type='checkbox'] {
+  @apply focus:border-primary cursor-default outline-none;
+}
+
+.prose li.task-item div:first-of-type {
+  /* min width in order to show blinking cursor on empty task item */
+  @apply min-w-[1em];
+}
+
+.prose ul.task-list li[data-checked='true'] {
+  @apply text-quaternary line-through decoration-2;
+}
+
+.prose strong {
+  @apply text-inherit;
+}
+
+.prose > .node-postNoteAttachment:first-child > .not-prose:first-child {
+  /* Remove top margin from attachment if it's the first node in a note */
+  @apply mt-0;
+}

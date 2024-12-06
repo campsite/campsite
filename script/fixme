@@ -1,0 +1,21 @@
+# remove leftover overmind files
+rm .overmind.sock
+
+# clean any messed up packages
+pnpm clean
+
+# install missing deps
+pnpm i
+
+# build the editor package
+pnpm build -F @campsite/editor...
+
+cd api
+
+# install gems
+bundle i
+
+# run any pending migrations
+bin/rails db:migrate
+
+cd ..

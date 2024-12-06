@@ -1,0 +1,135 @@
+---
+title: 'Webhooks'
+description: 'Use webhooks to get notified when something happens in Campsite'
+---
+
+Webhooks allow your integration to receive real-time notifications about events in Campsite, like a new post or comment being created. When an event occurs, Campsite sends an HTTP POST request to the URL you specify, allowing your integration to take action based on the event data.
+
+## Creating a webhook
+
+To add a webhook to your integration:
+
+1. Go to your Organization settings and click the **Integrations** tab.
+2. Select your integration from the list, or create an integration if you don't have one.
+3. In the **Webhooks** section of your integration settings, click **Add webhook**.
+4. Enter the HTTPS URL where you want to receive webhook events.
+5. Click **Create webhook** to save.
+
+## Webhook guidelines
+
+- HTTPS is required for all webhook URLs.
+- Webhook events are guaranteed to be delivered once. You may use the id field in the payload as an idempotency key.
+- Your webhook consumer should respond with a 2xx HTTP response status code to indicate a successful delivery. Any other response status code indicates a failed delivery. Campsite will retry failed deliveries up to 10 times.
+- Implement proper error handling in your webhook consumer to avoid processing the same event multiple times.
+- Respond quickly to webhook requests (within 20 seconds) to avoid timeouts. If you need to perform time-consuming operations, acknowledge the webhook quickly and process the event asynchronously.
+
+## Webhook payload
+
+Webhook payloads are sent as JSON in the body of the POST request. Here's an example payload for a `post.created` event:
+
+```json
+{
+  "id": "tnev64tnud69",
+  "type": "post.created",
+  "timestamp": "2024-10-01T18:30:03Z",
+  "organization_id": "jkh4ytt0s18o",
+  "application_id": "uc1d5rg02s2y",
+  "data": {
+    "post": {
+      "id": "qsoecyqn1lf1",
+      "url": "https://app.campsite.com/frontier-forest/posts/qsoecyqn1lf1",
+      "title": "Webhook example",
+      "content": "<p>This post was created via the Campsite API.</p>",
+      "created_at": "2024-10-01T18:30:02.060Z",
+      "channel": {
+        "id": "4alx5vvauzu3",
+        "name": "General"
+      },
+      "author": {
+        "id": "4qteru9o6s08",
+        "name": "Campbot",
+        "type": "app",
+        "avatar_urls": {
+          "xs": "https://campsite.imgix.net/o/cl3gijjgd001/oa/510e4c80-7944-44f8-93ae-b5444af2b696.jpg?fit=crop&h=40&w=40",
+          "sm": "https://campsite.imgix.net/o/cl3gijjgd001/oa/510e4c80-7944-44f8-93ae-b5444af2b696.jpg?fit=crop&h=48&w=48",
+          "base": "https://campsite.imgix.net/o/cl3gijjgd001/oa/510e4c80-7944-44f8-93ae-b5444af2b696.jpg?fit=crop&h=64&w=64",
+          "lg": "https://campsite.imgix.net/o/cl3gijjgd001/oa/510e4c80-7944-44f8-93ae-b5444af2b696.jpg?fit=crop&h=80&w=80",
+          "xl": "https://campsite.imgix.net/o/cl3gijjgd001/oa/510e4c80-7944-44f8-93ae-b5444af2b696.jpg?fit=crop&h=128&w=128",
+          "xxl": "https://campsite.imgix.net/o/cl3gijjgd001/oa/510e4c80-7944-44f8-93ae-b5444af2b696.jpg?fit=crop&h=224&w=224"
+        }
+      }
+    }
+  }
+}
+```
+
+## Supported events
+
+The following events are supported:
+
+- `post.created`: Triggered when a new post is created.
+- `comment.created`: Triggered when a new comment is created.
+- `app.mentioned`: Triggered when your integration is @-mentioned in a post or comment.
+- `message.created`: Triggered when a new message is created in a chat thread.
+- `message.dm`: Triggered when a new message is created in a direct message between your integration and one user. (See [Bot DMs](/api-reference/guides/bot-dms) for more information.)
+
+The data object in the payload will contain information about the respective entity (post or comment) that triggered the event.
+
+<Tip>Only integrations with an active webhook will appear in the mentions menu when composing a post or comment.</Tip>
+
+## Webhook signature verification
+
+Campsite signs outbound requests using a shared secret key. To verify that an incoming webhook is genuinely from Campsite:
+
+1. After creating a webhook, click Copy secret to get your webhook's secret key.
+2. Use this secret to validate the signature in the X-Campsite-Signature header of incoming webhook requests.
+
+The X-Campsite-Signature header has the following format:
+
+```
+X-Campsite-Signature: t=timestamp,v1=signature
+```
+
+To verify the signature:
+
+1. Split the header value by comma to separate the timestamp and signature.
+2. Construct the signed payload by concatenating the timestamp, a period (.), and the request body.
+3. Compute an HMAC with the SHA256 hash function, using your webhook secret as the key and the signed payload as the message.
+4. Compare your computed signature with the v1 signature in the header.
+
+Here's a TypeScript example of how to verify the signature:
+
+```ts
+import * as crypto from 'crypto'
+
+function verifySignature(payload: string, secret: string, signatureHeader: string): boolean {
+  const [timestamp, signature] = signatureHeader.split(',').map((part) => part.split('=')[1])
+
+  if (!timestamp || !signature) return false
+
+  const signedPayload = `${timestamp}.${payload}`
+  const expectedSignature = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex')
+
+  return crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature))
+}
+
+app.post('/webhook', async (req, res) => {
+  const payload = await req.json()
+
+  const isValid = verifySignature(
+    JSON.stringify(payload),
+    process.env.CAMPSITE_WEBHOOK_SECRET,
+    req.headers['X-Campsite-Signature']
+  )
+
+  if (!isValid) {
+    return res.status(401).send('Unauthorized')
+  }
+
+  if (payload.type === 'post.created') {
+    // Handle a 'post.created' event
+  }
+
+  res.send('OK')
+})
+```

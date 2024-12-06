@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+DRY_RUN=${DRY_RUN:-false}
+
+# get description of the latest tag matching the pattern (e.g. "api*")
+# then remove the commit hash and number of commits since the tag to get the raw tag name
+# works for annotated and lightweight tags
+function echo_ref() {
+
+  # find the latest commit matching the tag pattern
+  MATCH=$(git describe --match "$1*" --tags 2>/dev/null)
+
+  # if no match, default to the first commit which should guarantee a deploy
+  if [ -z "$MATCH" ]; then
+    MATCH=$(git rev-list --max-parents=0 HEAD)
+  fi
+
+  LATEST_TAG=$(echo $MATCH | sed 's/-[0-9]*-g[0-9a-f]\{7,9\}//')
+  LATEST_REF=$(git rev-list -n 1 $LATEST_TAG)
+  ECHO_OUTPUT="$1=$LATEST_REF"
+  if [[ $DRY_RUN == "true" ]]; then
+    echo $ECHO_OUTPUT
+  else
+    echo $ECHO_OUTPUT >> $GITHUB_OUTPUT
+  fi
+}
+
+echo_ref "api"
+echo_ref "site"
+echo_ref "web"
+echo_ref "elasticsearch"
+echo_ref "logs"
+echo_ref "html-to-image"
+echo_ref "sync-server"
+echo_ref "styled-text-server"

@@ -1,0 +1,13 @@
+<div class="mb-4">
+  <%= render 'mailers/components/avatar', avatar_url: @user.avatar_url(size: 40), href: @organization.url, name: @user.display_name, size: 40, class_name: @user.integration? ? "rounded" : "rounded-full" %>
+</div>
+
+<div class="mb-6">
+  <b><%= @user.display_name %></b> (<%= @user.email %>) joined <b><%= @organization.name %></b> via their email domain on Campsite.
+</div>
+
+<%= render 'mailers/components/cta_button', url: @organization.members_base_url, text: "Manage people" %>
+
+<div>
+  <div class="separator" />
+</div>

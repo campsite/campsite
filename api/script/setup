@@ -1,0 +1,49 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "--pristine" ]; then
+	export SETUP_PRISTINE=1
+fi
+
+echo "\nInstalling bundler and gems...\n============================================================"
+bundle install --local
+echo "\033[1;32mGem files installed.\033[0m"
+
+if [ -n "$SETUP_PRISTINE" ]; then
+	echo "\nDropping existing databases...\n============================================================"
+	mysql -u root -e 'DROP DATABASE IF EXISTS campsite_api_development; DROP DATABASE IF EXISTS campsite_api_test;'
+fi
+
+echo "\nChecking encryption keys...\n============================================================"
+if [ ! -f config/credentials/test.key ]; then
+	echo "Please enter a key for the test environment credentials file from 1Password: "
+	read -s TEST_KEY
+	echo $TEST_KEY > config/credentials/test.key
+else
+	echo "config/credentials/test.key exists"
+fi
+
+if [ ! -f config/credentials/development.key ]; then
+	echo "Please enter a key for the development environment credentials file from 1Password: "
+	read -s DEVELOPMENT_KEY
+	echo $DEVELOPMENT_KEY > config/credentials/development.key
+else
+	echo "config/credentials/development.key exists"
+fi
+
+echo "\nRunning redis-server in the background...\n============================================================"
+brew services start redis &
+
+echo "\nSetting up database...\n============================================================"
+brew services start mysql@8.0
+rails db:setup
+
+echo "\nLoading time zones into database...\n============================================================"
+mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u root mysql
+brew services restart mysql@8.0
+
+echo "\nShutting down redis-server...\n============================================================"
+redis-cli shutdown
+
+echo "\033[1;32mSetup completed!\033[0m"

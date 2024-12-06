@@ -1,0 +1,75 @@
+inherit_gem:
+  rubocop-shopify: rubocop.yml
+
+require:
+  - 'rubocop-rails'
+  - './test/custom_cops/no_focus.rb'
+
+AllCops:
+  NewCops: enable
+  Exclude:
+    - './bin/**/*'
+    - './config/initializers/email_provider_domains.rb'
+    - './db/**/*.rb'
+    - './script/**/*'
+    - './vendor/**/*'
+
+Layout/LineLength:
+  Max: 240
+
+Lint/MissingSuper:
+  Enabled: false
+
+Lint/NoReturnInBeginEndBlocks:
+  Enabled: false
+
+Rails/ActionOrder:
+  Enabled: false
+
+Rails/ActiveRecordCallbacksOrder:
+  Enabled: false
+
+Rails/FindEach:
+  Enabled: false
+
+Rails/InverseOf:
+  Enabled: false
+
+Rails/I18nLocaleTexts:
+  Enabled: false
+
+Rails/HasManyOrHasOneDependent:
+  Enabled: false
+
+Rails/LexicallyScopedActionFilter:
+  Enabled: false
+
+Rails/RedundantActiveRecordAllMethod:
+  Enabled: false
+
+Rails/ResponseParsedBody:
+  Enabled: false
+
+Rails/SkipsModelValidations:
+  Enabled: false
+
+Rails/UniqueValidationWithoutIndex:
+  Enabled: false
+
+Rails/UnusedIgnoredColumns:
+  Enabled: false
+
+Style/HashSyntax:
+  EnforcedShorthandSyntax: never
+
+Style/ClassMethodsDefinitions:
+  Enabled: false
+
+Style/InvertibleUnlessCondition:
+  Enabled: false
+
+Style/ReturnNilInPredicateMethodDefinition:
+  Enabled: false
+
+Style/SymbolProc:
+  Enabled: false

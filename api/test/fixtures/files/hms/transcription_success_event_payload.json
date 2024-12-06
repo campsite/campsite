@@ -1,0 +1,31 @@
+{
+  "version": "2.0",
+  "id": "********-****-****-****-***********",
+  "account_id": "************************",
+  "app_id": "************************",
+  "timestamp": "2023-06-15T06:17:39Z",
+  "type": "transcription.success",
+  "data": {
+    "account_id": "***********************",
+    "app_id": "***********************",
+    "metadata_id": "********-****-****-****-***********",
+    "metadata_timestamp": "2023-06-15T06:17:39.986637275Z",
+    "recording_id": "***********************",
+    "room_id": "***********************",
+    "transcription_id": "***********************",
+    "session_id": "***********************",
+    "duration": 23,
+    "summary_json_asset_id": "***********************",
+    "summary_json_path": "s3://bucket/prefix/<summary-json-address>.json",
+    "summary_json_presigned_url": "https://<file-access-url>?<signature>",
+    "transcript_json_asset_id": "***********************",
+    "transcript_json_path": "s3://bucket/prefix/<transcript-json-address>.json",
+    "transcript_json_presigned_url": "https://<file-access-url>?<signature>",
+    "transcript_srt_asset_id": "***********************",
+    "transcript_srt_path": "s3://bucket/prefix/<transcript-srt-address>.srt",
+    "transcript_srt_presigned_url": "https://<file-access-url>?<signature>",
+    "transcript_txt_asset_id": "***********************",
+    "transcript_txt_path": "s3://bucket/prefix/<transcript-txt-address>.txt",
+    "transcript_txt_presigned_url": "https://<file-access-url>?<signature>"
+  }
+}

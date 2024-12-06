@@ -1,0 +1,64 @@
+{
+  "short_name": "Campsite Dev",
+  "name": "Campsite Dev",
+  "icons": [
+    {
+      "purpose": "maskable",
+      "src": "/meta/maskable-apple-touch-icon-dev-120.png",
+      "sizes": "120x120",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "src": "/meta/maskable-apple-touch-icon-dev-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "src": "/meta/maskable-apple-touch-icon-dev-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "src": "/meta/maskable-apple-touch-icon-dev-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "src": "/meta/maskable-apple-touch-icon-dev-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/meta/apple-touch-icon-dev-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/meta/apple-touch-icon-dev-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/meta/apple-touch-icon-dev-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/meta/apple-touch-icon-dev-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/meta/apple-touch-icon-dev-120.png",
+      "sizes": "120x120",
+      "type": "image/png"
+    }
+  ],
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "start_url": "http://app.campsite.test:3000"
+}

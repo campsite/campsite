@@ -1,0 +1,38 @@
+#!/bin/bash
+
+set -eou pipefail
+
+OPENAPI_FILE_PATH=docs/api-reference/openapi_schema.json
+SWAGGER_FILE_PATH=api/gen/schema_swagger.json
+
+# generate swagger docs
+(cd api && bundle exec rake apigen:generate_json)
+
+# generate openapi schema
+(cd api && OUT=../$OPENAPI_FILE_PATH bundle exec rake openapi:generate_json)
+
+# swagger-typescript-api does not work with ES Modules which is required for our prettier v3 plugins
+# and swagger-typescript-api automatically detects and runs prettier on generated files
+mv .prettierrc.json .prettierrc_temp.json
+
+# generate client types
+pnpm swagger-typescript-api \
+  --extract-request-params \
+  --extract-request-body \
+  --extract-response-body \
+  --extract-response-error \
+  --module-name-index 1 \
+  --module-name-first-tag true \
+  --templates script/swagger-templates \
+  --path $SWAGGER_FILE_PATH \
+  --output ./packages/types/ \
+  --name generated.ts
+
+# remove swagger docs so we only check in the generated client types
+rm $SWAGGER_FILE_PATH
+
+# Put .prettierrc.json back
+mv .prettierrc_temp.json .prettierrc.json
+
+# format generated files
+pnpm prettier --config .prettierrc.json  --write ./packages/types/generated.ts ./$OPENAPI_FILE_PATH

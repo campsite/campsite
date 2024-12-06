@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <% if @title %>
+      <title><%= @title %></title>
+    <% end %>
+    <% unless Rails.env.test? %>
+      <%= stylesheet_link_tag "mailer.css" %>
+    <% end %>
+  </head>
+  <body>
+    <table class="w-full p-0 m-0" cellpadding="0" cellspacing="0">
+      <tr>
+        <td class="break-words" align="center">
+          <table class="w-full" cellpadding="0" cellspacing="0">
+            <tr>
+              <td cellpadding="0" cellspacing="0" class="w-full">
+                <div>
+                  <table class="w-full max-w-2xl mx-auto" align="center" cellpadding="0" cellspacing="0">
+                    <% # Email Body %>
+                    <tr>
+                      <td class="px-2 pb-8 pt-6">
+                        <%= yield %>
+                      </td>
+                    </tr>
+                    <% # Email footer %>
+                    <tr>
+                      <td align="left" class="px-2">
+                        <a href="<%= Campsite.base_app_url %>" target="_blank">
+                          <table class="p-0 m-0" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td>
+                                <img class="mr-1.5" width=24 height=24 src="https://campsite.imgix.net/static/mailer-footer-logo.png" />
+                              </td>
+                              <td>
+                                <a href="https://campsite.com/" target="_blank" class="font-semibold text-sm">
+                                  Campsite Software Co.
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+                        </a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="left" class="px-2 pt-4">
+                        <a class="text-sm text-secondary" href="<%= Campsite.base_app_url %>/me/settings" target="_blank">
+                          Account settings
+                        </a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="left" class="px-2 pt-4">
+                        <a class="text-sm text-secondary" href="https://twitter.com/trycampsite" target="_blank">
+                          Follow @trycampsite on Twitter
+                        </a>
+                      </td>
+                    <tr>
+                      <td align="left" class="px-2 pt-4 pb-16">
+                        <a class="text-sm text-secondary" href="mailTo:support@campsite.com" target="_blank">
+                          Contact support
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

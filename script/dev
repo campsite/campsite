@@ -1,0 +1,33 @@
+#!/bin/bash
+
+cd api && script/pre-dev && cd ../
+
+if [[ $* == *--ngrok* ]]; then
+  if [ -f .env.development.local ]; then
+    source .env.development.local
+  fi
+
+  NGROK_API_SUBDOMAIN=${NGROK_API_SUBDOMAIN:="api-dev"}
+  NGROK_APP_SUBDOMAIN=${NGROK_APP_SUBDOMAIN:="app-dev"}
+  NGROK_SYNC_SUBDOMAIN=${NGROK_SYNC_SUBDOMAIN:="sync-dev"}
+
+  export NGROK_API_SUBDOMAIN NGROK_APP_SUBDOMAIN NGROK_SYNC_SUBDOMAIN
+  envsubst < api/ngrok.yaml.template > api/ngrok.yaml
+
+  NGROK_API_URL="https://${NGROK_API_SUBDOMAIN}.campsite.co"
+  NGROK_APP_URL="https://${NGROK_APP_SUBDOMAIN}.campsite.co"
+  NGROK_SYNC_URL="wss://${NGROK_SYNC_SUBDOMAIN}.campsite.co"
+
+  NEXT_PUBLIC_API_URL=${NGROK_API_URL} \
+    NEXT_PUBLIC_AUTH_URL=${NGROK_API_URL} \
+    NEXT_PUBLIC_WEB_URL=${NGROK_APP_URL} \
+    NEXT_PUBLIC_SYNC_URL=${NGROK_SYNC_URL} \
+    DEV_APP_URL=${NGROK_APP_URL} \
+    AUTH_SUBDOMAIN=${NGROK_API_SUBDOMAIN} \
+    API_SUBDOMAIN=${NGROK_API_SUBDOMAIN} \
+    CAMPSITE_NGROK="true" \
+    NEXT_PUBLIC_IS_NGROK="true" \
+    overmind start
+else
+  overmind start -x ngrok
+fi

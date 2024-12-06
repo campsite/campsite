@@ -1,0 +1,48 @@
+{
+  "action": "create",
+  "actor": { "id": "00000000-0000-0000-0000-000000000000", "name": "Ranger Rick", "type": "user" },
+  "createdAt": "1970-01-01T00:00:00.000Z",
+  "data": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "createdAt": "1970-01-01T00:00:00.000Z",
+    "updatedAt": "1970-01-01T00:00:00.000Z",
+    "number": 1234,
+    "title": "Sample issue",
+    "priority": 1,
+    "boardOrder": 1,
+    "sortOrder": -999999,
+    "labelIds": [],
+    "teamId": "00000000-0000-0000-0000-000000000002",
+    "projectId": "00000000-0000-0000-0000-000000000003",
+    "previousIdentifiers": [],
+    "creatorId": "00000000-0000-0000-0000-000000000000",
+    "stateId": "00000000-0000-0000-0000-000000000004",
+    "reactionData": [],
+    "priorityLabel": "Medium priority",
+    "botActor": null,
+    "identifier": "CAM-0000",
+    "url": "https://linear.app/issue/CAM-0000/sample-issue",
+    "subscriberIds": ["00000000-0000-0000-0000-000000000000"],
+    "project": {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "name": "Sample project"
+    },
+    "state": {
+      "id": "00000000-0000-0000-0000-000000000004",
+      "color": "#123456",
+      "name": "Todo",
+      "type": "todo"
+    },
+    "team": {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "key": "CAM",
+      "name": "Sample team"
+    },
+    "labels": []
+  },
+  "url": "https://example.com/issue/CAM-0000/sample-issue",
+  "type": "Issue",
+  "organizationId": "00000000-0000-0000-0000-000000000005",
+  "webhookTimestamp": 0,
+  "webhookId": "00000000-0000-0000-0000-000000000006"
+}

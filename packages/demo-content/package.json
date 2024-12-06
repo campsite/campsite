@@ -1,0 +1,17 @@
+{
+  "name": "@campsite/demo-content",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./index.ts",
+  "scripts": {
+    "build": "tsc && node dist/index.js",
+    "clean": "rm -rf .turbo dist node_modules"
+  },
+  "devDependencies": {
+    "@campsite/tsconfig": "workspace:*",
+    "@campsite/types": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

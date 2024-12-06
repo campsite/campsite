@@ -1,0 +1,23 @@
+# fly.toml app configuration file generated for styled-text-server on 2024-03-27T20:57:45-04:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'styled-text-server'
+primary_region = 'iad'
+kill_timeout = 60
+
+[build]
+
+[env]
+  NODE_ENV = 'production'
+  PORT = '9000'
+
+[experimental]
+  allowed_public_ports = []
+  auto_rollback = true
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1

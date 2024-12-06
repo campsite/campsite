@@ -1,0 +1,18 @@
+{
+  "action": "update",
+  "data": {
+    "id": "XXXYYY",
+    "title": "Issue title",
+    "teamId": "YYYZZZ",
+    "team": {
+      "id": "YYYZZZ",
+      "key": "TEA",
+      "name": "Team"
+    }
+  },
+  "updatedFrom": {
+    "title": "Some title"
+  },
+  "type": "Issue",
+  "organizationId": "AAABBB"
+}

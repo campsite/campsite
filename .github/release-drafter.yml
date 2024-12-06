@@ -1,0 +1,16 @@
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+
+version-resolver:
+  default: major
+
+template: |
+  ---
+  title: Changelog title
+  date: 2023-MM-DD
+  slug: 2023-MM-DD-changelog-title-slugified
+  contributors: $CONTRIBUTORS
+  feature_image: optional
+  ---
+
+  $CHANGES

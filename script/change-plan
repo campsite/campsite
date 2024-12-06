@@ -1,0 +1,2 @@
+#!/bin/bash
+(cd api && bin/rails dev:change_plan $*)

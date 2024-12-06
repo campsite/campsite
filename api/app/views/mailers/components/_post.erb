@@ -1,0 +1,74 @@
+<% button_title ||= nil %>
+
+<div class="rounded-lg overflow-clip border">
+  <table cellpadding="0" cellspacing="0" class="w-full">
+    <%= render 'mailers/components/attachments_row', attachments: post.mailer_hero_attachments, url: post.url %>
+    <tr><td align="left" valign="top" class="p-4">
+      <%= render 'mailers/components/attachments_inner_row',
+        attachments: post.attachments,
+        origami_attachments: post.origami_attachments,
+        principle_attachments: post.principle_attachments,
+        stitch_attachments: post.stitch_attachments,
+        lottie_attachments: post.lottie_attachments,
+        url: post.url %>
+      <table cellpadding="0" cellspacing="0">
+        <tr>
+          <td align="left" valign="center">
+            <%= render 'mailers/components/avatar', avatar_url: post.author.avatar_url(size: 24), href: post.author.url, name: post.author.display_name, class_name: post.author.integration? ? "rounded" : "rounded-full" %>
+          </td>
+          <td align="left" valign="center" class="pl-2">
+            <% if post.author.url %>
+              <a class="inline-block text-sm" href="<%= post.author.url %>" target="_blank">
+                <%= post.author.display_name %>
+              </a>
+            <% else %>
+              <span class="inline-block text-sm">
+                <%= post.author.display_name %>
+              </span>
+            <% end %>
+            <a class="inline-block text-sm text-secondary" href="<%= post.url %>" target="_blank">
+              · <%= post.created_at.strftime("%b %d") %>
+            </a>
+          </td>
+        </tr>
+      </table>
+      <% if post.title %>
+      <div class="w-full mt-3">
+        <a class="font-bold text-[18px]" href="<%= post.url %>" target="_blank">
+          <%= post.title %>
+        </a>
+      </div>
+      <% end %>
+      <% if @show_full_post_description %>
+        <% if (html = post.mailer_description_html&.html_safe&.presence) %>
+        <div class="w-full prose mt-1">
+          <%= html %>
+        </div>
+        <% end %>
+      <% else %>
+        <% if (html = post.mailer_truncated_description_html&.html_safe&.presence) %>
+        <div class="w-full prose mt-1">
+          <%= html %>
+        </div>
+        <% end %>
+        <% if post.mailer_truncated_description_html != post.mailer_description_html %>
+        <a class="text-link" href="<%= post.url %>" target="_blank">
+          Read more
+        </a>
+        <% end %>
+      <% end %>
+      <% if post.project %>
+      <div class="w-full mt-3">
+        <a class="text-sm text-secondary" href="<%= post.project.url %>" target="_blank">
+          Posted in <%= post.project.name %>
+        </a>
+      </div>
+      <% end %>
+      <% if button_title %>
+      <div class="pt-4">
+        <%= render 'mailers/components/cta_button', url: post.url, text: button_title %>
+      </div>
+      <% end %>
+    </td></tr>
+  </table>
+</div>

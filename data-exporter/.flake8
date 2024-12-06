@@ -1,0 +1,20 @@
+[flake8]
+max-line-length = 160
+extend-ignore =
+    E203,
+    E501,
+    B009,
+    B010,
+    B007,
+    B015,
+    B008,
+    BLK999,
+exclude =
+    *.egg
+    .*
+    .git
+    __pycache__
+    _darcs
+    build
+    node_modules
+    notebooks

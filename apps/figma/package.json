@@ -1,0 +1,80 @@
+{
+  "name": "@campsite/figma",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "build": "pnpm build:css && pnpm build:js",
+    "build:css": "tailwind -i ./src/styles/global.css -o ./build/global.css",
+    "build:js": "build-figma-plugin --typecheck --minify",
+    "clean": "rm -rf .turbo build node_modules manifest.json",
+    "dev": "pnpm build:css && build-figma-plugin --typecheck && concurrently pnpm:dev:css pnpm:dev:js",
+    "dev:css": "tailwind -i ./src/styles/global.css -o ./build/global.css --watch",
+    "dev:js": "onchange 'build/global.css' 'src/**/*' '../../packages/ui/**/*' -- build-figma-plugin --typecheck"
+  },
+  "dependencies": {
+    "@campsite/config": "workspace:*",
+    "@campsite/editor": "workspace:*",
+    "@campsite/regex": "workspace:*",
+    "@campsite/types": "workspace:*",
+    "@campsite/ui": "workspace:*",
+    "@create-figma-plugin/ui": "catalog:",
+    "@create-figma-plugin/utilities": "catalog:",
+    "@hookform/resolvers": "catalog:",
+    "@radix-ui/react-select": "catalog:",
+    "@tanstack/react-query": "^4.29.12",
+    "@tiptap/react": "catalog:",
+    "framer-motion": "catalog:",
+    "pusher-js": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-hook-form": "catalog:",
+    "use-debounce": "catalog:",
+    "zod": "catalog:",
+    "zustand": "catalog:"
+  },
+  "devDependencies": {
+    "@babel/plugin-transform-react-jsx": "catalog:",
+    "@create-figma-plugin/build": "catalog:",
+    "@create-figma-plugin/tsconfig": "catalog:",
+    "@figma/plugin-typings": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "babel-plugin-jsx-pragmatic": "catalog:",
+    "concurrently": "catalog:",
+    "onchange": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "wait-on": "catalog:"
+  },
+  "figma-plugin": {
+    "editorType": [
+      "figma"
+    ],
+    "id": "1108886817260186751",
+    "name": "Campsite",
+    "main": "src/main.ts",
+    "ui": "src/ui.tsx",
+    "networkAccess": {
+      "allowedDomains": [
+        "https://fonts.googleapis.com",
+        "https://fonts.gstatic.com",
+        "https://api.campsite.design",
+        "https://auth.campsite.design",
+        "https://api.campsite.com",
+        "https://auth.campsite.com",
+        "https://campsite-media.s3.amazonaws.com",
+        "https://campsite.imgix.net",
+        "https://res.cloudinary.com",
+        "https://sockjs-us3.pusher.com",
+        "wss://ws-us3.pusher.com"
+      ],
+      "reasoning": "Campsite uses the API to authenticate and post to the user's account.",
+      "devAllowedDomains": [
+        "https://api-dev.campsite.design",
+        "https://api-dev.campsite.com",
+        "https://campsite-media-dev.s3.amazonaws.com",
+        "https://campsite-dev.imgix.net"
+      ]
+    }
+  }
+}

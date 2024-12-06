@@ -1,0 +1,250 @@
+---
+http_interactions:
+  - request:
+      method: get
+      uri: https://www.nickholden.io/
+      body:
+        encoding: US-ASCII
+        string: ''
+      headers:
+        User-Agent:
+          - Faraday v2.9.0
+    response:
+      status:
+        code: 301
+        message: Moved Permanently
+      headers:
+        date:
+          - Wed, 05 Jun 2024 21:39:42 GMT
+        content-type:
+          - text/html
+        content-length:
+          - '167'
+        connection:
+          - keep-alive
+        cache-control:
+          - max-age=3600
+        expires:
+          - Wed, 05 Jun 2024 22:39:42 GMT
+        location:
+          - https://nickholden.io
+        report-to:
+          - '{"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v4?s=P4H0OR995Uenw102wnRd2XoAeBkqLyXF6gGneaTZSqtBCgnepHjTWH42I2TZf6wSOr3h1WYPAq37dbxOSkVCcIyChbdqHNGqsSrP%2BDGP0EDULuTYvM60s9Cw4hT%2FejLgoGpHBQ%3D%3D"}],"group":"cf-nel","max_age":604800}'
+        nel:
+          - '{"success_fraction":0,"report_to":"cf-nel","max_age":604800}'
+        vary:
+          - Accept-Encoding
+        server:
+          - cloudflare
+        cf-ray:
+          - 88f3511efe177d27-LAX
+        alt-svc:
+          - h3=":443"; ma=86400
+      body:
+        encoding: UTF-8
+        string: "<html>\r\n<head><title>301 Moved Permanently</title></head>\r\n<body>\r\n<center><h1>301
+          Moved Permanently</h1></center>\r\n<hr><center>cloudflare</center>\r\n</body>\r\n</html>\r\n"
+    recorded_at: Wed, 05 Jun 2024 21:39:42 GMT
+  - request:
+      method: get
+      uri: https://nickholden.io
+      body:
+        encoding: US-ASCII
+        string: ''
+      headers:
+        User-Agent:
+          - Faraday v2.9.0
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        date:
+          - Wed, 05 Jun 2024 21:39:42 GMT
+        content-type:
+          - text/html; charset=utf-8
+        transfer-encoding:
+          - chunked
+        connection:
+          - keep-alive
+        access-control-allow-origin:
+          - '*'
+        cache-control:
+          - public, max-age=0, must-revalidate
+        referrer-policy:
+          - strict-origin-when-cross-origin
+        x-content-type-options:
+          - nosniff
+        report-to:
+          - '{"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v4?s=%2F79WW%2Fq%2F6zdZJm8d93TGmmZ8rcNClTOcmtZIUfIlCvx5rePCEa1E0ODzLJ1OTJRmbrTmSOwj0cHSMqW6tItNuxeiybaDMpQ4%2BjQx%2Bo5vFawc3iniagfrLOpedUpIvkfi"}],"group":"cf-nel","max_age":604800}'
+        nel:
+          - '{"success_fraction":0,"report_to":"cf-nel","max_age":604800}'
+        vary:
+          - Accept-Encoding
+        cf-cache-status:
+          - DYNAMIC
+        server:
+          - cloudflare
+        cf-ray:
+          - 88f3511f89e52f2d-LAX
+        content-encoding:
+          - gzip
+        alt-svc:
+          - h3=":443"; ma=86400
+      body:
+        encoding: UTF-8
+        string: "<!doctype html>\n<html>\n  <head>\n    <meta charset=\"utf-8\">\n    <meta
+          http-equiv=\"x-ua-compatible\" content=\"ie=edge\">\n    <meta name=\"viewport\"\n
+          \         content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n
+          \   <title>Nick Holden</title>\n    <link rel=\"icon\" href=\"data:image/svg+xml,<svg
+          xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22
+          font-size=%2290%22>\U0001F919</text></svg>\">\n    <link href=\"/stylesheets/site.css\"
+          rel=\"stylesheet\" />\n    <style>\n      @font-face {\n        font-family:
+          'FontAwesome';\n        src: url('../fonts/fontawesome-webfont.eot?v=4.7.0');\n
+          \       src: url('../fonts/fontawesome-webfont.eot?#iefix&v=4.7.0') format('embedded-opentype'),
+          url('../fonts/fontawesome-webfont.woff2?v=4.7.0') format('woff2'), url('../fonts/fontawesome-webfont.woff?v=4.7.0')
+          format('woff'), url('../fonts/fontawesome-webfont.ttf?v=4.7.0') format('truetype'),
+          url('../fonts/fontawesome-webfont.svg?v=4.7.0#fontawesomeregular') format('svg');\n
+          \       font-weight: normal;\n        font-style: normal;\n      }\n      .fa
+          {\n        display: inline-block;\n        font: normal normal normal 14px/1
+          FontAwesome;\n        font-size: inherit;\n        text-rendering: auto;\n
+          \       -webkit-font-smoothing: antialiased;\n        -moz-osx-font-smoothing:
+          grayscale;\n      }\n      .fa-envelope:before {\n        content: \"\\f0e0\";\n
+          \     }\n      .fa-github:before {\n        content: \"\\f09b\";\n      }\n
+          \     .fa-linkedin-square:before {\n        content: \"\\f08c\";\n      }\n
+          \     .fa-twitter-square:before {\n        content: \"\\f081\";\n      }\n
+          \     .fa-trophy:before {\n        content: \"\\f091\";\n      }\n    </style>\n
+          \ </head>\n  <body>\n    <div class=\"body-container\">\n      <div class=\"header\">\n
+          \ <div class=\"headshot\">\n    <img src=\"/images/headshot.png\" width=\"200\"
+          height=\"200\" alt=\"\" />\n  </div>\n  <div class=\"contact-icons\">\n    <div
+          class=\"icon\">\n      <a href=\"/cdn-cgi/l/email-protection#4c22252f27623e622423202829220c2b212d2520622f2321\"
+          target=\"_blank\"><i class=\"fa fa-envelope\"></i></a>\n    </div>\n    <div
+          class=\"icon\">\n      <a href=\"https://github.com/nholden\" target=\"_blank\"><i
+          class=\"fa fa-github\"></i></a>\n    </div>\n    <div class=\"icon\">\n      <a
+          href=\"https://www.linkedin.com/in/nickholden\" target=\"_blank\"><i class=\"fa
+          fa-linkedin-square\"></i></a>\n    </div>\n    <div class=\"icon\">\n      <a
+          href=\"https://www.twitter.com/nickyholden\" target=\"_blank\"><i class=\"fa
+          fa-twitter-square\"></i></a>\n    </div>\n  </div>\n</div>\n\n<div class=\"section\">\n
+          \ <div class=\"headline\">\n    <h1>Hi!</h1>\n  </div>\n  <div class=\"content\">\n
+          \   <p>\n      I’m Nick, a software developer based out of San Diego. In 2014,
+          I wrote\n      my first line of Rails, and I’ve been hooked on convention
+          over\n      configuration and optimizing for programmer happiness ever since.\n
+          \   </p>\n    <p>\n      Today, I’m an engineer at\n      <a href=\"https://campsite.com\"
+          target=\"_blank\">Campsite</a>.\n      I previously built software at \n      <a
+          href=\"https://github.com\" target=\"_blank\">GitHub</a>,\n      <a href=\"https://stripe.com\"
+          target=\"_blank\">Stripe</a>, and\n      <a href=\"https://tuple.app\" target=\"_blank\">Tuple</a>.\n
+          \   </p>\n  </div>\n</div>\n\n<div class=\"section\">\n  <div class=\"headline\">\n
+          \   <h2>Projects</h2>\n  </div>\n  <div class=\"content\">\n    <div class=\"project\">\n
+          \     <div class=\"project-title\">\n        <a href=\"https://github.com/nholden/crawl_vote\"
+          target=\"_blank\">Crawl Vote</a>\n        <a href=\"https://dev.to/devteam/announcing-the-pusher-contest-winners-1dlo\"
+          title=\"Panel Grand Prize winner of the DEV Pusher Contest\" target=\"_blank\"><i
+          class=\"fa fa-trophy\"></i></a>\n      </div>\n      <div class=\"tech-tags\"><span
+          class=\"tech-tag tech-tag__ruby\">Ruby</span><span class=\"tech-tag tech-tag__rails\">Rails</span><span
+          class=\"tech-tag tech-tag__rspec\">RSpec</span><span class=\"tech-tag tech-tag__javascript\">JavaScript</span><span
+          class=\"tech-tag tech-tag__vue-js\">Vue.js</span><span class=\"tech-tag tech-tag__graphql\">GraphQL</span></div>\n
+          \     <div class=\"project-description\">Helps groups on the move choose a
+          next spot</div>\n    </div>\n    <div class=\"project\">\n      <div class=\"project-title\"><a
+          href=\"https://github.com/github/typing-effect-element\" target=\"_blank\"><code>&lt;typing-effect&gt;</code>
+          Element</a></div>\n      <div class=\"tech-tags\"><span class=\"tech-tag tech-tag__typescript\">TypeScript</span><span
+          class=\"tech-tag tech-tag__mocha\">Mocha</span><span class=\"tech-tag tech-tag__web-components\">Web
+          Components</span></div>\n      <div class=\"project-description\">A custom
+          element that shows text as if it were being typed</div>\n    </div>\n    <div
+          class=\"project\">\n      <div class=\"project-title\"><a href=\"https://github.com/nholden/monday-miles\"
+          target=\"_blank\">Monday Miles</a></div>\n      <div class=\"tech-tags\"><span
+          class=\"tech-tag tech-tag__ruby\">Ruby</span><span class=\"tech-tag tech-tag__rails\">Rails</span><span
+          class=\"tech-tag tech-tag__rspec\">RSpec</span><span class=\"tech-tag tech-tag__javascript\">JavaScript</span><span
+          class=\"tech-tag tech-tag__vue-js\">Vue.js</span></div>\n      <div class=\"project-description\">Analyzes
+          Strava data to help athletes celebrate Monday finishes</div>\n    </div>\n
+          \   <div class=\"project\">\n      <div class=\"project-title\"><a href=\"https://github.com/nholden/fit-negative-split\"
+          target=\"_blank\">FIT Negative Split</a></div>\n      <div class=\"tech-tags\"><span
+          class=\"tech-tag tech-tag__javascript\">JavaScript</span><span class=\"tech-tag
+          tech-tag__jest\">Jest</span></div>\n      <div class=\"project-description\">Did
+          the activity in your Garmin FIT file have a negative split?</div>\n    </div>\n
+          \ </div>\n</div>\n\n<div class=\"section\">\n  <div class=\"headline\">\n
+          \   <h2>Blog posts</h2>\n  </div>\n  <div class=\"content\">\n    <div class=\"blog-post\">\n
+          \     <div class=\"blog-post-title\">\n        <a href=\"https://app.campsite.com/campsite/p/notes/4zvq5fmqazmh\"
+          target=\"_blank\">Stop paying the code-review productivity tax</a>\n      </div>\n
+          \     <div class=\"blockquote\">\n        <p>\n          Open PRs for tiny
+          vertical slices. Let’s say you’re adding “widgets” to your application. A
+          PR that’s all of the backend controller actions needed to support all CRUD
+          operations on widgets is hard to review. Instead, start with a PR that introduces
+          a blank page and a new URL behind a feature flag. Later, open another PR that
+          displays some widgets on that page.\n        </p>\n      </div>\n    </div>\n
+          \   <div class=\"blog-post\">\n      <div class=\"blog-post-title\">\n        <a
+          href=\"https://dev.to/nholden/how-i-replaced-a-rails-app-with-a-few-dozen-lines-of-ruby-3l1m\"
+          target=\"_blank\">How I replaced a Rails app with a few dozen lines of Ruby</a>\n
+          \     </div>\n      <div class=\"blockquote\">\n        <p>\n          Even
+          with all the magic that Rails provides, most apps need a whole bunch of things
+          — like authentication, UI, background jobs, email sending, deployment — that
+          aren’t unique to my idea. Next time I have an idea, I’ll look for ways to
+          write less code and maintain less infrastructure, at least to get started.\n
+          \       </p>\n      </div>\n      <div class=\"blog-post-title\">\n        <a
+          href=\"https://dev.to/nholden/resist-the-quick-fix--4fpl\" target=\"_blank\">Resist
+          the ‘quick fix’</a>\n      </div>\n      <div class=\"blockquote\">\n        <p>\n
+          \         To-dos move the context of a problem about out of my brain and into
+          a centralized place where others can consider it for their own work. A thoughtful
+          explanation of a problem in prose is more discoverable than a commit message,
+          a comment, or “self-documenting” code. It can also bring more perspectives
+          into the conversation by making the problem accessible to those who otherwise
+          wouldn’t be reviewing a code solution.\n        </p>\n      </div>\n    </div>\n
+          \   <div class=\"blog-post\">\n      <div class=\"blog-post-title\">\n        <a
+          href=\"https://dev.to/nholden/continuously-deploy-custom-heroku-error-and-maintenance-pages-from-your-apps-repository-13kn\"
+          target=\"_blank\">Continuously deploy custom Heroku error and maintenance
+          pages from your app’s repository</a>\n      </div>\n      <div class=\"blockquote\">\n
+          \       <p>\n          Heroku recommends hosting custom error and maintenance
+          pages on Amazon S3, but it can be easy to upload pages there, forget about
+          them, and have them fall out of sync with the rest of your application. One
+          solution is to have them continuously deployed from your application&rsquo;s
+          repository.\n        </p>\n      </div>\n    </div>\n    <div class=\"blog-post\">\n
+          \     <div class=\"blog-post-title\">\n        <a href=\"https://dev.to/nholden/try-ending-today-with-a-failing-test-for-a-great-start-tomorrow-3i8j\"
+          target=\"_blank\">Try ending today with a failing test for a great start tomorrow</a>\n
+          \     </div>\n      <div class=\"blockquote\">\n        <p>\n          Starting
+          with a failing test means I know exactly what to work on: making it pass.
+          Compared to an item on a to-do list, a failing test is better at returning
+          my mind to the state it was in when I was focused deeply on the task.\n        </p>\n
+          \     </div>\n    </div>\n  </div>\n</div>\n\n<div class=\"section\">\n  <div
+          class=\"headline\">\n    <h2>Open source contributions</h2>\n  </div>\n  <div
+          class=\"content\">\n    <div class=\"contribution\">\n      <div class=\"contribution-title\">\n
+          \       <a href=\"https://github.com/rails/rails/pull/44617\" target=\"_blank\">[rails/rails]
+          Add <code>active_record.destroy_association_async_batch_size</code> configuration</a>\n
+          \     </div>\n      <div class=\"tech-tags\"><span class=\"tech-tag tech-tag__ruby\">Ruby</span><span
+          class=\"tech-tag tech-tag__rails\">Rails</span><span class=\"tech-tag tech-tag__minitest\">Minitest</span></div>\n
+          \   </div>\n    <div class=\"contribution\">\n      <div class=\"contribution-title\">\n
+          \       <a href=\"https://github.com/apokalipto/devise_saml_authenticatable/pull/195\"
+          target=\"_blank\">[apokalipto/devise_saml_authenticatable] Validate <code>InResponseTo</code>
+          header in SAML responses</a>\n      </div>\n      <div class=\"tech-tags\"><span
+          class=\"tech-tag tech-tag__ruby\">Ruby</span><span class=\"tech-tag tech-tag__rails\">Rails</span><span
+          class=\"tech-tag tech-tag__rspec\">RSpec</span></div>\n    </div>\n    <div
+          class=\"contribution\">\n      <div class=\"contribution-title\">\n        <a
+          href=\"https://github.com/netlify/netlify-cms/pull/3721\" target=\"_blank\">[netlify/netlify-cms]
+          Add <code>pickerUtc</code> option to datetime widget</a>\n      </div>\n      <div
+          class=\"tech-tags\"><span class=\"tech-tag tech-tag__javascript\">JavaScript</span><span
+          class=\"tech-tag tech-tag__react\">React</span></div>\n    </div>\n    <div
+          class=\"contribution\">\n      <div class=\"contribution-title\">\n        <a
+          href=\"https://github.com/texas-justice-initiative/website-nextjs/pull/65\"
+          target=\"_blank\">[texas-justice-initiative/website-nextjs] Add autocomplete
+          filter</a>\n      </div>\n      <div class=\"tech-tags\"><span class=\"tech-tag
+          tech-tag__javascript\">JavaScript</span><span class=\"tech-tag tech-tag__react\">React</span></div>\n
+          \   </div>\n    <div class=\"contribution\">\n      <div class=\"contribution-title\">\n
+          \       <a href=\"https://github.com/thepracticaldev/dev.to/pull/843\" target=\"_blank\">[thepracticaldev/dev.to]
+          Improve developer experience for previewing docs in development</a>\n      </div>\n
+          \     <div class=\"tech-tags\"><span class=\"tech-tag tech-tag__documentation\">Documentation</span><span
+          class=\"tech-tag tech-tag__javascript\">JavaScript</span></div>\n    </div>\n
+          \   <div class=\"contribution\">\n      <div class=\"contribution-title\">\n
+          \       <a href=\"https://github.com/rails/rails/pull/32185\" target=\"_blank\">[rails/rails]
+          Add <code>before?</code> and <code>after?</code> methods to date and time
+          classes</a>\n      </div>\n      <div class=\"tech-tags\"><span class=\"tech-tag
+          tech-tag__ruby\">Ruby</span><span class=\"tech-tag tech-tag__rails\">Rails</span><span
+          class=\"tech-tag tech-tag__minitest\">Minitest</span></div>\n    </div>\n
+          \   <div class=\"contribution\">\n      <div class=\"contribution-title\">\n
+          \       <a href=\"https://github.com/vuejs-tips/v-money/pull/51\" target=\"_blank\">[vuejs-tips/v-money]
+          Add <code>allowBlank</code> option</a>\n      </div>\n      <div class=\"tech-tags\"><span
+          class=\"tech-tag tech-tag__javascript\">JavaScript</span><span class=\"tech-tag
+          tech-tag__vue-js\">Vue.js</span></div>\n    </div>\n    <div class=\"contribution\">\n
+          \     <div class=\"contribution-title\">\n        <a href=\"https://github.com/victorjonsson/jQuery-Form-Validator/pull/650\"
+          target=\"_blank\">[victorjonsson/jQuery-Form-Validator] Fix issue with hyphens
+          in file validation mime types</a>\n      </div>\n      <div class=\"tech-tags\"><span
+          class=\"tech-tag tech-tag__javascript\">JavaScript</span></div>\n    </div>\n
+          \ </div>\n</div>\n\n    </div>\n  <script data-cfasync=\"false\" src=\"/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js\"></script></body>\n</html>\n"
+    recorded_at: Wed, 05 Jun 2024 21:39:42 GMT
+recorded_with: VCR 6.1.0

@@ -1,0 +1,13 @@
+<div class="mb-4">
+  <%= render 'mailers/components/avatar', avatar_url: @organization.avatar_url(size: 40), href: "#{@organization.url}", name: @organization.name, size: 40, class_name: "rounded" %>
+</div>
+
+<div class="mb-6">
+  Your request to join the <b><%= @organization.name %></b> organization on Campsite has been approved. Open the app to start sharing.
+</div>
+
+<%= render 'mailers/components/cta_button', url: @organization.url, text: "Open Campsite" %>
+
+<div class="pt-6">
+  <div class="separator">
+</div>

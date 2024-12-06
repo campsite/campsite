@@ -1,0 +1,17 @@
+<div class="mb-4">
+  <%= render 'mailers/components/avatar', avatar_url: @user.avatar_url(size: 40), href: @organization.url, name: @user.display_name, size: 40, class_name: "rounded" %>
+</div>
+
+<div class="mb-6">
+  <b><%= @user.display_name %></b> (<%= @user.email %>) requested to join the <b><%= @organization.name %></b> organization on Campsite.
+</div>
+
+<%= render 'mailers/components/cta_button', url: @organization.members_settings_url, text: "Manage request" %>
+
+<div class="pt-6 mb-4 text-sm text-secondary">
+  As an administrator, you can accept or decline this request.
+</div>
+
+<div>
+  <div class="separator" />
+</div>

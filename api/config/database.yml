@@ -1,0 +1,75 @@
+default: &default
+  adapter: trilogy
+  encoding: utf8mb4
+  pool: <%= ENV.fetch('RAILS_MAX_THREADS') { 5 } * ENV.fetch('RAILS_MAX_ASYNC_QUERIES') { 5 } %>
+  username: root
+  password:
+  port: 3306
+
+development:
+  primary:
+    <<: *default
+    database: <%= ENV['ENABLE_PSDB'] ? 'campsite-api' : 'campsite_api_development' %>
+    host: <%= ENV['ENABLE_PSDB'] ? '127.0.0.1' : '' %>
+    port: <%= ENV['ENABLE_PSDB'] ? 3305 : ENV.fetch("DB_PORT", 3306) %>
+  primary_replica:
+    <<: *default
+    database: <%= ENV['ENABLE_PSDB'] ? 'campsite-api' : 'campsite_api_development' %>
+    host: <%= ENV['ENABLE_PSDB'] ? '127.0.0.1' : '' %>
+    port: <%= ENV['ENABLE_PSDB'] ? 3305 : ENV.fetch("DB_PORT", 3306) %>
+    replica: true
+
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+test:
+  primary:
+    <<: *default
+    database: campsite_api_test
+    host: 127.0.0.1
+    username: <%= ENV.fetch("MYSQL_USER") { "root" } %>
+    password: <%= ENV['MYSQL_PASSWORD'] %>
+  primary_replica:
+    <<: *default
+    database: campsite_api_test
+    host: 127.0.0.1
+    username: <%= ENV.fetch("MYSQL_USER") { "root" } %>
+    password: <%= ENV['MYSQL_PASSWORD'] %>
+    replica: true
+
+# As with config/credentials.yml, you never want to store sensitive information,
+# like your database password, in your source code. If your source code is
+# ever seen by anyone, they now have access to your database.
+#
+# Instead, provide the password or a full connection URL as an environment
+# variable when you boot the app. For example:
+#
+#   DATABASE_URL="mysql2://myuser:mypass@localhost/somedatabase"
+#
+# If the connection URL is provided in the special DATABASE_URL environment
+# variable, Rails will automatically merge its configuration values on top of
+# the values provided in this file. Alternatively, you can specify a connection
+# URL environment variable explicitly:
+#
+#   production:
+#     url: <%= ENV["MY_APP_DATABASE_URL"] %>
+#
+# Read https://guides.rubyonrails.org/configuring.html#configuring-a-database
+# for a full overview on how database connection configuration can be specified.
+#
+production:
+  primary:
+    <<: *default
+    username: <%= Rails.application.credentials.planetscale&.fetch(:username) %>
+    password: <%= Rails.application.credentials.planetscale&.fetch(:password) %>
+    database: <%= Rails.application.credentials.planetscale&.fetch(:database) %>
+    host: <%= Rails.application.credentials.planetscale&.fetch(:host) %>
+    ssl_mode: verify_identity
+  primary_replica:
+    <<: *default
+    username: <%= Rails.application.credentials.planetscale_replica&.fetch(:username) %>
+    password: <%= Rails.application.credentials.planetscale_replica&.fetch(:password) %>
+    database: <%= Rails.application.credentials.planetscale_replica&.fetch(:database) %>
+    host: <%= Rails.application.credentials.planetscale_replica&.fetch(:host) %>
+    ssl_mode: verify_identity
+    replica: true

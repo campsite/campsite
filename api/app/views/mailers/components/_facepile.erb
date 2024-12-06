@@ -1,0 +1,9 @@
+<% if users %>
+<div>
+  <% users.each do |user| %>
+    <a href="<%= "#{organization.url}/people/#{user.username}" %>" target="_blank" class="inline-block align-top items-center mr-1/2 mb-1">
+      <img src="<%= user.avatar_url(size: 24) %>" width="24" height="24" class="aspect-square overflow-hidden <%= user.integration? ? 'rounded' : 'rounded-full' %>" />
+    </a>
+  <% end %>
+</div>
+<% end %>

@@ -1,0 +1,43 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://localhost:3002/markdown_to_html
+    body:
+      encoding: UTF-8
+      string: '{"markdown":"\u003cspan data-type=\"mention\" data-id=\"0123456789ab\"
+        data-label=\"User Name\" data-username=\"username\"\u003e@User Name\u003c/span\u003e
+        should have pancakes.","editor":"markdown"}'
+    headers:
+      User-Agent:
+      - Faraday v2.9.0
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer d8c0a2827589659ff292a8999b024f24a185ed82
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      x-powered-by:
+      - Express
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '180'
+      etag:
+      - W/"b4-qA3GOVrBLiOvQFOT3fy3JkcmvM4"
+      date:
+      - Tue, 18 Jun 2024 19:25:15 GMT
+      connection:
+      - keep-alive
+      keep-alive:
+      - timeout=5
+    body:
+      encoding: UTF-8
+      string: '{"html":"<p><span class=\"mention\" data-type=\"mention\" data-id=\"0123456789ab\"
+        data-label=\"User Name\" data-username=\"username\">@User Name</span> should
+        have pancakes.</p>"}'
+  recorded_at: Tue, 18 Jun 2024 19:25:15 GMT
+recorded_with: VCR 6.1.0

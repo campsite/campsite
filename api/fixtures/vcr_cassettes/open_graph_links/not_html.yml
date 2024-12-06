@@ -1,0 +1,57 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://github.com/campsite/campsite/actions/runs/6801021881
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Faraday v2.9.0
+  response:
+    status:
+      code: 404
+      message: Not Found
+    headers:
+      server:
+      - GitHub.com
+      date:
+      - Wed, 05 Jun 2024 20:44:49 GMT
+      content-type:
+      - text/plain; charset=utf-8
+      vary:
+      - X-PJAX, X-PJAX-Container, Turbo-Visit, Turbo-Frame, Accept-Encoding, Accept,
+        X-Requested-With
+      cache-control:
+      - no-cache
+      strict-transport-security:
+      - max-age=31536000; includeSubdomains; preload
+      x-frame-options:
+      - deny
+      x-content-type-options:
+      - nosniff
+      x-xss-protection:
+      - '0'
+      referrer-policy:
+      - origin-when-cross-origin, strict-origin-when-cross-origin
+      content-security-policy:
+      - default-src 'none'; base-uri 'self'; connect-src 'self'; form-action 'self';
+        img-src 'self' data:; script-src 'self'; style-src 'unsafe-inline'
+      content-encoding:
+      - gzip
+      set-cookie:
+      - _gh_sess=r8H97R5uzWp0gJf5haX9DyP6kjf%2BIMgGUoyhj%2BOBGXY%2FdtDrx3qFOHu9FeMGd0dAIww8nWppgoGS3ucdlRvS7oMBscw2eMLkgeHJg7zzouerFA5eIaocvDZhSR88fTAfpy9aExo9r5JoMtPwOTqs4hsUUCFHDYsb%2FW8%2BEFyIIYzvZfAwJa%2B0hd1Ce6dwUMsxXlNKRU%2BTnedj8UF7JPw4PYY2U0ZmOFUL4jRl9SBml243EWeVfxAEve2IF%2Fd3Vn6gf1raX7X0ZtTGK5CzouvAWg%3D%3D--WsFqXaEkHFDOea6R--fy%2BxICAdArjz25cRrKUeEw%3D%3D;
+        Path=/; HttpOnly; Secure; SameSite=Lax, _octo=GH1.1.78197701.1717620289; Path=/;
+        Domain=github.com; Expires=Thu, 05 Jun 2025 20:44:49 GMT; Secure; SameSite=Lax,
+        logged_in=no; Path=/; Domain=github.com; Expires=Thu, 05 Jun 2025 20:44:49
+        GMT; HttpOnly; Secure; SameSite=Lax
+      content-length:
+      - '40'
+      x-github-request-id:
+      - EC7A:3AFE95:A525CA1:E999413:6660CE41
+    body:
+      encoding: UTF-8
+      string: Not Found
+  recorded_at: Wed, 05 Jun 2024 20:44:49 GMT
+recorded_with: VCR 6.1.0

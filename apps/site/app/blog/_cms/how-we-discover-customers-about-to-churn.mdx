@@ -1,0 +1,48 @@
+---
+title: 'How we discover customers about to churn'
+description: 'We’re always trying to make Campsite better for teams, but we know it won’t stick for everyone. When that happens and a customer churns, we need to understand what happened — are there major workflow issues we need to fix?'
+publishedAt: '2024-08-20 00:00:00.000'
+author: brianlovin
+---
+
+We’re always trying to make Campsite better for teams, but we know it won’t stick for everyone. When that happens and a customer churns, we need to understand what happened — are there major workflow issues we need to fix? Was there an annoying bug we didn’t know about? Did they switch to a different tool for a specific task or feature?
+
+But it’s better to catch people before they completely churn, not after. If we notice someone who was recently-active, but hasn’t used Campsite for a few days, we do our best to reach out early to get fresh feedback, answer questions, and hopefully solve problems that might keep them around.
+
+I also believe it’s important that everyone on our team knows when customers are about to churn. <mark>Developing shared context helps us to spot trends, make more informed product decisions, and keep the health of our business top-of-mind</mark>.
+
+We’ve built a simple system using Retool, Zapier, and Campsite posts to alert us when customers are about to churn and create visibility for everyone on our team.
+
+Here’s how it works:
+
+1. Every morning at 8, we run a check that looks for teams:
+
+- With more than one member
+- Where the admin uses a work email (not Gmail, iCloud, or Outlook)
+- Who have used Campsite in the last month
+- But haven’t created anything (post, doc, call, or chat) in the last four days (to account for long weekends)
+
+We include both paying customers and new teams who are still on their 30-day trial. Combined, this criteria keeps our alerts high-signal by only showing organizations that we have a good chance of learning from.
+
+![A screenshot of a Retool workflow showing how we find organizations that are about to churn](/img/blog/churn-workflow.png)
+
+If a team meets all these criteria, we move to the next step.
+
+2. For each of these teams, we create a post in a “Churning orgs” channel with:
+
+- The admin’s email and job title (if they shared it during onboarding)
+- How big their company is and how many are using Campsite
+- What plan they’re on, and how many seats they’re paying for
+- A link to our Retool dashboard to see usage over the last month
+
+This post gives us enough insight into how they’ve used Campsite in the past so we can decide if it's appropriate to send them an email.
+
+![A screenshot of a sample posts in Campsite showing orgs about to churn](/img/blog/churning-orgs-space.png)
+
+Triagining these about-to-churn organizations is now part of my morning ritual.
+
+And because these posts live on Campsite, I can have an async conversation with my team to ask questions, gather context on previous interactions with the customer, and report back with the customer’s feedback. These conversations are easy to search for later as we look for patterns and prioritize our roadmap.
+
+We’ll keep iterating on this workflow over time as we learn — if you have ideas or feedback, [I’d love to hear from you](https://x.com/brian_lovin).
+
+You can create a workflow like this for yourself with our [Zapier integration](https://zapier.com/apps/campsite/integrations).

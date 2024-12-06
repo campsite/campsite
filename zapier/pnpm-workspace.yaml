@@ -1,0 +1,2 @@
+# Empty file workaround to exclude this project from the parent workspace:
+# https://github.com/pnpm/pnpm/issues/2412

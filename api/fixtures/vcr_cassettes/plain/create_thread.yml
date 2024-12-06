@@ -1,0 +1,44 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://core-api.uk.plain.com/graphql/v1
+    body:
+      encoding: UTF-8
+      string: '{"query":"mutation CreateThread($createThreadInput: CreateThreadInput!)
+        {\n  createThread(input: $createThreadInput) {\n    thread {\n      id\n    }\n  }\n}\n","variables":{"createThreadInput":{"customerIdentifier":{"externalId":"123"},"title":"It''s
+        levio-sah","components":[{"componentPlainText":{"plainText":"Please make the
+        update to your website posthaste."}},{"componentSpacer":{"spacerSize":"M"}},{"componentLinkButton":{"linkButtonLabel":"attachment.jpg","linkButtonUrl":"https://media.campsite.test/u/1/attachment.jpg"}}],"labelTypeIds":["lt_01HKXK5B9WTSVHQ95HGQVNATYW"]}}}'
+    headers:
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer <PLAIN_API_KEY>
+      User-Agent:
+      - Faraday v2.7.5
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      date:
+      - Fri, 12 Jan 2024 02:24:12 GMT
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '76'
+      connection:
+      - keep-alive
+      etag:
+      - W/"4c-ZeHkx37xT65L8JAy3P+1sXZFwNc"
+      x-powered-by:
+      - Express
+      apigw-requestid:
+      - RZ5f-j3urPEEKBA=
+    body:
+      encoding: UTF-8
+      string: '{"data":{"createThread":{"thread":{"id":"th_01HKXQQVPBVQDHCRE9VBXQ8ZKR"}}}}
+
+        '
+  recorded_at: Fri, 12 Jan 2024 02:24:12 GMT
+recorded_with: VCR 6.1.0

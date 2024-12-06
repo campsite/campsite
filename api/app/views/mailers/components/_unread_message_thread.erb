@@ -1,0 +1,58 @@
+<table class="w-full p-0 m-0" border="0" cellpadding="0" cellspacing="0">
+  <tr><td align="left" valign="top">
+    You have unread messages from <strong><%= link_to thread.formatted_title(@organization_membership), thread.url, target: "_blank" %></strong>
+  </td></tr>
+  <tr><td align="left" valign="top" class="py-3">
+    <%
+      groups = messages
+        .reverse
+        .select{ |message| message.has_content? || message.attachments.any? }
+        .slice_when { |message_a, message_b| message_a.author != message_b.author }
+        .to_a
+    %>
+    <% groups.each do |group| %>
+      <% author = group.first.author %>
+      <table class="w-full p-0 mx-0 my-2" border="0" cellpadding="0" cellspacing="0">
+        <% if thread.group? %>
+          <tr>
+            <td></td>
+            <td>
+              <span class="text-xs text-secondary pl-3.5"><%= author.display_name %></span>
+            </td>
+          </tr>
+        <% end %>
+        <tr>
+          <td align="left" valign="bottom" width="40">
+            <div class="mb-1">
+              <%= render 'mailers/components/avatar', avatar_url: author.avatar_url(size: 32), href: author.url, name: author.display_name, size: 32, class_name: author.integration? ? "rounded" : "rounded-full" %>
+            </div>
+          </td>
+          <td align="left" valign="bottom">
+            <% group.each_with_index do |message, index| %>
+              <%
+                border_radius_classes = if group.size == 1
+                  "rounded-[18px] after:rounded-[18px]"
+                elsif index == 0
+                  "rounded-[18px] rounded-bl after:rounded-[18px] after:rounded-bl"
+                elsif index == group.size - 1
+                  "rounded-r-[18px] rounded-tl rounded-bl-[18px] after:rounded-r-[18px] after:rounded-tl after:rounded-bl-[18px]"
+                else
+                  "rounded-l rounded-r-[18px] after:rounded-l after:rounded-r-[18px]"
+                end
+              %>
+              <div class="py-[1px]">
+                <div class="bg-quaternary px-3.5 py-2 inline-block text-sm prose <%= border_radius_classes %>">
+                  <% if message.has_content? %>
+                    <%= message.mailer_content.html_safe %>
+                  <% elsif message.attachments.any? %>
+                    <%= "#{message.attachments.count} #{"attachment".pluralize(message.attachments.count)}" %>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </td>
+        </tr>
+      </table>
+    <% end %>
+  </td></tr>
+</table>

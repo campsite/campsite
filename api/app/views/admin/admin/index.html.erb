@@ -1,0 +1,7 @@
+<ul class="space-y-2 mt-8">
+  <% [["Demo orgs", demo_orgs_path], ["Features", features_path], ["Mailers", "/rails/mailers"], ["Sidekiq", "/admin/sidekiq"]].each do |name, path| %>
+    <li>
+      <%= link_to name, path, class: "text-link hover:underline" %>
+    </li>
+  <% end %>
+</ul>

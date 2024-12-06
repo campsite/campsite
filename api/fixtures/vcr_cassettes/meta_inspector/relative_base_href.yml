@@ -1,0 +1,107 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://musicforprogramming.net/latest/
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Faraday v2.9.0
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      accept-ranges:
+      - bytes
+      age:
+      - '36188'
+      cache-control:
+      - public,max-age=0,must-revalidate
+      cache-status:
+      - '"Netlify Edge"; hit'
+      content-encoding:
+      - gzip
+      content-length:
+      - '2571'
+      content-type:
+      - text/html; charset=UTF-8
+      date:
+      - Thu, 06 Jun 2024 18:29:49 GMT
+      etag:
+      - '"37bbd6feea4d989e29e0b7fd05de489f-ssl-df"'
+      server:
+      - Netlify
+      strict-transport-security:
+      - max-age=31536000
+      vary:
+      - Accept-Encoding
+      x-nf-request-id:
+      - 01HZQD0WDW2083K46TT8G0B95J
+    body:
+      encoding: UTF-8
+      string: '<!doctype html> <html lang=en> <head> <meta charset=utf-8> <meta content="width=device-width,initial-scale=1"
+        name=viewport> <meta content=#1a1a1a name=theme-color> <base href=/ > <link
+        href=/style.css rel=stylesheet> <link href=/favicon.png rel=icon type=image/png>
+        <link href=/rss.php rel=alternate type=application/rss+xml title="Music For
+        Programming Episodes"> <link href=client/main.3487819868.css rel=stylesheet>
+        <noscript id=sapper-head-start></noscript><noscript id=sapper-head-end></noscript>
+        </head> <body> <script>(function(i,s,o,g,r,a,m){i[''GoogleAnalyticsObject'']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new
+        Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,''script'',''https://www.google-analytics.com/analytics.js'',''ga'');
+        ga(''create'', ''UA-71148914-1'', ''auto''); ga(''send'', ''pageview'');</script>
+        <div id=sapper> <div style=display:none><a href=https://home.social/@datassette
+        rel=me>Mastodon Verification</a> <a href=/rss.xml>RSS</a> <a href=seventy>70:
+        THINGS DISAPPEAR</a><a href=sixtynine>69: Pearl River Sound</a><a href=sixtyeight>68:
+        no data available</a><a href=sixtyseven>67: Datassette</a><a href=sixtysix>66:
+        Conrad Clipper</a><a href=sixtyfive>65: Matt Whitehead</a><a href=sixtyfour>64:
+        Strepsil</a><a href=sixtythree>63: T-FLX</a><a href=sixtytwo>62: Our Grey
+        Lives</a><a href=sixtyone>61: Linnley</a><a href=sixty>60: TUNDRA</a><a href=fiftynine>59:
+        Miunau</a><a href=fiftyeight>58: OliSUn</a><a href=fiftyseven>57: Hainbach</a><a
+        href=fiftysix>56: Forest Drive West</a><a href=fiftyfive>55: 20 Jazz Funk
+        Greats</a><a href=fiftyfour>54: HLER</a><a href=fiftythree>53: Beb Welten</a><a
+        href=fiftytwo>52: Inchindown</a><a href=fiftyone>51: Mücha</a><a href=fifty>50:
+        Misc.</a><a href=fortynine>49: Julien Mier</a><a href=fortyeight>48: Michael
+        Hicks</a><a href=fortyseven>47: Abe Mangger</a><a href=fortysix>46: Jo Johnson</a><a
+        href=fortyfive>45: Ehohroma</a><a href=fortyfour>44: hukka</a><a href=fortythree>43:
+        Hey Exit</a><a href=fortytwo>42: Datassette</a><a href=fortyone>41: Sunjammer</a><a
+        href=forty>40: Mark Schneider</a><a href=thirtynine>39: Kidding Kurrys</a><a
+        href=thirtyeight>38: J.S. Aurelius</a><a href=thirtyseven>37: Lackluster</a><a
+        href=thirtysix>36: Ea7_dmZ</a><a href=thirtyfive>35: Nadim Kobeissi</a><a
+        href=thirtyfour>34: Chukus</a><a href=thirtythree>33: uuav</a><a href=thirtytwo>32:
+        Chris Seddon</a><a href=thirtyone>31: Datassette</a><a href=thirty>30: Matt
+        Kruse</a><a href=twentynine>29: Luke Handsfree</a><a href=twentyeight>28:
+        Big War</a><a href=twentyseven>27: Michael Hicks</a><a href=twentysix>26:
+        Abstraction</a><a href=twentyfive>25: _nono_</a><a href=twentyfour>24: RITES</a><a
+        href=twentythree>23: Panda Magic</a><a href=twentytwo>22: Mindaugaszq</a><a
+        href=twentyone>21: Idol Eyes</a><a href=twenty>20: Uberdog</a><a href=nineteen>19:
+        Hivemind</a><a href=eighteen>18: Konx Om Pax</a><a href=seventeen>17: Graphplan</a><a
+        href=sixteen>16: Silent Stelios</a><a href=fifteen>15: Dan Adeyemi</a><a href=fourteen>14:
+        Tahlhoff Garten + Untitled</a><a href=thirteen>13: Matt Whitehead</a><a href=twelve>12:
+        Forgotten Light</a><a href=eleven>11: Miles Tilmann</a><a href=ten>10: Unity
+        Gain Temple</a><a href=nine>09: Datassette</a><a href=eight>08: Connectedness
+        Locus</a><a href=seven>07: Tahlhoff Garten + Untitled</a><a href=six>06: Gods
+        Of The New Age</a><a href=five>05: Abe Mangger</a><a href=four>04: Com Truise</a><a
+        href=three>03: Datassette</a><a href=two>02: Sunjammer</a><a href=one>01:
+        Datassette</a><a href=about>About</a><a href=credits>Credits</a></div></div>
+        <script>__SAPPER__={baseUrl:"",preloaded:[void 0,{entry:{slug:"seventy",type:"episode",order:70,title:"70:
+        THINGS DISAPPEAR",file:"https:\u002F\u002Fdatashat.net\u002Fmusic_for_programming_70-things_disappear.mp3",filesize:"112636977",duration:"1:03:30",timestamp:"2023-11-20
+        12:55:00",body:"",tracklist:"\n\t\t\tPhoenix G - Soundbath@TheLoft\u003Cbr\u003E\n\t\t\tBedouin
+        Ascent - Joyriding III\u003Cbr\u003E\n\t\t\tGlobal Communication - Enlightenment
+        From The Augur\u003Cbr\u003E\n\t\t\tThe Grid - Without Your Clarity I Would
+        Still Be Bound By Gravity (Boundless Mix)\u003Cbr\u003E\n\t\t\tLaraaji - Moon
+        Shadows\u003Cbr\u003E\n\t\t\tInterior - Ascending\u003Cbr\u003E\n\t\t\tAphex
+        Twin - bank lullaby\u003Cbr\u003E\n\t\t\tAshTreJinkins - no team effort\u003Cbr\u003E\n\t\t\tSam
+        Gendel - ZeroZero\u003Cbr\u003E\n\t\t\tPanoram - Ray Rain\u003Cbr\u003E\n\t\t\tHarold
+        Budd and Cocteau Twins - Memory Gongs\u003Cbr\u003E\n\t\t\tJohn Livengood
+        - Véhicule\u003Cbr\u003E\n\t\t\tKMRU - strain\u003Cbr\u003E\n\t\t\tSébastien
+        Robert - Imaginary Geography\u003Cbr\u003E\n\t\t\tGigi Masin & Allesandro
+        Monti - O.A.L.\u003Cbr\u003E\n\t\t\tTerre Thaemlitz - Aging Core, Aging Periphery\u003Cbr\u003E\n\t\t\tAFX
+        - s8v1 [brooklyn]\u003Cbr\u003E\n\t\t\tOneohtrix Point Never - Behind The
+        Bank\u003Cbr\u003E\n\t\t\tFred Wackenhut - Orianna Twilight\u003Cbr\u003E\n\t\t",links:"\n\t\t\t\u003Ca
+        target=\"_blank\" href=\"https:\u002F\u002Fsoundcloud.com\u002Fthingsdisappear\"\u003Ehttps:\u002F\u002Fsoundcloud.com\u002Fthingsdisappear\u003C\u002Fa\u003E\u003Cbr\u003E\n\t\t"}}]};if(''serviceWorker''
+        in navigator)navigator.serviceWorker.register(''/service-worker.js'');var
+        s=document.createElement("script");try{new Function("if(0)import('''')")();s.src="/client/client.49200d32.js";s.type="module";s.crossOrigin="use-credentials";}catch(e){s.src="/client/shimport@1.0.1.js";s.setAttribute("data-main","/client/client.49200d32.js")}document.head.appendChild(s)</script> '
+  recorded_at: Thu, 06 Jun 2024 18:29:49 GMT
+recorded_with: VCR 6.1.0

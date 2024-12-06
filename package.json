@@ -1,0 +1,35 @@
+{
+  "name": "@campsite/monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "clean": "turbo run clean && rm -rf .turbo node_modules",
+    "dev": "turbo run dev --parallel",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint -- --fix",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "catalog:",
+    "prettier": "catalog:",
+    "prettier-plugin-packagejson": "catalog:",
+    "prettier-plugin-tailwindcss": "catalog:",
+    "swagger-typescript-api": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:"
+  },
+  "packageManager": "pnpm@9.7.1",
+  "engines": {
+    "node": ">=20.0.0 <21"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "^18.0.0"
+    },
+    "patchedDependencies": {
+      "@radix-ui/react-popper": "patches/@radix-ui__react-popper.patch"
+    }
+  }
+}

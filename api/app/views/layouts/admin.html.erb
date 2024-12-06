@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= @page_title || "Campsite" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= favicon_link_tag "/favicon.ico" %>
+    <%= favicon_link_tag "/favicon.svg" %>
+
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="/android-chrome-192x192.png" sizes="192x192" />
+    <link rel="icon" type="image/png" href="/android-chrome-512x512.png" sizes="512x512" />
+
+    <% unless Rails.env.test? %>
+      <%= stylesheet_link_tag "application" %>
+      <%= javascript_include_tag "application", defer: true %>
+    <% end %>
+  </head>
+
+  <body class="w-full min-h-screen">
+    <div class="p-2 bg-primary w-full flex flex-col justify-center text-primary text-sm border-b border-secondary">
+      <div class="w-full text-center">
+        <span class="font-semibold"><%= Rails.env.titleize %> sha:</span> <code><a target="_blank" class="text-link" href="https://github.com/campsite/campsite/commit/<%= ENV["RELEASE_SHA"] %>"><%= ENV["RELEASE_SHA"] %></a></code>
+      </div>
+    </div>
+
+    <main class="bg-primary min-h-screen">
+      <div class="max-w-lg mx-auto px-4 py-10">
+        <div class="page-title-container">
+          <svg width="49" height="20" viewBox="0 0 49 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0.201982 21.9532L13.7942 0.654571C14.0531 0.248924 14.5245 0 15.0338 0H37.1765C38.2907 0 38.9824 1.12038 38.4161 2.00776L24.8238 23.3064C24.565 23.7121 24.0936 23.961 23.5843 23.961H1.44157C0.327401 23.961 -0.364321 22.8406 0.201982 21.9532Z" fill="currentColor"/>
+            <path d="M32.0309 23.9609H47.4978C48.5832 23.9609 49.2781 22.8922 48.7691 22.0055L41.4653 9.28149C40.9386 8.36398 39.5292 8.33304 38.9561 9.22642L30.793 21.9505C30.2237 22.8378 30.9152 23.9609 32.0309 23.9609Z" fill="currentColor"/>
+          </svg>
+
+          <div class="flex items-center justify-start mt-1 text-sm">
+            <%= link_to 'Admin', admin_path, class: "hover:underline font-bold" %>
+            <% breadcrumbs.each do |crumb| %>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3 mx-1">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            
+              <% if crumb.link? && crumb != breadcrumbs.last %>
+                <%= link_to crumb.name, crumb.path, class: "hover:underline font-bold" %>
+              <% else %>
+                <span class="text-sm text-secondary">
+                  <%= crumb.name %>
+                </span>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+
+        <%= yield %>
+      </div>
+    </main>
+
+    <% unless Rails.env.test? %>
+      <%= javascript_include_tag "autocomplete" %>
+      <%= javascript_include_tag "relative-time" %>
+      <%= javascript_include_tag "rails-ujs" %>
+    <% end %>
+  </body>
+</html>

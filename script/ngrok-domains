@@ -1,0 +1,13 @@
+#!/bin/bash
+
+ENV_FILE=".env.development.local"
+
+read -p "What is your ngrok app subdomain (e.g. app-dev-brian)? " ngrok_app_subdomain
+read -p "What is your ngrok API subdomain (e.g. api-dev-brian)? " ngrok_api_subdomain
+read -p "What is your ngrok sync subdomain (e.g. sync-dev-brian)? " ngrok_sync_subdomain
+
+echo "NGROK_APP_SUBDOMAIN=$ngrok_app_subdomain" >> "$ENV_FILE"
+echo "NGROK_API_SUBDOMAIN=$ngrok_api_subdomain" >> "$ENV_FILE"
+echo "NGROK_SYNC_SUBDOMAIN=$ngrok_sync_subdomain" >> "$ENV_FILE"
+
+echo "Configuration updated in $ENV_FILE."

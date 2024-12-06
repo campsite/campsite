@@ -1,0 +1,60 @@
+# fly.toml app configuration file generated for campsite-api on 2023-05-24T16:54:00-04:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "campsite-api"
+primary_region = "iad"
+kill_signal = "SIGINT"
+kill_timeout = 60
+
+[experimental]
+  auto_rollback = true
+
+[build]
+  [build.args]
+    BUNDLER_VERSION = "2.3.14"
+    NODE_VERSION = "18.16.1"
+    RUBY_VERSION = "3.3.4"
+
+[deploy]
+
+[env]
+  PORT = "8080"
+  SERVER_COMMAND = "bundle exec puma"
+
+[processes]
+  web = "bundle exec puma"
+  worker = "bundle exec sidekiq"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  processes = ["web"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 100
+    soft_limit = 10
+
+  [[services.tcp_checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "1s"
+    restart_limit = 0
+
+[[statics]]
+  guest_path = "/app/public"
+  url_prefix = "/"
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "1536mb"

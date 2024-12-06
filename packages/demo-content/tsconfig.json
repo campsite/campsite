@@ -1,0 +1,9 @@
+{
+  "extends": "@campsite/tsconfig/base.json",
+  "include": ["./*.ts"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "."
+  }
+}

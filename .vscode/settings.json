@@ -1,0 +1,73 @@
+{
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "[javascript][javascriptreact][json][jsonc][typescript][typescriptreact]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "html.format.templating": true,
+  "tailwindCSS.experimental.classRegex": [["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]],
+  "typescript.preferences.autoImportFileExcludePatterns": [
+    // `useInView` should be imported from `react-intersection-observer` instead of `framer-motion`
+    "framer-motion/dist/index.d.ts",
+    // Force importing `useInView` from the barrel file. Since there's no other exports, there's no performance impact.
+    "react-intersection-observer/useInView.d.ts",
+    // Hide Next.js internal types for Pages Router in favor exported index file (next/router.d.ts)
+    "next/dist/client/router.d.ts",
+    // Hide Next.js router imports from App Router
+    "next/navigation.d.ts",
+    "next/dist/client/components/navigation.d.ts",
+    // `useHotkeys` should be imported from `@campsite/ui`
+    "react-hotkeys-hook/dist/index.d.ts",
+    "react-hotkeys-hook/dist/useHotkeys.d.ts"
+  ],
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "search.exclude": {
+    "zapier/lib": true,
+    "**/.next": true,
+    "apps/web/out": true
+  },
+  "files.exclude": {
+    "api": true
+  },
+  "eslint.rules.customizations": [{ "rule": "*", "severity": "warn" }],
+  "eslint.workingDirectories": [{ "pattern": "apps/*/" }, { "pattern": "packages/*/" }]
+}

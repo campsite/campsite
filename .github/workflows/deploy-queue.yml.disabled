@@ -1,0 +1,183 @@
+name: Deploy Queue
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/deploy-*.yml'
+      - 'api/**'
+      - 'apps/**'
+      - 'packages/**'
+      - 'html-to-image/**'
+      - 'logs/**'
+      - 'elasticsearch/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'patches/**'
+  workflow_dispatch:
+    inputs:
+      force:
+        type: boolean
+        default: false
+        description: Force deploy everything (ignore change checks)
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  target-determinator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      api-changes: ${{ steps.api-changes.outputs.has-changes }}
+      web-changes: ${{ steps.web-changes.outputs.has-changes }}
+      elasticsearch-changes: ${{ steps.elasticsearch-changes.outputs.has-changes }}
+      logs-changes: ${{ steps.logs-changes.outputs.has-changes }}
+      html-to-image-changes: ${{ steps.html-to-image-changes.outputs.has-changes }}
+      sync-server-changes: ${{ steps.sync-server-changes.outputs.has-changes }}
+      styled-text-server-changes: ${{ steps.styled-text-server-changes.outputs.has-changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # fetch all commits in order to compare app changes to HEAD
+          fetch-depth: 0
+
+      - name: Load tags
+        id: load-tags
+        run: .github/set-deploy-refs
+
+      - uses: dorny/paths-filter@v3
+        name: Check for API changes
+        id: api-changes
+        with:
+          base: ${{ steps.load-tags.outputs.api }}
+          filters: |
+            has-changes:
+              - 'api/**'
+
+      - uses: dorny/paths-filter@v3
+        name: Check for Sync Server changes
+        id: sync-server-changes
+        with:
+          base: ${{ steps.load-tags.outputs.sync-server }}
+          filters: |
+            has-changes:
+              - 'apps/sync-server/**'
+              - 'packages/editor/**'
+              - 'packages/config/**'
+              - 'packages/types/**'
+
+      - uses: dorny/paths-filter@v3
+        name: Check for styled-text-server changes
+        id: styled-text-server-changes
+        with:
+          base: ${{ steps.load-tags.outputs.styled-text-server }}
+          filters: |
+            has-changes:
+              - 'apps/styled-text-server/**'
+              - 'packages/editor/**'
+              - 'packages/config/**'
+
+      - uses: dorny/paths-filter@v3
+        name: Check for Web changes
+        id: web-changes
+        with:
+          base: ${{ steps.load-tags.outputs.web }}
+          filters: |
+            has-changes:
+              - 'apps/web/**'
+              - 'packages/**'
+
+      - uses: dorny/paths-filter@v3
+        name: Check for Elasticsearch changes
+        id: elasticsearch-changes
+        with:
+          base: ${{ steps.load-tags.outputs.elasticsearch }}
+          filters: |
+            has-changes:
+              - 'elasticsearch/**'
+
+      - uses: dorny/paths-filter@v3
+        name: Check for Logs changes
+        id: logs-changes
+        with:
+          base: ${{ steps.load-tags.outputs.logs }}
+          filters: |
+            has-changes:
+              - 'logs/**'
+
+      - uses: dorny/paths-filter@v3
+        name: Check for Html to Image changes
+        id: html-to-image-changes
+        with:
+          base: ${{ steps.load-tags.outputs.html-to-image }}
+          filters: |
+            has-changes:
+              - 'html-to-image/**'
+
+  deploy-api:
+    needs: target-determinator
+    if: ${{ github.event.inputs.force || needs.target-determinator.outputs.api-changes == 'true' }}
+    uses: ./.github/workflows/deploy-api.yml
+    secrets: inherit
+
+  deploy-sync-server:
+    needs: [target-determinator, deploy-api]
+    # this needs to run if API or sync server is skipped, but not if it fails
+    if: |
+      always() &&
+      (
+        github.event.inputs.force ||
+        needs.target-determinator.outputs.sync-server-changes == 'true'
+      ) &&
+      (
+        needs.deploy-api.result == 'success' || 
+        needs.deploy-api.result == 'skipped'
+      )
+    uses: ./.github/workflows/deploy-sync-server.yml
+    secrets: inherit
+
+  deploy-web:
+    needs: [target-determinator, deploy-api, deploy-sync-server]
+    # this needs to run if API or sync server is skipped, but not if it fails
+    if: |
+      always() &&
+      (
+        github.event.inputs.force ||
+        needs.target-determinator.outputs.web-changes == 'true'
+      ) &&
+      (
+        needs.deploy-api.result == 'success' || 
+        needs.deploy-api.result == 'skipped'
+      ) &&
+      (
+        needs.deploy-sync-server.result == 'success' || 
+        needs.deploy-sync-server.result == 'skipped'
+      )
+    uses: ./.github/workflows/deploy-web.yml
+    secrets: inherit
+
+  deploy-elasticsearch:
+    needs: target-determinator
+    if: ${{ github.event.inputs.force || needs.target-determinator.outputs.elasticsearch-changes == 'true' }}
+    uses: ./.github/workflows/deploy-elasticsearch.yml
+    secrets: inherit
+
+  deploy-logs:
+    needs: target-determinator
+    if: ${{ github.event.inputs.force || needs.target-determinator.outputs.logs-changes == 'true' }}
+    uses: ./.github/workflows/deploy-logs.yml
+    secrets: inherit
+
+  deploy-html-to-image:
+    needs: target-determinator
+    if: ${{ github.event.inputs.force || needs.target-determinator.outputs.html-to-image-changes == 'true' }}
+    uses: ./.github/workflows/deploy-html-to-image.yml
+    secrets: inherit
+
+  deploy-styled-text-server:
+    needs: target-determinator
+    if: ${{ github.event.inputs.force || needs.target-determinator.outputs.styled-text-server-changes == 'true' }}
+    uses: ./.github/workflows/deploy-styled-text-server.yml
+    secrets: inherit

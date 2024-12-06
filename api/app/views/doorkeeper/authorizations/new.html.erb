@@ -1,0 +1,60 @@
+<%
+  application = @pre_auth.client.application
+  # user scoped tokens are the default
+  org_resource_owner = application.tokens_owned_by_organizations? || params[:actor] == 'application'
+%>
+
+<div class="w-full">
+  <div class="flex items-center justify-between mb-4">
+    <img
+      alt="Campsite icon"
+      src="https://campsite.imgix.net/static/avatars/service-campsite-v2.png"
+      class="w-16 h-16 rounded-[14px]"
+    />
+    <svg width="140" height="4" viewBox="0 0 140 4" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <line x1="2" y1="2" x2="138" y2="2" stroke="#E5E5E5" stroke-width="4" stroke-linecap="round" stroke-dasharray="8 8"/>
+    </svg>
+    <img
+      alt="<%= application.display_name %> icon"
+      src="<%= application.avatar_url %>"
+      class="w-16 h-16 rounded-[14px]"
+    />
+  </div>
+
+  <p class="text-lg font-semibold dark:text-white mb-2 pt-2">Connect to <%= application.display_name %></p>
+  <p class="text-base text-tertiary dark:text-white">
+    This application will be able to read and write data
+    <% if org_resource_owner %>
+      in your organization.
+    <% else %>
+      on your behalf.
+    <% end %>
+  </p>
+
+  <div class="w-full pt-6">
+    <%= form_tag request.path, method: :post do %>
+      <% if org_resource_owner %>
+        <% if current_user.organizations.length >= 2 %>
+          <div class="mb-3">
+            <%= label_tag :resource_owner_id, "Select an organization", class: "mb-1" %>
+            <%= select_tag :resource_owner_id, options_from_collection_for_select(current_user.organizations, "id", "name"), id: nil, class: 'text-sm' %>
+          </div>
+        <% else %>
+          <%= hidden_field_tag :resource_owner_id, current_user.organizations.first.id, id: nil %>
+        <% end %>
+        <%= hidden_field_tag :resource_owner_type, "Organization", id: nil %>
+      <% end %>
+
+      <%= hidden_field_tag :client_id, @pre_auth.client.uid, id: nil %>
+      <%= hidden_field_tag :redirect_uri, @pre_auth.redirect_uri, id: nil %>
+      <%= hidden_field_tag :state, @pre_auth.state, id: nil %>
+      <%= hidden_field_tag :response_type, @pre_auth.response_type, id: nil %>
+      <%= hidden_field_tag :response_mode, @pre_auth.response_mode, id: nil %>
+      <%= hidden_field_tag :scope, @pre_auth.scope, id: nil %>
+      <%= hidden_field_tag :code_challenge, @pre_auth.code_challenge, id: nil %>
+      <%= hidden_field_tag :code_challenge_method, @pre_auth.code_challenge_method, id: nil %>
+      <%= submit_tag "Connect", class: "w-full btn btn-primary mb-2" %>
+    <% end %>
+  </div>
+
+</div>

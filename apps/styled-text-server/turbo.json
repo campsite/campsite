@@ -1,0 +1,24 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "dev": {
+      "dependsOn": ["build"],
+      "passThroughEnv": ["AUTHTOKEN", "PORT"]
+    },
+    "build": {
+      "env": [
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "TIPTAP_PRIVATE_REGISTRY_KEY",
+        "NODE_ENV",
+        "AUTHTOKEN",
+        "PORT"
+      ]
+    },
+    "sentry:sourcemaps": {
+      "env": ["SENTRY_AUTH_TOKEN", "SENTRY_ORG", "SENTRY_PROJECT"]
+    }
+  }
+}

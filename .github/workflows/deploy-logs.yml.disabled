@@ -1,0 +1,68 @@
+name: Deploy Logs
+on:
+  workflow_dispatch:
+  workflow_call:
+
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+jobs:
+  deploy-logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: GitHub App token
+        id: gen-token
+        uses: tibdex/github-app-token@v2.1.0
+        with:
+          app_id: 290357
+          private_key: ${{ secrets.DEPLOYBOT_TOKEN }}
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.gen-token.outputs.token }}
+
+      - name: Set git info
+        id: git-info
+        run: .github/set-git-message
+
+      - name: Setup Fly
+        uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy Logs
+        working-directory: logs
+        run: flyctl deploy --remote-only -e RELEASE_SHA=${{ github.sha }}
+
+      - name: Bump version and push tag
+        id: tag
+        uses: campsite/github-tag-action@master
+        with:
+          github_token: ${{ steps.gen-token.outputs.token }}
+          tag_prefix: logs-
+          default_bump: major
+          fetch_all_tags: true
+
+      - name: Notify success
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: eng-ops
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_WEBHOOK: ${{ secrets.CAMPBOT_SLACK_WEBHOOK_URL }}
+          MSG_MINIMAL: url, actions
+          SLACK_TITLE: Deployed Logs
+          SLACK_MESSAGE: |
+            ${{ steps.git-info.outputs.git-message }} <https://github.com/campsite/campsite/commit/${{ github.sha }}|(${{ steps.git-info.outputs.git-sha }})>
+          SLACK_FOOTER: |
+            <https://github.com/campsite/campsite/actions/runs/${{ github.run_id }}|Run logs>, tag: <https://github.com/campsite/campsite/releases/tag/${{ steps.tag.outputs.new_tag }}|${{ steps.tag.outputs.new_tag }}>
+
+      - name: Notify failure
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: eng-ops
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_WEBHOOK: ${{ secrets.CAMPBOT_SLACK_WEBHOOK_URL }}
+          MSG_MINIMAL: url, actions
+          SLACK_TITLE: 🚨 Logs deploy failed!
+          SLACK_MESSAGE: |
+            ${{ steps.git-info.outputs.git-message }} <https://github.com/campsite/campsite/commit/${{ github.sha }}|(${{ steps.git-info.outputs.git-sha }})>
+          SLACK_FOOTER: |
+            <https://github.com/campsite/campsite/actions/runs/${{ github.run_id }}|Run logs>

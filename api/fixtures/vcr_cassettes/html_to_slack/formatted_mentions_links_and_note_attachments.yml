@@ -1,0 +1,41 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://localhost:3002/html_to_slack
+    body:
+      encoding: UTF-8
+      string: '{"html":"\u003cp\u003eHey \u003ca class=\"mention\" href=\"http://app.campsite.test:3000/foo-bar/people/joe\"\u003e@Joe
+        Schmoe\u003c/a\u003e, check out this \u003ca href=\"https://example.com\"\u003elink\u003c/a\u003e\u003c/p\u003e"}'
+    headers:
+      User-Agent:
+      - Faraday v2.7.5
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer d8c0a2827589659ff292a8999b024f24a185ed82
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      x-powered-by:
+      - Express
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '180'
+      etag:
+      - W/"b4-n+f9x6MJMTHqgbC7IqNArn+RwXw"
+      date:
+      - Fri, 29 Mar 2024 19:58:52 GMT
+      connection:
+      - keep-alive
+      keep-alive:
+      - timeout=5
+    body:
+      encoding: UTF-8
+      string: '[{"type":"section","text":{"type":"mrkdwn","text":"Hey <http://app.campsite.test:3000/foo-bar/people/joe|@Joe
+        Schmoe>, check out this <https://example.com|link>","verbatim":true}}]'
+  recorded_at: Fri, 29 Mar 2024 19:58:52 GMT
+recorded_with: VCR 6.1.0

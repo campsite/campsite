@@ -1,0 +1,17 @@
+<% inner_embed ||= false %>
+
+<% if (attachments&.size || 0) > 0 %>
+<tr><td align="center" valign="top">
+  <table cellpadding="0" cellspacing="0" class="bg-tertiary <%= inner_embed ? "rounded-lg overflow-clip" : "" %>" style="<%= inner_embed ? "" : "border-bottom: 1px solid #F0F0F0;" %>">
+    <tr>
+      <td align="top" valign="center">
+        <a href="<%= url %>" target="_blank">
+          <div class="max-h-[500px] overflow-hidden">
+            <%= render 'mailers/components/media_file', file: attachments.first %>
+          </div>
+        </a>
+      </td>
+    </tr>
+  </table>
+</td></tr>
+<% end %>

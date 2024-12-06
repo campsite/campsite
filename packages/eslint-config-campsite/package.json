@@ -1,0 +1,16 @@
+{
+  "name": "@campsite/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "@tanstack/eslint-plugin-query": "catalog:",
+    "@typescript-eslint/eslint-plugin": "catalog:",
+    "@typescript-eslint/parser": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-next": "catalog:",
+    "eslint-config-turbo": "catalog:",
+    "eslint-plugin-react": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
+    "eslint-plugin-unused-imports": "catalog:"
+  }
+}

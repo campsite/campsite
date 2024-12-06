@@ -1,0 +1,53 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://api.figma.com/v1/images/LatexK446J8mGtPFbySaOe?format=png&ids=1%3A2&scale=2
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer <FIGMA_OAUTH_TOKEN>
+      User-Agent:
+      - Faraday v2.7.5
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '126'
+      connection:
+      - keep-alive
+      date:
+      - Mon, 09 Oct 2023 21:52:56 GMT
+      access-control-allow-origin:
+      - "*"
+      access-control-allow-headers:
+      - Content-Type, X-Figma-Token, Authorization
+      cache-control:
+      - no-cache, no-store
+      vary:
+      - X-Figma-Token,Authorization
+      x-cache:
+      - Miss from cloudfront
+      via:
+      - 1.1 c625b1bdde545acdeb26c9f6ad3a8c6e.cloudfront.net (CloudFront)
+      x-amz-cf-pop:
+      - IAD12-P1
+      alt-svc:
+      - h3=":443"; ma=86400
+      x-amz-cf-id:
+      - i0PwuYnX1f4UefI9ckBIG1n_KkfdBLCpaYSf9ahFySXRCUdRQp5QcQ==
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+    body:
+      encoding: UTF-8
+      string: '{"err":null,"images":{"1:2":"https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/b19e3b85-7231-44ff-817a-059e9a96e090"}}'
+  recorded_at: Mon, 09 Oct 2023 21:52:56 GMT
+recorded_with: VCR 6.1.0

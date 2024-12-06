@@ -1,0 +1,28 @@
+{
+  "name": "@campsite/api",
+  "version": "0.0.0",
+  "private": "true",
+  "scripts": {
+    "build": "esbuild ./app/javascript/*.* --bundle --sourcemap --outdir=./app/assets/builds --public-path=assets",
+    "build:app:css": "tailwindcss -i ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.css --minify --postcss",
+    "build:css": "yarn build:app:css && yarn build:mailer:css",
+    "build:mailer:css": "tailwindcss -c ./tailwind.mailer.config.js -i ./app/assets/stylesheets/mailer.css -o ./app/assets/builds/mailer.css --minify --postcss"
+  },
+  "dependencies": {
+    "@github/auto-complete-element": "^3.3.4",
+    "@github/relative-time-element": "^4.3.0",
+    "@rails/ujs": "^7.0.4",
+    "@tailwindcss/forms": "^0.5.2",
+    "@tailwindcss/typography": "^0.5.4",
+    "autoprefixer": "^10.4.8",
+    "caniuse-lite": "^1.0.30001474",
+    "esbuild": "^0.14.47",
+    "postcss": "^8.4.20",
+    "postcss-custom-properties": "^12.1.8",
+    "postcss-discard-comments": "^5.1.2",
+    "postcss-import": "^15.0.0",
+    "postcss-loader": "^7.0.1",
+    "tailwindcss": "^3.1.8"
+  },
+  "packageManager": "yarn@1.22.21"
+}

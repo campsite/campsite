@@ -1,0 +1,70 @@
+---
+title: 'Building a fast feedback loop with customers and engineers'
+description: 'Most companies struggle with a slow, messy customer feedback loop: tangled tools, scattered messages, hard-to-spot themes, and engineers working miles away from the customers they’re building for.'
+publishedAt: '2024-08-16 00:00:00.000'
+author: brianlovin
+---
+
+Most companies struggle with a slow, messy customer feedback loop: tangled tools, scattered messages, hard-to-spot themes, and engineers working miles away from the customers they’re building for.
+
+We made a simple system that closes the distance between our team and customers and creates a rich archive of threads that shape our roadmap.
+
+Here's how it works:
+
+1. Customer feedback (from [Plain](https://plain.com), contact forms, etc.) triggers a [Zapier workflow](https://zapier.com/apps/campsite/integrations) to create a Campsite post.
+2. All replies from our team or the customer appear as comments on the post.
+3. We create Linear issues as needed using our [Linear integration](https://linear.app/integrations/campsite).
+
+Here’s an example interaction — note how our team was able to talk on Campsite privately before responding to the customer:
+
+![A screenshot of a Campsite post with feedback from a customer and the team having a private internal conversation](/img/blog/feedback-post.png)
+
+Simple, right? But this setup has fundamentally changed our customer interactions: conversations are more transparent, faster to diagnose, and it's easier to pull the right people in.
+
+Here’s what our feedback channel looks:
+
+![A screenshot of a Campsite channel with a list of posts created from customer support emails](/img/blog/feedback-space.png)
+
+In the case that there's a long back and forth with a customer, Campsite will summarize the conversation so that people can get the gist without having to re-read every comment:
+
+![A screenshot of a Campsite conversation summarized into an easy-to-read recap](/img/blog/feedback-summary.png)
+
+### Why Campsite works
+
+Campsite is built for this kind of structured, async workflow:
+
+- **Posts with nested comments:** Each piece of customer feedback becomes a threaded discussion without the noise of a typical chat channel.
+- **Async-friendly:** Our team can dive into feedback when they have time, without the pressure of real-time chat channels pushing things out of sight. This leads to more thoughtful responses for our users.
+- **Easy to reference:** We can link directly to specific customer conversations in pull requests and product specs. No more vague "customers are asking for X" – we can point to the source.
+- **Internally transparent:** Everyone on our team can see all customer feedback, but it's not a firehose. Posts keep things structured and easy to keep up with.
+
+That's it. No fancy project management software. No complicated prioritization meetings. Just real customer feedback in front of everyone on the team.
+
+### Changing our team culture
+
+This kind of workflow has reshaped the way we talk to our customers and build Campsite:
+
+- Our roadmap writes itself based on clear trends in feature requests and pain points.
+- Engineers see raw customer feedback with real quotes, not watered-down summaries.
+- New team members have a single channel to quickly understand customer pain points and what requests are top-of-mind.
+- We've axed several features that looked good on paper but that customers never actually mentioned wanting.
+
+---
+
+This isn't a silver bullet. We still argue about priorities. We still sometimes build the wrong things. But those debates are now grounded in real customer feedback, not whoever argues the loudest in meetings.
+
+And because Campsite keeps everything in one place, those debates are more productive: we're all looking at the same conversations with actual quotes and stories from our users.
+
+Campsite turns a chaotic firehose of customer feedback into a structured, searchable, async-friendly repository of insights.
+
+Give it a try.
+
+---
+
+For inspiration, here’s how we’ve set up our Plain + Zapier workflow to sync email replies to posts and comments. The Zapier table is a 2-column table that pairs a Plain conversation ID with the Campsite post ID so that we know where to add new comments.
+
+For larger companies, you might create posts in team-specific or project-specific Campsite channels to keep feedback organized.
+
+![A screenshot of a Zapier workflow to keep email replies synced with Campsite posts and comments](/img/blog/feedback-zapier.png)
+
+[Create a Zapier workflow with Campsite](https://zapier.com/apps/campsite/integrations).

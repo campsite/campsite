@@ -1,0 +1,54 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://api.figma.com/v1/me
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer <FIGMA_OAUTH_TOKEN>
+      User-Agent:
+      - Faraday v2.7.5
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '234'
+      connection:
+      - keep-alive
+      date:
+      - Wed, 27 Sep 2023 23:05:02 GMT
+      access-control-allow-origin:
+      - "*"
+      access-control-allow-headers:
+      - Content-Type, X-Figma-Token, Authorization
+      cache-control:
+      - no-cache, no-store
+      vary:
+      - X-Figma-Token,Authorization
+      x-cache:
+      - Miss from cloudfront
+      via:
+      - 1.1 d6a9c65b56abf1b1f44b07e3c78fbc60.cloudfront.net (CloudFront)
+      x-amz-cf-pop:
+      - LAX53-P3
+      alt-svc:
+      - h3=":443"; ma=86400
+      x-amz-cf-id:
+      - 8nzEImuh3gvyr0L9bTF0j0lcDqIdFxi31S6avvyai3tcFrkv14Vy2Q==
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+    body:
+      encoding: UTF-8
+      string: '{"id":"1186844228047072104","email":"nick@campsite.design","handle":"Nick
+        Holden","img_url":"https://www.gravatar.com/avatar/f69657b76af36cdbb1f78ae73437d306?size=240&default=https%3A%2F%2Fs3-alpha.figma.com%2Fstatic%2Fuser_n_v2.png"}'
+  recorded_at: Wed, 27 Sep 2023 23:05:02 GMT
+recorded_with: VCR 6.1.0

@@ -1,0 +1,106 @@
+name: Client Build
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/client-build.yml'
+      - 'turbo.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'apps/**'
+      - 'packages/**'
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  TIPTAP_PRIVATE_REGISTRY_KEY: ${{ secrets.TIPTAP_PRIVATE_REGISTRY_KEY }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  TURBO_REMOTE_ONLY: true
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+  SENTRY_ORG: campsite-software
+  SENTRY_PROJECT: campsite-web
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  client-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: GitHub App token
+        id: gen-token
+        uses: tibdex/github-app-token@v2.1.0
+        with:
+          app_id: 290357
+          private_key: ${{ secrets.DEPLOYBOT_TOKEN }}
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.gen-token.outputs.token }}
+
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            client-web:
+              - 'apps/web/**'
+              - 'packages/**'
+            figma:
+              - 'apps/figma/**'
+              - 'packages/ui/**'
+              - 'packages/config/**'
+              - 'packages/types/**'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.0.0
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - run: pnpm config set "@tiptap-pro:registry" https://registry.tiptap.dev/
+      - run: pnpm config set "//registry.tiptap.dev/:_authToken" ${{ secrets.TIPTAP_PRIVATE_REGISTRY_KEY }}
+      - run: pnpm install
+
+      - run: pnpm format
+      - run: pnpm lint:fix
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 🤖 linting with autofix
+          branch: ${{ github.head_ref }}
+      - name: Run tests
+        run: pnpm turbo run test --filter=@campsite/web
+
+      - name: Install Vercel CLI
+        run: pnpm install --global vercel
+
+      - name: Vercel Build Web
+        if: ${{ steps.changes.outputs.client-web == 'true' }}
+        env:
+          VERCEL_PROJECT_ID: prj_ecDUhYR4IMEOyMnXJ9YkMgRInMS5
+        run: |
+          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Figma Build
+        if: ${{ steps.changes.outputs.figma == 'true' }}
+        run: |
+          pnpm build --filter=@campsite/figma

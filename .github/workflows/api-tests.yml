@@ -1,0 +1,101 @@
+name: API Tests
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/api-tests.yml'
+      - 'api/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  MYSQL_DB: campsite_api_test
+  MYSQL_USER: root
+  MYSQL_PASSWORD: root
+  DATABASE_HOST: 127.0.0.1
+  RAILS_ENV: test
+  RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+
+jobs:
+  test:
+    name: tests
+    runs-on:
+      labels: warp-ubuntu-latest-x64-8x
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379/tcp
+        options: --entrypoint redis-server
+    steps:
+      - name: GitHub App token
+        id: gen-token
+        uses: tibdex/github-app-token@v2.1.0
+        with:
+          app_id: 290357
+          private_key: ${{ secrets.DEPLOYBOT_TOKEN }}
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.gen-token.outputs.token }}
+
+      - name: Cache Ruby gems
+        uses: actions/cache@v4
+        with:
+          path: api/vendor/bundle
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gems-
+
+      - name: Setup MySQL
+        uses: shogo82148/actions-setup-mysql@v1
+        with:
+          mysql-version: '8.0'
+          root-password: ${{ env.MYSQL_PASSWORD }}
+          my-cnf: |
+            authentication_policy=mysql_native_password
+
+      - name: Create MySQL database
+        working-directory: api
+        run: |
+          mysql -h 127.0.0.1 -e 'CREATE DATABASE ${{ env.MYSQL_DB }};' -u${{ env.MYSQL_USER }} -p${{ env.MYSQL_PASSWORD }}
+          mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -h 127.0.0.1 -u${{ env.MYSQL_USER }} -p${{ env.MYSQL_PASSWORD }} mysql
+          mysql -h 127.0.0.1 -u${{ env.MYSQL_USER }} -p${{ env.MYSQL_PASSWORD }} -e 'SELECT COUNT(*) FROM mysql.time_zone_name;'
+
+      - name: Setup Rails
+        uses: ruby/setup-ruby@v1
+        with:
+          working-directory: api
+          bundler-cache: true
+
+      # lint and push any fixes before building
+      - name: Lint Ruby files
+        working-directory: api
+        run: bundle exec rubocop --parallel --autocorrect
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 🤖 linting with autofix
+          branch: ${{ github.head_ref }}
+          disable_globbing: true
+          file_pattern: >
+            api/**/*.rb api/**/*.erb api/Gemfile :!api/vendor/**/*
+
+      - name: Setup Elasticsearch
+        uses: ankane/setup-elasticsearch@v1
+
+      - name: Build and run tests
+        env:
+          REDIS_HOST: localhost
+          REDIS_PORT: ${{ job.services.redis.ports[6379] }}
+        working-directory: api
+        run: |
+          bundle exec rails db:schema:load
+          bundle exec rails assets:precompile
+          bundle exec rails test

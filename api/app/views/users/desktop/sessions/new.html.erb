@@ -1,0 +1,19 @@
+<% @page_title = "Desktop sign in - Campsite" %>
+
+<main class="flex items-center justify-center w-full h-screen p-4 bg-neutral-50 dark:bg-neutral-900">
+  <div class="flex flex-col items-center justify-center w-full max-w-sm gap-4 p-8">
+    <img
+      alt="App icon for Campsite desktop app"
+      src="<%= asset_path('/desktop-app-icon.png') %>"
+      class="w-36 h-36"
+    />
+
+    <div class="flex flex-col items-center w-full gap-2">
+      <template class="js-desktop-sign-in-template">
+        <a class="js-desktop-session-url" href="<%= open_desktop_session_url %>">
+      </template>
+
+      <button class="btn btn-primary js-desktop-sign-in-with-browser">Sign in with browser</button>
+    </div>
+  </div>
+</main>

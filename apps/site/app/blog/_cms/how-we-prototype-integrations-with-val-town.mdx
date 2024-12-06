@@ -1,0 +1,175 @@
+---
+title: 'How we prototype API integrations with Val Town'
+description: 'Ship fast and validate ideas'
+publishedAt: '2024-10-30 00:00:00.000'
+author: danphilibin
+---
+
+When we started building [Campsite's public API](https://developers.campsite.com), I wanted a way to rapidly prototype and test integrations without thinking about deployments or infrastructure. That's when we turned to [Val Town](https://val.town) – a browser-based development environment that I'd describe as "GitHub Gists that you can run with a web server".
+
+What started as a quick experiment has become an essential part of our API development workflow. The platform's AI assistant, Townie, often writes most of the initial integration code, and everything is instantly deployed to public URLs, making it easy to test conversational workflows that incorporate webhooks within our own workspace.
+
+Here are some of the ways we've been using Val Town to prototype integrations against our new API.
+
+### From idea to working integration in minutes
+
+One of the best things about Val Town is how quickly you can go from idea to working code. Recently, Brian asked if we could support email forwarding in Campsite channels:
+
+![A screenshot of Brian asking for email forwarding support in Campsite](/img/blog/feedback-email-replies.png)
+
+Val Town has an "email" primitive that gives you a public email address and pipes incoming emails into your handler function. I asked Townie, Val Town's AI assistant, to get us started:
+
+> 🤖 Write an email val that receives forwarded emails and sends the original message in a POST request to https://api.campsite.com/v2/posts with a JSON body containing a channel_id const, a title, and a content_markdown field with the forwarded body. The request should use bearer auth and the script should log the POST result when finished.
+
+Since Val Town scripts are instantly deployed to public URLs, we had a working integration in less than a minute. Any email forwarded to our new address would show up as a comment in Campsite:
+
+![A screenshot of the first email received by the integration](/img/blog/feedback-email-example.png)
+
+The first version worked fine, but forwarded emails can be messy with all their metadata and email chains. Since this was an internal tool handling a low volume of customer emails, we could experiment with using GPT-4 to extract just the important parts:
+
+> 🤖 Let's try using OpenAI to extract the forwarded message from the email body. Write the code to do this along with a basic system prompt, and then I'll update the system prompt myself.
+
+Townie added the business logic while I fine-tuned the prompt:
+
+```ts
+let SYSTEM_PROMPT = `Extract the most recent message from the raw contents of this forwarded email. Ignore irrelevant parts of the email, including previous emails in the chain from other senders. The message MUST be formatted as markdown with all new lines prefixed with a blockquote character (>). Also extract the name and email address of the sender, which is likely at the top of the raw body on a line starting with "From:", and the subject of the email. If the subject is ambiguous, write a better subject.`
+```
+
+I also incorporated [Vercel's AI SDK](https://sdk.vercel.ai/docs/introduction) to get structured output from the LLM:
+
+```ts
+// Extract structured data from the forwarded email
+const {
+  object: { name, email, subject, message }
+} = await generateObject({
+  model: openai('gpt-4-turbo'),
+  schema: z.object({
+    name: z.string(),
+    email: z.string(),
+    subject: z.string(),
+    message: z.string()
+  }),
+  prompt: emailBody,
+  system: SYSTEM_PROMPT
+})
+
+const content_markdown = `${name} (${email})\n\n${message}`
+
+await campsite.posts.create({
+  channel_id: FEEDBACK_CHANNEL_ID,
+  title: '📨 ' + subject,
+  content_markdown
+})
+```
+
+In about an hour we had a working "email channel" integration that anyone on the team could use. While we probably wouldn't use GPT-4 in production for high-volume email processing, it was perfect for this internal prototype.
+
+We also ended up incorporating LLM-generated titles in many other integrations, like our [Plain](https://plain.com) integration:
+
+```ts
+async function generateTitle(message: string) {
+  const { text } = await generateText({
+    model: openai('gpt-4-turbo'),
+    prompt: message,
+    system: `
+      Create a brief, professional subject based on the contents of an email.
+      Incorporate the most important keywords or themes from the conversation.
+      Format the title as plain text using sentence case.
+      The title MUST NOT exceed 10 words.
+      DO NOT use quotations or other stylistic punctuation.
+      DO NOT use first-person, narrator voice, passive voice, or AI speak.`
+  })
+  return text
+}
+```
+
+![A screenshot of posts with LLM-generated titles](/img/blog/magic-post-titles.png)
+
+### Building with webhooks
+
+As we expanded our API with webhook support, I wanted to experiment with a "ChatGPT bot" that could respond to comments. Once again, Val Town's instant deployments meant I could ship fast and iterate in side-by-side browser windows as I used the bot in our production workspace:
+
+```ts
+import { createOpenAI } from 'npm:@ai-sdk/openai'
+import { CoreSystemMessage, CoreUserMessage, generateText } from 'npm:ai'
+import Campsite from 'npm:campsite-client'
+
+export async function handler(request: Request) {
+  if (request.method !== 'POST') {
+    return new Response('OK')
+  }
+
+  const body = await request.json()
+
+  if ('app.mentioned' !== body.type || !body.data.comment) {
+    return new Response('OK')
+  }
+
+  const campsite = new Campsite({
+    apiKey: Deno.env.get('CAMPSITE_CHATGPT_KEY')
+  })
+  const openai = createOpenAI({ apiKey: Deno.env.get('OPENAI_API_KEY') })
+  const model = openai('gpt-4-turbo')
+
+  const messages: (CoreSystemMessage | CoreUserMessage)[] = [{ role: 'system', content: ASSISTANT_SYSTEM_PROMPT }]
+
+  messages.push({ role: 'user', content: body.data.comment.content })
+
+  // Typically we'd put these slow async calls in a function and respond quickly.
+  const { text } = await generateText({ messages, model })
+
+  await campsite.posts.comments.create(body.data.comment.subject_id, {
+    parent_id: body.data.comment.parent_id || body.data.comment.id,
+    content_markdown: text
+  })
+
+  return new Response('OK')
+}
+```
+
+Early versions of Campsite's API only supported creating content, but as we added more endpoints, I updated the bot to fetch additional context about posts and comments and reconstruct conversations to help the bot give better responses:
+
+```ts
+const { subject_id } = webhookBody.data.comment;
+const post = await campsite.posts.retrieve(subject_id);
+const comments = await fetchConversationThread(subject_id);
+
+messages.push({
+  role: "system",
+  content: `Original post title: ${post.title}\nPost content (as HTML): ${post.content}`,
+});
+messages.push({
+  role: "system",
+  content: `Comments chain (each comment separated with ---): ${comments.join("\n\n---\n\n"}`,
+});
+```
+
+To give the bot more context on the company itself, I created a "What is Campsite?" post in our organization with a description of the product and its features, fetched the contents, and included that in the context too:
+
+```ts
+const post = await campsite.posts.retrieve(COMPANY_CONTEXT_POST_ID)
+
+messages.push({
+  role: 'system',
+  content: `Here is some context on our company: ${post.content}`
+})
+```
+
+![A screenshot of a message to a ChatGPT bot inside Campsite](/img/blog/chatgpt-bot.png)
+
+Today our GPT-4 bot experiment has grown to support [OpenAI's Assistants API](https://platform.openai.com/docs/assistants/overview) for private threaded messages with integrations.
+
+In our monorepo, adding a feature like this would involve database migrations, new models, deployment pipelines, and careful iteration in a production environment. And if we're happy with the experiment, we might get there someday! But in tools like Val Town, experiments can be prototyped in an afternoon, letting us quickly test different approaches to incorporating workspace context.
+
+### Ship fast and validate ideas
+
+Building a good public API is a combination of shipping endpoints and understanding how developers will use them in the real world. Val Town has been invaluable in this process, letting us quickly build and test real integrations outside of our monorepo and CI/CD pipeline. While some of our experiments might not be production-ready solutions, they've helped us validate API design decisions and discover new possibilities for what developers could build with Campsite.
+
+---
+
+### Links & examples
+
+- [Campsite API docs](https://developers.campsite.com)
+- [GitHub examples repo](https://github.com/campsite/examples)
+
+We also host several integration examples on our [Val Town profile](https://www.val.town/u/campsite) that you can fork and run yourself.

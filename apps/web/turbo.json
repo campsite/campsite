@@ -1,0 +1,34 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "env": [
+        "ANALYZE",
+        "CHANGELOG_APP_ID",
+        "CHANGELOG_CLIENT_ID",
+        "CHANGELOG_CLIENT_SECRET",
+        "CHANGELOG_INSTALLATION_ID",
+        "CHANGELOG_PRIVATE_KEY",
+        "CI",
+        "NEXT_PUBLIC_AXIOM_INGEST_ENDPOINT",
+        "NEXT_PUBLIC_COMMUNITY_JOIN_TOKEN",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_VERCEL_ENV",
+        "NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA",
+        "NEXT_PUBLIC_POSTHOG_KEY",
+        "NEXT_RUNTIME",
+        "NODE_ENV",
+        "PLAIN_CONTACT_FORM_API_KEY",
+        "REVALIDATE_STATIC_CACHE_TOKEN",
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_DSN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "SSR_SECRET",
+        "TIPTAP_PRIVATE_REGISTRY_KEY",
+        "VERCEL_GIT_COMMIT_SHA"
+      ]
+    }
+  }
+}

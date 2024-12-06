@@ -1,0 +1,27 @@
+{
+  "version": "2.0",
+  "id": "********-****-****-****-***********",
+  "account_id": "************************",
+  "timestamp": "2021-11-30T20:36:55Z",
+  "type": "beam.failure",
+  "data": {
+    "beam_id": "************************",
+    "error_code": 1,
+    "error_message": "Failed to upload recordings. Check if upload config is correct.",
+    "error_type": "UPLOAD_ERROR",
+    "job_id": "************************",
+    "metadata_id": "********-****-****-****-***********",
+    "metadata_timestamp": "2021-11-30T20:36:55.807155801Z",
+    "peer_id": "********-****-****-****-***********",
+    "recording_enabled": true,
+    "room_id": "************************",
+    "session_id": "************************",
+    "template_id": "************************",
+    "max_height": 720,
+    "max_width": 1280,
+    "meeting_url": "https://app.100ms.live/preview/rpe-pwl-akt?token=beam_recording",
+    "rtmp": [{ "url": "http://test.com" }],
+    "duration": 56,
+    "session_started_at": "2021-11-30T12:58:49.97291247Z"
+  }
+}

@@ -1,0 +1,51 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://localhost:3002/html_to_slack
+    body:
+      encoding: UTF-8
+      string: '**hey**'
+    headers:
+      Content-type:
+        - text/plain
+      Authorization:
+        - Bearer d8c0a2827589659ff292a8999b024f24a185ed82
+      User-Agent:
+        - Faraday v2.5.2
+  response:
+    status:
+      code: 500
+      message: Internal Server Error
+    headers:
+      x-powered-by:
+        - Express
+      content-security-policy:
+        - default-src 'none'
+      x-content-type-options:
+        - nosniff
+      content-type:
+        - text/html; charset=utf-8
+      content-length:
+        - '1439'
+      date:
+        - Fri, 16 Dec 2022 19:40:49 GMT
+      connection:
+        - keep-alive
+      keep-alive:
+        - timeout=5
+    body:
+      encoding: UTF-8
+      string: |
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="utf-8">
+        <title>Error</title>
+        </head>
+        <body>
+        <pre>ReferenceError: foobar is not defined<br> &nbsp; &nbsp;at file:///Users/nickholden/campsite/markdown-to-slack-api/src/app.js:20:3<br> &nbsp; &nbsp;at Layer.handle [as handle_request] (/Users/nickholden/campsite/markdown-to-slack-api/node_modules/express/lib/router/layer.js:95:5)<br> &nbsp; &nbsp;at next (/Users/nickholden/campsite/markdown-to-slack-api/node_modules/express/lib/router/route.js:144:13)<br> &nbsp; &nbsp;at Route.dispatch (/Users/nickholden/campsite/markdown-to-slack-api/node_modules/express/lib/router/route.js:114:3)<br> &nbsp; &nbsp;at Layer.handle [as handle_request] (/Users/nickholden/campsite/markdown-to-slack-api/node_modules/express/lib/router/layer.js:95:5)<br> &nbsp; &nbsp;at /Users/nickholden/campsite/markdown-to-slack-api/node_modules/express/lib/router/index.js:284:15<br> &nbsp; &nbsp;at Function.process_params (/Users/nickholden/campsite/markdown-to-slack-api/node_modules/express/lib/router/index.js:346:12)<br> &nbsp; &nbsp;at next (/Users/nickholden/campsite/markdown-to-slack-api/node_modules/express/lib/router/index.js:280:10)<br> &nbsp; &nbsp;at file:///Users/nickholden/campsite/markdown-to-slack-api/src/app.js:16:3<br> &nbsp; &nbsp;at Layer.handle [as handle_request] (/Users/nickholden/campsite/markdown-to-slack-api/node_modules/express/lib/router/layer.js:95:5)</pre>
+        </body>
+        </html>
+  recorded_at: Fri, 16 Dec 2022 19:40:49 GMT
+recorded_with: VCR 6.1.0

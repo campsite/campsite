@@ -1,0 +1,13 @@
+name: Enforce PR labels
+
+on:
+  pull_request:
+    types: [opened, labeled, unlabeled, edited, synchronize]
+
+jobs:
+  enforce-label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: yogevbd/enforce-label-action@2.1.0
+        with:
+          BANNED_LABELS: "Migrations pending"

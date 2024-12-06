@@ -1,0 +1,3 @@
+docker build -t campsite/data-exporter .
+docker tag campsite/data-exporter:latest 932625572335.dkr.ecr.us-east-1.amazonaws.com/campsite/data-exporter:latest
+docker push 932625572335.dkr.ecr.us-east-1.amazonaws.com/campsite/data-exporter:latest

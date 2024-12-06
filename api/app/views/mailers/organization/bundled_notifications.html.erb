@@ -1,0 +1,41 @@
+<table class="w-full p-0 m-0" border="0" cellpadding="0" cellspacing="0">
+  <% if @notifications.size > 1 %>
+  <tr><td align="left" valign="top">
+    <%= render 'mailers/components/avatar', avatar_url: @organization.avatar_url(size: 40), href: @organization.url, name: @organization.name, size: 40, class_name: "rounded" %>
+  </td></tr>
+  <tr><td align="left" valign="top" class="pt-6">
+    You have <%= @notifications.size %> unread <%= "notification".pluralize(@notifications.size) %> in <b><%= @organization.name %></b>.
+  </td></tr>
+  <tr><td align="center" valign="top" class="pt-6">
+    <div class="separator"  />
+  </td></tr>
+  <% end %>
+  <% @notifications.each do |notification| %>
+  <tr><td align="left" valign="top" class="py-6">
+    <% case notification.subject
+       when Post %>
+    <%= render 'mailers/components/notification_post', notification: notification %>
+    <% when Comment %>
+    <%= render 'mailers/components/notification_comment', notification: notification %>
+    <% when PostFeedbackRequest %>
+    <%= render 'mailers/components/notification_feedback_request', notification: notification %>
+    <% when Permission %>
+    <%= render 'mailers/components/notification_permission', notification: notification %>
+    <% when ProjectMembership %>
+    <%= render 'mailers/components/notification_project_membership', notification: notification %>
+    <% when Project %>
+    <%= render 'mailers/components/notification_project', notification: notification %>
+    <% when FollowUp %>
+    <%= render 'mailers/components/notification_follow_up', notification: notification %>
+    <% when Call %>
+    <%= render 'mailers/components/notification_call', notification: notification %>
+    <% end %>
+  </td></tr>
+  <% end %>
+
+  <% @message_notifications.group_by(&:message_thread).each do |thread, message_notifications| %>
+    <tr><td align="left" valign="top" class="py-6">
+    <%= render 'mailers/components/unread_message_thread', thread: thread, messages: message_notifications.map(&:message) %>
+    </td></tr>
+  <% end %>
+</table>

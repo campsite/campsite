@@ -1,0 +1,344 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    /*
+      Temporarily fix a bug in Chrome
+      Ref https://twitter.com/Eramdam/status/1750934375200661609
+    */
+    font-synthesis-weight: none;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-color) transparent;
+  }
+
+  #__next {
+    @apply isolate flex h-full min-h-[100svh] flex-1 flex-col overflow-hidden;
+    -webkit-app-region: no-drag;
+  }
+
+  :root {
+    --sidebar-width: 240px;
+    --feed-width: 700px;
+    --chat-width: 60px;
+    --navbar-height: 56px;
+    --post-width: 756px;
+  }
+
+  :root,
+  .light,
+  .dark .invert-color-theme,
+  .light .dark .invert-color-theme {
+    @apply text-primary;
+
+    --text-blue: theme(colors.blue.700);
+    --tag-border: theme(colors.neutral.100);
+    --tag-bg: theme(colors.black / 0.08);
+    --tag-focus: 0px 0px 0px 1px theme(colors.blue.500), 0px 0px 0px 3px theme(colors.blue.500 / 0.15);
+
+    --text-light: theme(colors.gray.50);
+    --text-dark: theme(colors.gray.900);
+    --text-light-secondary: theme(colors.gray.600);
+    --text-dark-secondary: theme(colors.gray.400);
+
+    --text-primary: theme(colors.gray.900);
+    --text-secondary: theme(colors.gray.600);
+    --text-tertiary: theme(colors.gray.500);
+    --text-quaternary: theme(colors.gray.400);
+    --text-primary-action: theme(colors.white);
+    --text-highlight: theme(colors.yellow.900);
+
+    --bg-main: theme(colors.gray.50);
+
+    --bg-primary-action: theme(colors.gray.900);
+    --bg-primary-action-hover: theme(colors.gray.750);
+    --bg-secondary-action: theme(colors.gray.200);
+    --bg-tertiary-action: theme(colors.white);
+
+    --bg-button: theme(colors.white);
+
+    --bg-primary: theme(colors.white);
+    --bg-secondary: theme(colors.gray.50);
+    --bg-tertiary: theme(colors.gray.100);
+    --bg-quaternary: theme(colors.gray.150);
+    --bg-elevated: theme(colors.white);
+    --bg-react-select: theme(colors.white);
+    --bg-highlight: theme(colors.yellow.500 / 20%);
+
+    --grad-primary-rgb: 255, 255, 255;
+
+    --border-primary: theme(colors.black / 0.1);
+    --border-primary-opaque: theme(colors.gray.200);
+    --border-secondary: theme(colors.black / 0.07);
+    --border-secondary-opaque: theme(colors.gray.150);
+    --border-tertiary: theme(colors.black / 0.04);
+
+    --scrollbar-color: theme(colors.gray.400 / 0.8);
+
+    --base-shadow-color: rgb(0 0 0 / 0.05);
+
+    --button-drop-shadow: rgb(0 0 0 / 0);
+    --button-shadow: inset 0px 1px 0px 0px rgb(255 255 255 / 1), 0px 0px 0px 1px rgb(0 0 0 / 0.06),
+      0px 1px 0px 0px rgb(0 0 0 / 0.08), 0px 2px 2px 0px rgb(0 0 0 / 0.04), 0px 3px 3px 0px rgb(0 0 0 / 0.02),
+      0px 4px 4px 0px rgb(0 0 0 / 0.01);
+    --popover-shadow: 0px 0px 3.6px rgba(0, 0, 0, 0.04), 0px 0px 10px rgba(0, 0, 0, 0.04),
+      0px 0px 24.1px rgba(0, 0, 0, 0.05), 0px 0px 80px rgba(0, 0, 0, 0.08);
+    --dropdown-item-shadow: inset 0px 1px 0px rgb(255 255 255 / 0.02), inset 0px 0px 0px 1px rgb(255 255 255 / 0.02),
+      0px 1px 2px rgb(0 0 0 / 0.12), 0px 2px 4px rgb(0 0 0 / 0.08), 0px 0px 0px 0.5px rgb(0 0 0 / 0.24);
+    --button-base-shadow: 0px 1px 1px -1px rgb(0 0 0 / 0.08), 0px 2px 2px -1px rgb(0 0 0 / 0.08),
+      0px 0px 0px 1px rgb(0 0 0 / 0.06), inset 0px 1px 0px #fff, inset 0px 1px 2px 1px #fff,
+      inset 0px 1px 2px rgb(0 0 0 / 0.06);
+
+    .bg-main,
+    .bg-elevated {
+      --base-shadow-color: rgb(0 0 0 / 0.045);
+
+      .bg-primary {
+        --base-shadow-color: rgb(0 0 0 / 0.05);
+      }
+    }
+  }
+
+  .dark,
+  .light .invert-color-theme,
+  .dark .light .invert-color-theme {
+    @apply text-primary;
+
+    --text-blue: theme(colors.blue.400);
+    --tag-border: theme(colors.neutral.700);
+    --tag-bg: theme(colors.neutral.600);
+    --tag-focus: 0px 0px 0px 1px theme(colors.blue.600), 0px 0px 0px 3px theme(colors.blue.600 / 0.15);
+
+    --text-primary: theme(colors.gray.100);
+    --text-secondary: theme(colors.gray.300);
+    --text-tertiary: theme(colors.gray.400);
+    --text-quaternary: theme(colors.gray.500);
+    --text-primary-action: theme(colors.gray.900);
+    --text-highlight: theme(colors.yellow.100);
+
+    --bg-main: theme(colors.gray.950);
+
+    --bg-primary-action: theme(colors.white);
+    --bg-primary-action-hover: theme(colors.gray.150);
+    --bg-secondary-action: theme(colors.gray.700);
+    --bg-tertiary-action: theme(colors.gray.800);
+
+    --bg-button: theme(colors.gray.750);
+
+    --bg-primary: theme(colors.gray.950);
+    --bg-secondary: theme(colors.gray.900);
+    --bg-tertiary: theme(colors.gray.800);
+    --bg-quaternary: theme(colors.gray.750);
+    --bg-elevated: theme(colors.gray.850);
+    --bg-react-select: theme(colors.gray.750);
+
+    --grad-primary-rgb: 13, 13, 13;
+
+    --border-primary: theme(colors.white / 0.12);
+    --border-primary-opaque: theme(colors.gray.750);
+    --border-secondary: theme(colors.white / 0.08);
+    --border-secondary-opaque: theme(colors.gray.800);
+    --border-tertiary: theme(colors.white / 0.06);
+
+    --scrollbar-color: theme(colors.gray.500);
+
+    --base-shadow-color: rgb(0 0 0 / 0.16);
+
+    --button-drop-shadow: rgb(0 0 0 / 0.4);
+    --danger-drop-shadow: rgb(127 29 29 / 0.8);
+    --button-shadow: 0px -1px 0px 0px rgb(255 255 255 / 0.04), 0px 0px 0px 1px rgb(255 255 255 / 0.12),
+      0px 0px 1px 0px rgb(0 0 0 / 0.04), 0px 2px 2px 0px rgb(0 0 0 / 0.04), 0px 4px 2px 0px rgb(0 0 0 / 0.04),
+      0px 6px 3px 0px rgb(0 0 0 / 0.04);
+    --popover-shadow: 0px 0px 4px rgba(0, 0, 0, 0.08), 0px 0px 10px rgba(0, 0, 0, 0.12),
+      0px 0px 24px rgba(0, 0, 0, 0.16), 0px 0px 80px rgba(0, 0, 0, 0.2);
+    --button-base-shadow: 0px 0px 0px 0.5px rgb(0 0 0 / 0.4), 0px 1px 1px -1px rgb(0 0 0 / 0.12),
+      0px 2px 2px -1px rgb(0 0 0 / 0.12), inset 0px 0.5px 0px rgb(255 255 255 / 0.06),
+      inset 0px 0px 1px 0px rgb(255 255 255 / 0.16), inset 0px -6px 12px -4px rgb(0 0 0 / 0.16);
+    --button-primary-shadow: 0px 1px 1px -1px rgb(0 0 0 / 0.08), 0px 2px 2px -1px rgb(0 0 0 / 0.08),
+      0px 0px 0px 1px rgb(0 0 0 / 0.06), inset 0px 1px 0px #fff, inset 0px 0px 2px 1px #fff,
+      inset 0px 1px 2px rgb(0 0 0 / 0.06), inset 0px -4px 8px -4px rgb(0 0 0 / 0.06);
+
+    .bg-main,
+    .bg-elevated {
+      --base-shadow-color: rgb(0 0 0 / 0.05);
+
+      .bg-primary {
+        --base-shadow-color: rgb(0 0 0 / 0.14);
+      }
+    }
+  }
+}
+
+body.grabbing * {
+  cursor: grabbing !important;
+}
+
+#__next {
+  @apply relative flex min-h-[100svh] flex-col;
+}
+
+@layer utilities {
+  .focus-ring {
+    @apply initial:relative;
+    @apply z-[1];
+    @apply focus-visible:ring-0;
+    @apply before:pointer-events-none;
+    @apply before:absolute;
+    @apply before:-inset-[3px];
+    @apply before:initial:rounded-lg;
+    @apply before:border;
+    @apply before:border-blue-500;
+    @apply before:opacity-0;
+    @apply before:ring-2;
+    @apply before:ring-blue-500/20;
+    @apply before:transition-opacity;
+    @apply focus:before:opacity-100;
+    @apply focus-within:before:opacity-100;
+  }
+
+  @supports not (overflow-wrap: anywhere) {
+    .break-anywhere {
+      word-break: break-word;
+    }
+  }
+
+  @supports (overflow-wrap: anywhere) {
+    .break-anywhere {
+      overflow-wrap: anywhere;
+    }
+  }
+
+  @media all and (display-mode: standalone) {
+    .callout-none {
+      @apply [-webkit-touch-callout:_none];
+    }
+  }
+}
+
+@layer components {
+  .smooth-gradient-scrim {
+    @apply absolute inset-0;
+
+    background: linear-gradient(
+      180deg,
+      transparent 50%,
+      rgba(0, 0, 0, 0.004) 54%,
+      rgba(0, 0, 0, 0.01) 58%,
+      rgba(0, 0, 0, 0.03) 62%,
+      rgba(0, 0, 0, 0.05) 68%,
+      rgba(0, 0, 0, 0.09) 72%,
+      rgba(0, 0, 0, 0.13) 74%,
+      rgba(0, 0, 0, 0.17) 76%,
+      rgba(0, 0, 0, 0.22) 78%,
+      rgba(0, 0, 0, 0.26) 80%,
+      rgba(0, 0, 0, 0.3) 82%,
+      rgba(0, 0, 0, 0.34) 84%,
+      rgba(0, 0, 0, 0.36) 86%,
+      rgba(0, 0, 0, 0.38) 88%,
+      rgba(0, 0, 0, 0.39) 90%,
+      rgba(0, 0, 0, 0.4) 92%
+    );
+  }
+
+  .smooth-gradient-scrim::after {
+    @apply pointer-events-none absolute inset-0 rounded-b-md content-[''];
+
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 8%,
+      rgba(0, 0, 0, 0) 16%,
+      rgba(0, 0, 0, 0.01) 24%,
+      rgba(0, 0, 0, 0.02) 28%,
+      rgba(0, 0, 0, 0.03) 36%,
+      rgba(0, 0, 0, 0.04) 42%,
+      rgba(0, 0, 0, 0.05) 48%,
+      rgba(0, 0, 0, 0.06) 52%,
+      rgba(0, 0, 0, 0.07) 58%,
+      rgba(0, 0, 0, 0.08) 64%,
+      rgba(0, 0, 0, 0.11) 72%,
+      rgba(0, 0, 0, 0.12) 78%,
+      rgba(0, 0, 0, 0.16) 84%,
+      rgba(0, 0, 0, 0.24) 92%,
+      rgba(0, 0, 0, 0.24) 100%
+    );
+  }
+
+  input,
+  textarea {
+    @apply placeholder-neutral-400;
+  }
+
+  input[type='time']::-webkit-calendar-picker-indicator {
+    display: none;
+  }
+
+  .tweet {
+    --tweet-border: 1px solid theme(colors.black / 0.08);
+    --tweet-body-font-size: 15px;
+    --tweet-body-line-height: 1.25rem;
+    --tweet-quoted-body-font-size: 15px;
+    --tweet-quoted-body-line-height: 1.25rem;
+    --tweet-header-font-size: 15px;
+    --tweet-font-color-secondary: theme(colors.gray.500);
+    --tweet-color-blue-secondary: theme(colors.blue.500);
+    --tweet-quoted-body-margin: 0 0 0.5rem 0;
+  }
+
+  .tweet img:first-of-type {
+    @apply mt-0;
+  }
+
+  .clip-path-hexagon {
+    clip-path: url('#shape-hex');
+  }
+
+  .dark .tweet {
+    --tweet-border: 1px solid theme(colors.white / 0.12);
+  }
+
+  .tweet-media-max-height > div {
+    max-height: 400px;
+  }
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+.scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.toaster-container {
+  @apply mb-0;
+
+  /* lg breakpoint */
+  @media (max-width: 1024px) {
+    margin-bottom: calc(52px + env(safe-area-inset-bottom, -52px));
+  }
+}
+
+.search-highlight {
+  @apply -mx-0.5 rounded-sm bg-amber-100 px-0.5 font-medium text-amber-900 dark:bg-amber-500/30 dark:text-amber-200;
+}
+
+/* cmdk does not provide access to heading components so apply styles to headings in wrapper classes */
+.command-menu {
+  [cmdk-group-heading] {
+    @apply text-secondary flex h-10 select-none items-center px-2 text-xs;
+  }
+}
+
+.inset-image-border:before {
+  @apply shadow-inset-image-border pointer-events-none absolute inset-0;
+  border-radius: inherit;
+  content: '';
+}

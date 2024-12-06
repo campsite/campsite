@@ -1,0 +1,146 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.openai.com/v1/chat/completions
+    body:
+      encoding: UTF-8
+      string: '{"model":"gpt-4o","messages":[{"role":"system","content":"Provide a
+        concise summary of the final conversation outcome, highlighting responsible
+        parties for actions or decisions. Focus solely on the conversation''s conclusion,
+        omitting intermediate steps. Utilize language akin to the original discourse
+        but maintain a professional tone. DO NOT use first-person, narrator voice,
+        passive voice, AI speak, or the word \"resolution\". Avoid an introduction
+        and keep the summary factual, excluding acknowledgments or gratitude expressions.
+        Complex decisions should be minimized, avoiding repetition of all steps in
+        the decision-making process. The summary MUST be under 50 words."},{"role":"user","content":"TITLE:
+        Look at these designs\nAUTHOR: Harry Potter\nPOST: ```\nWhat should I eat
+        for breakfast?\n```\nCOMMENTS:\n1. AUTHOR: Harry Potter\n```\nI definitely
+        think you should have pancakes.\n```\nREPLIES:\n- AUTHOR: Harry Potter\n```\nI
+        totally agree, pancakes sound delicious!\n```\n2. AUTHOR: Harry Potter\n```\nI
+        totally agree, pancakes sound delicious!\n```\n3. AUTHOR: Harry Potter\n```\nI
+        think you should have cereal.\n```\nREPLIES:\n- AUTHOR: Harry Potter\n```\nNah,
+        I think you should have pancakes.\n```\n4. AUTHOR: Harry Potter\n```\nNah,
+        I think you should have pancakes.\n```\n5. AUTHOR: Harry Potter\n```\nPancakes
+        it is!\n```"}],"temperature":0.0}'
+    headers:
+      Content-Type:
+      - application/json
+      Authorization:
+      - Bearer <OPENAI_API_KEY>
+      OpenAI-Organization:
+      - "<OPENAI_ORGANIZATION>"
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      date:
+      - Tue, 21 May 2024 18:35:29 GMT
+      content-type:
+      - application/json
+      transfer-encoding:
+      - chunked
+      connection:
+      - keep-alive
+      openai-organization:
+      - campsite
+      openai-processing-ms:
+      - '275'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '500'
+      x-ratelimit-limit-tokens:
+      - '30000'
+      x-ratelimit-remaining-requests:
+      - '499'
+      x-ratelimit-remaining-tokens:
+      - '29678'
+      x-ratelimit-reset-requests:
+      - 120ms
+      x-ratelimit-reset-tokens:
+      - 644ms
+      x-request-id:
+      - req_ea0a1f7ee75f852a555af916b260ac93
+      cf-cache-status:
+      - DYNAMIC
+      set-cookie:
+      - __cf_bm=5kKcs_xjtyap6OLntqiBYpnsrv18hw9OLuH5Lb6xjpY-1716316529-1.0.1.1-X5NSkc863LtAe7AytxNotOJMXZuXFcepTpOLFEZobkscLG0LyGuRL2Gb_d54YPEQuz8AIQlMb7tDYScQVdItdA;
+        path=/; expires=Tue, 21-May-24 19:05:29 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None, _cfuvid=mJOwSVi_m0D1YiPbGAar8paW_XFGlHrQgO8K7azOIQE-1716316529014-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      server:
+      - cloudflare
+      cf-ray:
+      - 8876aa9f3f89c472-EWR
+      content-encoding:
+      - gzip
+      alt-svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: |
+        {
+          "id": "chatcmpl-9ROcaMe68XFgkCJOLh8BODWKWFP5t",
+          "object": "chat.completion",
+          "created": 1716316528,
+          "model": "gpt-4o-2024-05-13",
+          "choices": [
+            {
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": "Harry Potter decided to have pancakes for breakfast."
+              },
+              "logprobs": null,
+              "finish_reason": "stop"
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 281,
+            "completion_tokens": 9,
+            "total_tokens": 290
+          },
+          "system_fingerprint": "fp_729ea513f7"
+        }
+  recorded_at: Tue, 21 May 2024 18:35:29 GMT
+- request:
+    method: post
+    uri: http://localhost:3002/markdown_to_html
+    body:
+      encoding: UTF-8
+      string: '{"markdown":"Harry Potter decided to have pancakes for breakfast.","editor":"markdown"}'
+    headers:
+      User-Agent:
+      - Faraday v2.9.0
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer d8c0a2827589659ff292a8999b024f24a185ed82
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      x-powered-by:
+      - Express
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '70'
+      etag:
+      - W/"46-an/0Z9pXEWV0sTqbWXAEVrJ6C8k"
+      date:
+      - Tue, 21 May 2024 18:35:29 GMT
+      connection:
+      - keep-alive
+      keep-alive:
+      - timeout=5
+    body:
+      encoding: UTF-8
+      string: '{"html":"<p>Harry Potter decided to have pancakes for breakfast.</p>"}'
+  recorded_at: Tue, 21 May 2024 18:35:29 GMT
+recorded_with: VCR 6.1.0

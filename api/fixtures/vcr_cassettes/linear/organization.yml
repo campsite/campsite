@@ -1,0 +1,71 @@
+---
+http_interactions:
+  - request:
+      method: post
+      uri: https://api.linear.app/graphql
+      body:
+        encoding: UTF-8
+        string: '{"query":"query {\n  organization {\n    id\n  }\n}\n"}'
+      headers:
+        Content-type:
+          - application/json
+        Authorization:
+          - some-token
+        User-Agent:
+          - Faraday v2.5.2
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        date:
+          - Thu, 25 May 2023 19:04:24 GMT
+        content-type:
+          - application/json; charset=utf-8
+        transfer-encoding:
+          - chunked
+        connection:
+          - keep-alive
+        x-complexity:
+          - '2'
+        x-ratelimit-complexity-limit:
+          - '1000000'
+        x-ratelimit-complexity-remaining:
+          - '999998'
+        x-ratelimit-complexity-reset:
+          - '1685045064818'
+        x-ratelimit-requests-limit:
+          - '500'
+        x-ratelimit-requests-remaining:
+          - '499'
+        x-ratelimit-requests-reset:
+          - '1685045064818'
+        etag:
+          - W/"48-JN5xbe9Ed3OKb5BPeDJbp0bU5kk"
+        cache-control:
+          - private, no-cache, no-store, must-revalidate
+        x-request-id:
+          - 7cd00b428914942e-SJC
+        via:
+          - 1.1 google
+        alt-svc:
+          - h3=":443"; ma=86400, h3-29=":443"; ma=86400
+        cf-cache-status:
+          - DYNAMIC
+        set-cookie:
+          - __cf_bm=Ge_tn7ITDbMTY2k_c.gZycsqsWZD9NOO6Utsxq85aPQ-1685041464-0-AdI62Jwqz0EeZXWMA8hlAo5utafRejhQ8q4oDiRHYcakPaJ55QjiB2UaCIZLt0kj6BaIbXDbEOISHtLMt9DiUtc=;
+            path=/; expires=Thu, 25-May-23 19:34:24 GMT; domain=.linear.app; HttpOnly;
+            Secure; SameSite=None, _cfuvid=8GgsKKkqJWAIj.UH2qM6yyOyx3PJYfBQzOZEKZ4zBYo-1685041464867-0-604800000;
+            path=/; domain=.linear.app; HttpOnly; Secure; SameSite=None
+        server:
+          - cloudflare
+        cf-ray:
+          - 7cd00b428914942e-SJC
+        content-encoding:
+          - gzip
+      body:
+        encoding: UTF-8
+        string: '{"data":{"organization":{"id":"linear-organization-id"}}}
+          '
+    recorded_at: Thu, 25 May 2023 19:04:24 GMT
+recorded_with: VCR 6.1.0

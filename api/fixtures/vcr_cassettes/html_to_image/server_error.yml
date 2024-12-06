@@ -1,0 +1,42 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://localhost:9222/image
+    body:
+      encoding: UTF-8
+      string: '{"html":"\u003c!DOCTYPE html\u003e\n\u003chtml lang=''en'' style=\"background-color:
+        transparent;\"\u003e\n  \u003chead\u003e\n    \u003cmeta http-equiv=''Content-Type''
+        content=''text/html'' charset=''utf-8'' /\u003e\n  \u003c/head\u003e\n  \u003cbody
+        style=\"background-color: transparent;\"\u003e\n    \u003cdiv class=\"prose\"\u003e\n      \u003cp\u003efoo\u003c/p\u003e\n    \u003c/div\u003e\n  \u003c/body\u003e\n\u003c/html\u003e","styles":"p
+        { color: red; }","theme":"light","width":700}'
+    headers:
+      User-Agent:
+      - Faraday v2.7.5
+      Content-type:
+      - application/json
+  response:
+    status:
+      code: 500
+      message: Internal Server Error
+    headers:
+      x-powered-by:
+      - Express
+      content-type:
+      - image/png
+      content-length:
+      - '15'
+      etag:
+      - W/"227-C3Wn6ucCOrzvm8bXqaZTTYPF/ec"
+      date:
+      - Wed, 05 Jul 2023 20:30:46 GMT
+      connection:
+      - keep-alive
+      keep-alive:
+      - timeout=5
+    body:
+      encoding: ASCII-8BIT
+      string: |
+        Something broke
+  recorded_at: Wed, 05 Jul 2023 20:30:46 GMT
+recorded_with: VCR 6.1.0

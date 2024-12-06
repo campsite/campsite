@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= @page_title || "Campsite" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= favicon_link_tag "/favicon.ico" %>
+    <%= favicon_link_tag "/favicon.svg" %>
+
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="/android-chrome-192x192.png" sizes="192x192" />
+    <link rel="icon" type="image/png" href="/android-chrome-512x512.png" sizes="512x512" />
+
+    <% unless Rails.env.test? %>
+      <%= stylesheet_link_tag "application" %>
+      <%= javascript_include_tag "application", defer: true %>
+    <% end %>
+  </head>
+
+  <body>
+    <header class="drag h-14 absolute w-full"></header>
+    <%= yield %>
+    <%= yield(:javascript) %>
+  </body>
+</html>

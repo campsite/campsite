@@ -1,0 +1,65 @@
+<table class="w-full p-0 m-0" border="0" cellpadding="0" cellspacing="0">
+
+  <tr><td align="left" valign="top">
+    <%= render 'mailers/components/avatar', avatar_url: @organization.avatar_url(size: 40), href: @organization.url, name: @organization.name, size: 40, class_name: "rounded" %>
+  </td></tr>
+
+  <tr><td align="left" valign="top" class="pt-6">
+    Here’s what happened this week.
+  </td></tr>
+
+  <% if @posts.size > 1 %>
+  <tr><td align="center" valign="top" class="pt-6">
+    <div class="separator"  />
+  </td></tr>
+
+  <tr><td align="left" valign="top" class="pt-6 text-sm text-secondary">
+    <%= Time.current.strftime("%B %d, %Y") %>
+  </td></tr>
+
+  <tr><td align="left" valign="center" class="pt-4">
+    <%= render 'mailers/components/facepile', users: @posters, organization: @organization %>
+  </td></tr>
+
+  <tr><td align="left" valign="top" class="pt-4 text-sm text-secondary">
+    <%= @post_count_byline %>
+  </td></tr>
+
+  <tr><td align="center" valign="top" class="pt-6">
+    <div class="separator" />
+  </td></tr>
+  <% end %>
+
+  <% if @projects.any? %>
+    <tr><td align="left" valign="top" class="pt-6 font-bold">
+      <b>New spaces</b>
+    </td></tr>
+
+    <% @projects.each do |project| %>
+      <tr><td align="left" valign="top" class="pt-4">
+        <a href="<%= project.url %>">
+          <b><%= [project.accessory, project.name].compact_blank.join(" ") %></b>
+        </a>
+      </td></tr>
+      <tr><td align="left" valign="top" class="pt-1 text-sm text-secondary">
+        <%= project.description.presence %>
+      </td></tr>
+      <tr><td align="left" valign="top" class="pt-1 text-sm text-secondary">
+        <a href="<%= project.creator.url %>">
+          <%= "Created by #{project.creator.display_name}" %>
+        </a>
+      </td></tr>
+    <% end %>
+
+    <tr><td align="center" valign="top" class="pt-6">
+      <div class="separator" />
+    </td></tr>
+  <% end %>
+
+  <% @posts.first(20).each do |post| %>
+  <tr><td align="left" valign="top" class="pt-6">
+    <%= render 'mailers/components/post', post: post %>
+  </td></tr>
+  <% end %>
+
+</table>

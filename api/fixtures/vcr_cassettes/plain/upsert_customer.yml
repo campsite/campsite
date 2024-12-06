@@ -1,0 +1,44 @@
+---
+http_interactions:
+  - request:
+      method: post
+      uri: https://core-api.uk.plain.com/graphql/v1
+      body:
+        encoding: UTF-8
+        string: '{"query":"mutation UpsertCustomer($upsertCustomerInput: UpsertCustomerInput!)
+          {\n  upsertCustomer(input: $upsertCustomerInput) {\n    result\n  }\n}\n","variables":{"upsertCustomerInput":{"identifier":{"externalId":"123"},"onCreate":{"externalId":"123","fullName":"Hermione
+          Granger","shortName":"Hermione","email":{"email":"hermione@campsite.com","isVerified":true}},"onUpdate":{"externalId":{"value":"123"},"fullName":{"value":"Hermione
+          Granger"},"shortName":{"value":"Hermione"},"email":{"email":"hermione@campsite.com","isVerified":true}}}}}'
+      headers:
+        Content-type:
+          - application/json
+        Authorization:
+          - Bearer <PLAIN_API_KEY>
+        User-Agent:
+          - Faraday v2.7.5
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        date:
+          - Fri, 12 Jan 2024 01:30:39 GMT
+        content-type:
+          - application/json; charset=utf-8
+        content-length:
+          - '46'
+        connection:
+          - keep-alive
+        x-powered-by:
+          - Express
+        etag:
+          - W/"2e-tR1K4ek/0biHDzRBYgfpZy8NsJA"
+        apigw-requestid:
+          - RZxp7g30LPEEMWw=
+      body:
+        encoding: UTF-8
+        string: '{"data":{"upsertCustomer":{"result":"NOOP"}}}
+
+          '
+    recorded_at: Fri, 12 Jan 2024 01:30:39 GMT
+recorded_with: VCR 6.1.0

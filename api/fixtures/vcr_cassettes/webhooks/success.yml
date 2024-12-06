@@ -1,0 +1,51 @@
+---
+http_interactions:
+  - request:
+      method: post
+      uri: https://example.com
+      body:
+        encoding: UTF-8
+        string: '{"foo":"bar"}'
+      headers:
+        Content-type:
+          - application/json
+        X-Campsite-Signature:
+          - 1234567890
+        User-Agent:
+          - Faraday v2.5.2
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        x-powered-by:
+          - Express
+        content-security-policy:
+          - default-src 'none'
+        x-content-type-options:
+          - nosniff
+        content-type:
+          - text/html; charset=utf-8
+        content-length:
+          - '1439'
+        date:
+          - Tue, 24 Sep 2024 19:40:49 GMT
+        connection:
+          - keep-alive
+        keep-alive:
+          - timeout=5
+      body:
+        encoding: UTF-8
+        string: |
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+          <meta charset="utf-8">
+          <title>Error</title>
+          </head>
+          <body>
+          OK
+          </body>
+          </html>
+    recorded_at: Tue, 24 Sep 2024 19:40:49 GMT
+recorded_with: VCR 6.1.0

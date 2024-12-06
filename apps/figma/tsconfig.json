@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "module": "ES2020",
+    "moduleResolution": "Node",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "lib": ["es6", "dom", "es2017"],
+    "jsx": "preserve",
+    "target": "ES5",
+    "typeRoots": ["node_modules/@figma", "node_modules/@types"],
+    "baseUrl": "."
+  },
+  "include": ["global.d.ts", "src/**/*.ts", "src/**/*.tsx"]
+}

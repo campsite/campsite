@@ -1,0 +1,21 @@
+name: API Tests
+
+on:
+  pull_request:
+    # must be in sync with the paths filter in tests.yml
+    paths-ignore:
+      - '.github/workflows/api-tests.yml'
+      - 'api/**'
+
+jobs:
+  # names must match those in tests.yml
+  test:
+    name: tests
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No build required"'
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No build required"'

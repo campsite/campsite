@@ -1,0 +1,31 @@
+{
+  "version": "2.0",
+  "id": "********-****-****-****-***********",
+  "account_id": "************************",
+  "timestamp": "2021-11-30T12:59:57Z",
+  "type": "beam.recording.success",
+  "data": {
+    "beam_id": "************************",
+    "created_at": "2021-11-30T12:59:57.672493658Z",
+    "duration": 79,
+    "metadata_id": "********-****-****-****-***********",
+    "metadata_timestamp": "2021-11-30T12:59:57.679491494Z",
+    "peer_id": "********-****-****-****-***********",
+    "recording_path": "s3://bucket/prefix/ac.mp4",
+    "recording_presigned_url": "https://<file access URL>",
+    "recording_id": "***********************",
+    "chat_recording_path": "s3://bucket/prefix/chat-recording-address.csv",
+    "chat_recording_presigned_url": "https://<chat-recording-access-url>?<signature>",
+    "room_id": "************************",
+    "started_at": "2021-11-30T12:58:34.051Z",
+    "stopped_at": "2021-11-30T12:59:56.778Z",
+    "session_id": "************************",
+    "template_id": "************************",
+    "max_height": 720,
+    "max_width": 1280,
+    "meeting_url": "https://app.100ms.live/preview/rpe-pwl-akt?token=beam_recording",
+    "rtmp": [{ "url": "http://test.com" }],
+    "session_started_at": "2021-11-30T12:58:49.97291247Z",
+    "size": 10024
+  }
+}

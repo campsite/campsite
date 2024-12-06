@@ -1,0 +1,40 @@
+{
+  "name": "@campsite/styled-text-server",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf .turbo dist node_modules",
+    "dev": "tsup --watch --onSuccess \"node dist/index.mjs\"",
+    "lint": "eslint . --ext .ts,.tsx",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org campsite-software --project styled-text-server ./dist && sentry-cli sourcemaps upload --org campsite-software --project styled-text-server ./dist",
+    "start": "node dist/index.mjs",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@campsite/editor": "workspace:*",
+    "@sentry/node": "catalog:",
+    "@tiptap/pm": "catalog:",
+    "body-parser": "catalog:",
+    "cheerio": "catalog:",
+    "express": "catalog:",
+    "jsdom": "catalog:",
+    "jsx-slack": "catalog:",
+    "morgan": "catalog:"
+  },
+  "devDependencies": {
+    "@campsite/eslint-config": "workspace:*",
+    "@campsite/tsconfig": "workspace:*",
+    "@flydotio/dockerfile": "catalog:",
+    "@sentry/cli": "catalog:",
+    "@types/body-parser": "catalog:",
+    "@types/express": "catalog:",
+    "@types/jsdom": "catalog:",
+    "@types/morgan": "catalog:",
+    "@types/supertest": "catalog:",
+    "supertest": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

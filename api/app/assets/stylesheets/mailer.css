@@ -1,0 +1,47 @@
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import 'mailer-base';
+@import 'prose';
+
+b,
+strong {
+  @apply font-semibold;
+}
+
+/* override tw border to avoid applying border-style reset to all elements inline */
+.border {
+  @apply border-primary border-solid;
+  border-width: 1px;
+}
+
+img {
+  border-style: none;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  @apply text-primary bg-primary h-full w-full font-sans text-base antialiased;
+}
+
+label {
+  @apply text-primary items-center space-x-3 font-semibold;
+}
+
+/* copied from web's global.css custom rule */
+.prose p {
+  @apply mb-2.5 mt-0;
+}
+
+.prose img[data-emoji], /* native reactions on Gmail get hot-swapped to Android emojis as <img> */
+.prose img[data-type='reaction'] {
+  @apply !h-5 !w-5;
+  vertical-align: top !important;
+  display: inline-block !important;
+}

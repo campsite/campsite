@@ -1,0 +1,44 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://localhost:3002/html_to_slack
+    body:
+      encoding: UTF-8
+      string: '{"html":"\u003ch1\u003eMy markdown\u003c/h1\u003e\n\u003chr\u003e\n\u003cp\u003eIt
+        has \u003cb\u003ebold\u003c/b\u003e and \u003ci\u003eitalics\u003c/i\u003e
+        and a \u003ca href=\"https://campsite.design\"\u003e\u003cb\u003ebold link\u003c/b\u003e\u003c/a\u003e.\u003c/p\u003e\n\u003cp\u003eIt
+        has multiple paragraphs.\u003c/p\u003e"}'
+    headers:
+      User-Agent:
+      - Faraday v2.7.5
+      Content-type:
+      - application/json
+      Authorization:
+      - Bearer d8c0a2827589659ff292a8999b024f24a185ed82
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      x-powered-by:
+      - Express
+      content-type:
+      - application/json; charset=utf-8
+      content-length:
+      - '342'
+      etag:
+      - W/"156-cYa4wnb8aVW+7NimHKBQbnkwRTA"
+      date:
+      - Fri, 29 Mar 2024 17:39:50 GMT
+      connection:
+      - keep-alive
+      keep-alive:
+      - timeout=5
+    body:
+      encoding: UTF-8
+      string: '[{"type":"section","text":{"type":"mrkdwn","text":"*My markdown*","verbatim":true}},{"type":"divider"},{"type":"section","text":{"type":"mrkdwn","text":"It
+        has *bold* and _italics_ and a <https://campsite.design|*bold link*>.","verbatim":true}},{"type":"section","text":{"type":"mrkdwn","text":"It
+        has multiple paragraphs.","verbatim":true}}]'
+  recorded_at: Fri, 29 Mar 2024 17:39:50 GMT
+recorded_with: VCR 6.1.0
