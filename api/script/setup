@@ -10,6 +10,10 @@ echo "\nInstalling bundler and gems...\n========================================
 bundle install --local
 echo "\033[1;32mGem files installed.\033[0m"
 
+echo "\nInstalling javascript dependencies...\n============================================================"
+yarn install
+echo "\033[1;32mJavascript dependencies installed.\033[0m"
+
 if [ -n "$SETUP_PRISTINE" ]; then
 	echo "\nDropping existing databases...\n============================================================"
 	mysql -u root -e 'DROP DATABASE IF EXISTS campsite_api_development; DROP DATABASE IF EXISTS campsite_api_test;'
