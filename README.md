@@ -112,6 +112,12 @@ Are you looking to setup and run the API locally? Checkout the [API README](api/
 
 ✨
 
+## API secrets
+
+Running `script/setup` will generate [Rails custom credential files](https://edgeguides.rubyonrails.org/security.html#custom-credentials) for development and production environments. From the API directory, run `VISUAL="code --wait" bin/rails credentials:edit --environment development` to edit development credentials, or run `VISUAL="code --wait" bin/rails credentials:edit --environment development` to edit production credentials.
+
+When you deploy Campsite, `config/credentials/production.yml.enc` must be present on your production server, and you must set the `RAILS_MASTER_KEY` environment variable equal to the contents of `config/credentials/production.key`. If you deploy from a git repository, you can remove `config/credentials/production.yml.enc` from `.gitignore` and commit the file. Do not remove `config/credentials/production.key` from `.gitignore`, instead share this with your team in a safe place outside of the repository, such as in a password vault.
+
 ## Calls in development
 
 To use calls in development, you'll need to treat the `http://app.campsite.test:3000` origin as secure. In a Chromium-based browser, you can do that at chrome://flags/#unsafely-treat-insecure-origin-as-secure.

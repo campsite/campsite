@@ -87,4 +87,183 @@ namespace :dev do
 
     puts "✅ Updated #{slug} to #{plan_name}."
   end
+
+  desc "Setup Rails custom credentials for development and production if they don't exist"
+  task setup_credentials: :environment do
+    # Default credentials structure
+    DEFAULT_CREDENTIALS = {
+      active_record_encryption: {
+        primary_key: "TODO",
+        deterministic_key: "TODO",
+        key_derivation_salt: "TODO",
+      },
+      aws: {
+        s3_bucket: "TODO",
+        access_key_id: "TODO",
+        secret_access_key: "TODO",
+      },
+      aws_ecs: {
+        s3_bucket: "TODO",
+        access_key_id: "TODO",
+        secret_access_key: "TODO",
+      },
+      aws_transcriber: {
+        source_media_bucket: "n/a",
+        output_bucket: "n/a",
+        access_key_id: "n/a",
+        secret_access_key: "n/a",
+      },
+      cal_dot_com: {
+        client_id: "TODO",
+        client_secret: "TODO",
+        redirect_uri: "TODO",
+      },
+      campsite: {
+        api_token: "TODO",
+        api_url: "http://api.campsite.test:3001",
+        feature_flags_thread_id: "TODO",
+      },
+      figma: {
+        client_id: "TODO",
+        client_secret: "TODO",
+      },
+      google_calendar: {
+        client_id: "TODO",
+        client_secret: "TODO",
+        redirect_uri: "TODO",
+      },
+      hms: {
+        app_access_key: "TODO",
+        app_secret: "TODO",
+        webhook_passcode: "TODO",
+      },
+      imgix: {
+        url: "TODO",
+        api_key: "TODO",
+        source_id: "TODO",
+      },
+      imgix_folder: {
+        url: "TODO",
+      },
+      imgix_video: {
+        url: "TODO",
+      },
+      linear: {
+        token: "TODO",
+        client_id: "TODO",
+        client_secret: "TODO",
+        webhook_signing_secret: "TODO",
+      },
+      omniauth_google: {
+        client_id: "TODO",
+        client_secret: "TODO",
+      },
+      openai: {
+        access_token: "TODO",
+        organization_id: "TODO",
+      },
+      plain: {
+        api_key: "TODO",
+      },
+      postmark: {
+        api_token: "TODO",
+      },
+      pusher: {
+        app_id: "TODO",
+        key: "TODO",
+        secret: "TODO",
+        cluster: "TODO",
+      },
+      rack_attack: {
+        ssr_secret: "TODO",
+        url: "redis://localhost:6379",
+      },
+      raycast: {
+        client_id: "TODO",
+        client_secret: "TODO",
+        redirect_uri: "TODO",
+      },
+      redis_sidekiq: {
+        url: "redis://localhost:6379",
+      },
+      redis: {
+        url: "redis://localhost:6379",
+      },
+      sentry: {
+        dsn: "TODO",
+      },
+      slack: {
+        client_id: "TODO",
+        client_secret: "TODO",
+        signing_secret: "TODO",
+      },
+      stripe: {
+        secret_key: "TODO",
+        webhook_signing_secret: "TODO",
+      },
+      styled_text_api: {
+        authtoken: "TODO",
+      },
+      userlist: {
+        push_key: "TODO",
+        push_id: "TODO",
+      },
+      vercel: {
+        revalidate_static_cache: "TODO",
+      },
+      webpush_vapid: {
+        public_key: "TODO",
+        private_key: "TODO",
+      },
+      workos: {
+        client_id: "TODO",
+        api_key: "TODO",
+        webhook_secret: "TODO",
+      },
+      zapier: {
+        client_id: "TODO",
+        client_secret: "TODO",
+        redirect_uri: "TODO",
+      },
+      tenor: {
+        api_key: "TODO",
+      },
+    }.freeze
+
+    def setup_credentials_for_environment(environment)
+      credentials_path = Rails.root.join("config/credentials/#{environment}.yml.enc")
+      key_path = Rails.root.join("config/credentials/#{environment}.key")
+
+      if File.exist?(credentials_path)
+        puts "#{environment.capitalize} credentials already exist at #{credentials_path}"
+        return
+      end
+
+      # Create the credentials directory if it doesn't exist
+      FileUtils.mkdir_p(Rails.root.join("config/credentials"))
+
+      # Generate a new encryption key if it doesn't exist
+      unless File.exist?(key_path)
+        encryption_key = SecureRandom.alphanumeric(32)
+        File.write(key_path, encryption_key)
+        File.chmod(0o600, key_path)
+        puts "Generated new encryption key for #{environment} environment"
+      end
+
+      # Create new credentials file
+      credentials = ActiveSupport::EncryptedConfiguration.new(
+        config_path: credentials_path,
+        key_path: key_path,
+        env_key: "RAILS_MASTER_KEY",
+        raise_if_missing_key: true,
+      )
+
+      credentials.write(DEFAULT_CREDENTIALS.to_yaml)
+      puts "Created new #{environment} credentials at #{credentials_path}"
+    end
+
+    ["development", "production"].each do |environment|
+      setup_credentials_for_environment(environment)
+    end
+  end
 end
