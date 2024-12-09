@@ -178,11 +178,6 @@ namespace :dev do
         ssr_secret: "TODO",
         url: "redis://localhost:6379",
       },
-      raycast: {
-        client_id: "TODO",
-        client_secret: "TODO",
-        redirect_uri: "TODO",
-      },
       redis_sidekiq: {
         url: "redis://localhost:6379",
       },

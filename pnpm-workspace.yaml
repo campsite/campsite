@@ -1,7 +1,6 @@
 packages:
   - apps/*
   - packages/*
-  - '!**/packages/raycast-extensions/**'
 catalog:
   '@100mslive/hms-noise-cancellation': ^0.0.1
   '@100mslive/hms-video-store': ^0.12.21
