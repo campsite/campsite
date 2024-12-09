@@ -120,7 +120,6 @@ namespace :dev do
       },
       campsite: {
         api_token: "TODO",
-        api_url: "http://api.campsite.test:3001",
       },
       figma: {
         client_id: "TODO",
