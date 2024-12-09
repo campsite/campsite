@@ -10,8 +10,6 @@ class OauthApplication < ApplicationRecord
   after_discard :remove_from_message_threads
   after_discard :deactivate_webhooks
 
-  after_create :notify_campsite
-
   belongs_to :owner, polymorphic: true, optional: true
   belongs_to :creator, class_name: "OrganizationMembership", optional: true
   has_many :message_thread_memberships, dependent: :destroy
@@ -120,16 +118,5 @@ class OauthApplication < ApplicationRecord
 
   def deactivate_webhooks
     active_webhooks.discard_all
-  end
-
-  def notify_campsite
-    return if editor_sync? || figma?
-
-    return unless Rails.env.production?
-
-    CreateCampsiteCommentJob.perform_async(
-      CAMPSITE_NOTIFICATION_POST_ID,
-      "#{owner&.name} created a new OAuth application: #{name}",
-    )
   end
 end
