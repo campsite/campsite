@@ -51,7 +51,6 @@ module Admin
           assert_response :redirect
           assert_includes response.redirect_url, feature_name
           assert_includes Flipper.features.map(&:name), feature_name
-          assert_enqueued_sidekiq_job(HandleFlipperAuditLogJob)
         end
       end
 
@@ -65,7 +64,6 @@ module Admin
 
           assert_response :redirect
           assert_not_includes Flipper.features.map(&:name), feature_name
-          assert_enqueued_sidekiq_job(HandleFlipperAuditLogJob)
         end
       end
 

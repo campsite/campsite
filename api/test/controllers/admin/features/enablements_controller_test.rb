@@ -21,7 +21,6 @@ module Admin
           post feature_enablement_path(feature_name)
 
           assert_predicate Flipper.feature(feature_name), :enabled?
-          assert_enqueued_sidekiq_job(HandleFlipperAuditLogJob)
         end
       end
 
@@ -35,7 +34,6 @@ module Admin
           delete feature_enablement_path(feature_name)
 
           assert_not_predicate Flipper.feature(feature_name), :enabled?
-          assert_enqueued_sidekiq_job(HandleFlipperAuditLogJob)
         end
       end
     end

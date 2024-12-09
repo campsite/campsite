@@ -20,7 +20,7 @@ end
 # https://www.flippercloud.io/docs/instrumentation
 ActiveSupport::Notifications.subscribe("feature_operation.flipper") do |event|
   if event.payload[:operation].in?([:enable, :disable, :add, :remove])
-    audit_log = FlipperAuditLog.create!(
+    FlipperAuditLog.create!(
       user_id: Current.user&.id,
       feature_name: event.payload[:feature_name],
       operation: event.payload[:operation],
@@ -29,6 +29,5 @@ ActiveSupport::Notifications.subscribe("feature_operation.flipper") do |event|
       result: event.payload[:result],
       gate_values_snapshot: Flipper.feature(event.payload[:feature_name]).gate_values,
     )
-    HandleFlipperAuditLogJob.perform_async(audit_log.id)
   end
 end
