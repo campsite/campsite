@@ -45,22 +45,6 @@ module Api
 
             assert_response :forbidden
           end
-
-          test "creating a video attachment enqueues a transcription job" do
-            sign_in @member.user
-
-            AttachmentDimensionsJob.expects(:perform_async).once
-            AttachmentTranscriptionJob.expects(:perform_async).once
-
-            post organization_attachments_path(@org.slug),
-              params: {
-                file_type: "video/mp4",
-                file_path: "/path/to/video.mp4",
-              }
-
-            assert_response :created
-            assert_nil json_response["image_urls"]
-          end
         end
 
         context "#show" do

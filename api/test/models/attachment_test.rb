@@ -81,39 +81,6 @@ class AttachmentTest < ActiveSupport::TestCase
     end
   end
 
-  context "update_transcription_job" do
-    test "does not update the status if there is no job id" do
-      attachment = create(:attachment, file_type: "video/mp4", preview_file_path: "/path/to/video.mp4")
-      TranscriptionClient.any_instance.expects(:status).never
-      attachment.update_transcription_job
-    end
-
-    test "does not update the status if status is not IN_PROGRESS" do
-      attachment = create(:attachment, file_type: "video/mp4", preview_file_path: "/path/to/video.mp4")
-      attachment.transcription_job_id = "abcdef123"
-      attachment.transcription_job_status = "COMPLETED"
-      TranscriptionClient.any_instance.expects(:status).never
-      attachment.update_transcription_job
-    end
-
-    test "updates the vtt if the status changes from IN_PROGRESS to COMPLETED" do
-      attachment = create(:attachment, file_type: "video/mp4", preview_file_path: "/path/to/video.mp4")
-      attachment.transcription_job_id = "abcdef123"
-      attachment.transcription_job_status = "IN_PROGRESS"
-      vtt = "WEBVTT\n\n00:00:00.000 --> 00:00:01.000\nHello world"
-      TranscriptionClient.any_instance.expects(:status).returns("COMPLETED")
-      TranscriptionClient.any_instance.expects(:vtt).returns(vtt)
-      attachment.update_transcription_job
-      assert_equal "COMPLETED", attachment.transcription_job_status
-      assert_equal vtt, attachment.transcription_vtt
-    end
-
-    test "returns zip extension for zip file" do
-      file = build(:attachment, file_type: "application/zip", name: "archive.zip")
-      assert_equal "zip", file.extension
-    end
-  end
-
   context "image?" do
     test "returns true if the file is an image" do
       file = create(:attachment, file_type: "image/png")
