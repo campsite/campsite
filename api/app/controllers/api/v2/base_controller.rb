@@ -18,7 +18,6 @@ module Api
       before_action :set_sentry_info
       before_action :limit_cursor_pagination, only: :index
       before_action :validate_order_params, only: :index
-      before_action :log_deprecated_order_field, only: :index
 
       after_action :verify_authorized, except: :not_found
       after_action :verify_policy_scoped, only: :index
@@ -182,20 +181,6 @@ module Api
         if params[:limit].to_i > MAX_CURSOR_PAGINATION_LIMIT
           render_error(status: :unprocessable_entity, message: "`limit` must be less than or equal to #{MAX_CURSOR_PAGINATION_LIMIT}.")
         end
-      end
-
-      # TODO: remove after confirming this field is no longer used.
-      # I don't think we ever documented it but I'm checking anyway.
-      def log_deprecated_order_field
-        return if params[:order].blank?
-
-        Sentry.capture_message(
-          "Request made with deprecated order field",
-          extra: {
-            oauth_application_id: current_oauth_application&.id,
-            order: params[:order],
-          },
-        )
       end
     end
   end

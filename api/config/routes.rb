@@ -642,11 +642,6 @@ Rails.application.routes.draw do
       resources :messages, only: [:create], module: :members
     end
 
-    # deprecated on 9/9/24; keeping until we've migrated all users w/ custom integrations
-    resources :projects, only: [:index]
-
-    # this must appear after :projects until projects are fully deprecated,
-    # otherwise the project route will clobber the channels route
     resources :channels, only: [:index], controller: "projects"
 
     resources :threads, only: [:create] do

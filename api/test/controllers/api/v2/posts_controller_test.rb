@@ -41,15 +41,6 @@ module Api
           assert_equal @posts[1].public_id, json_response["data"][0]["id"]
         end
 
-        test "sorts by recent activity (deprecated order object)" do
-          @posts.last.update(last_activity_at: 1.day.ago)
-
-          list_posts(params: { order: { by: "last_activity_at", direction: "desc" } })
-
-          assert_response :success
-          assert_equal @posts[1].public_id, json_response["data"][0]["id"]
-        end
-
         test "does not include posts in private projects" do
           private_project_post = create(:post, project: create(:project, :private, organization: @org), organization: @org)
 
@@ -63,7 +54,7 @@ module Api
           project = create(:project, organization: @org)
           create_list(:post, 3, project: project, organization: @org)
 
-          list_posts(params: { project_id: project.public_id })
+          list_posts(params: { channel_id: project.public_id })
 
           assert_response :success
           assert_equal 3, json_response["data"].count
@@ -82,7 +73,7 @@ module Api
         test "returns an error for a private project if the app is not a member of the project" do
           private_project = create(:project, :private, organization: @org)
 
-          list_posts(params: { project_id: private_project.public_id })
+          list_posts(params: { channel_id: private_project.public_id })
 
           assert_response :forbidden
         end
@@ -92,7 +83,7 @@ module Api
           private_project.add_oauth_application!(@org_oauth_app)
           create_list(:post, 3, project: private_project, organization: @org)
 
-          list_posts(params: { project_id: private_project.public_id })
+          list_posts(params: { channel_id: private_project.public_id })
 
           assert_response :success
           assert_equal 3, json_response["data"].count
@@ -158,16 +149,6 @@ module Api
           create_post(params: { content_markdown: "Test content" })
 
           assert_response :unprocessable_entity
-        end
-
-        test "works with deprecated project_id" do
-          html = "<p>Test content</p>"
-          StyledText.any_instance.expects(:markdown_to_html).returns(html)
-
-          create_post(params: { content_markdown: "Test content", project_id: @project.public_id })
-
-          assert_response :created
-          assert_equal @project.public_id, json_response.dig("channel", "id")
         end
 
         test "assigns the post to a member when using a user-scoped token" do

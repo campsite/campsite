@@ -7,8 +7,6 @@ module Api
 
       include MarkdownEnrichable
 
-      before_action :log_deprecated_project_id_field, only: :create
-
       api_summary "List posts"
       api_description <<~DESC
         Lists posts.
@@ -80,11 +78,11 @@ module Api
       def create
         authorize(current_organization, :create_post?)
 
-        if project_id.blank?
+        if params[:channel_id].blank?
           return render_error(status: :unprocessable_entity, code: "unprocessable", message: "Channel ID is required.")
         end
 
-        project = current_organization.projects.find_by!(public_id: project_id)
+        project = current_organization.projects.find_by!(public_id: params[:channel_id])
 
         authorize(project, :create_post?)
 
@@ -124,27 +122,11 @@ module Api
         content.present? ? content.strip : ""
       end
 
-      def project_id
-        params[:channel_id] || params[:project_id]
-      end
-
       def current_post
         @current_post ||= current_organization
           .kept_published_posts
           .public_api_includes
           .find_by!(public_id: params[:id])
-      end
-
-      def log_deprecated_project_id_field
-        return if params[:project_id].blank?
-
-        Sentry.capture_message(
-          "Request made with deprecated project_id field",
-          extra: {
-            oauth_application_id: current_oauth_application&.id,
-            project_id: params[:project_id],
-          },
-        )
       end
 
       def allowed_order_fields
