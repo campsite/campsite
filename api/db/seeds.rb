@@ -67,37 +67,4 @@ if Rails.env.development?
     owner: admin_user,
     scopes: "read_organization write_post write_project"
   )
-
-  # Create Campbot integration for local integration testing
-  campbot_app = OauthApplication.create(
-    name: "Campbot",
-    avatar_path: "static/avatars/service-campbot.png",
-    confidential: false,
-    owner: generator.organization
-  )
-
-  token = campbot_app.access_tokens.create!(
-    resource_owner: generator.organization,
-    expires_in: nil,
-  )
-  token.secret_strategy.store_secret(token, :token, Rails.application.credentials.campsite.api_token)
-  token.save!
-
-  # Create Daily Standup channel for testing the 'daily-standup' integration
-  generator.organization.projects.create!(
-    public_id: "owyniumz9p3r",
-    name: "Daily Standup",
-    description: "Used for testing the 'daily-standup' cron script in @campsite/integrations.",
-    creator: admin_member,
-  )
-
-  # Create the "Feature Flags" thread
-  MessageThread.create!(
-    public_id: Rails.application.credentials.dig(:campsite, :feature_flags_thread_id),
-    title: "Feature Flags",
-    owner: admin_member,
-    organization_memberships: [admin_member],
-    oauth_applications: [campbot_app],
-    group: true,
-  )
 end

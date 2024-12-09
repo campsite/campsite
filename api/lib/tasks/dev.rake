@@ -119,7 +119,6 @@ namespace :dev do
         redirect_uri: "TODO",
       },
       campsite: {
-        api_token: "TODO",
         api_url: "http://api.campsite.test:3001",
         feature_flags_thread_id: "TODO",
       },
