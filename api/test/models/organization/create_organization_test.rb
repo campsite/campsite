@@ -18,9 +18,8 @@ class Organization
         assert_predicate org, :persisted?
         assert_equal "Foo bar", org.name
         assert_equal @user, org.creator
+        assert_equal Plan::PRO_NAME, org.plan_name
         assert_predicate org.campsite_integration, :present?
-        assert_enqueued_sidekiq_job(TrialEndingReminderJob, args: [org.id], in: Organization::TRIAL_DURATION - Organization::TRIAL_ENDING_REMINDER_LEAD_TIME)
-        assert_enqueued_sidekiq_job(TrialEndedJob, args: [org.id], in: Organization::TRIAL_DURATION)
       end
     end
 

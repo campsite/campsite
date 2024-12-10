@@ -8,14 +8,11 @@
         "CAMPSITE_API_BASE",
         "CAMPSITE_API_KEY",
         "CAMPSITE_ROLLUP_APP_KEY",
-        "CAMPSITE_STRIPE_APP_KEY",
         "CRON_SECRET",
         "DAILY_STANDUP_CHANNEL_ID",
         "NEW_CUSTOMERS_CHANNEL_ID",
         "NODE_ENV",
-        "OPENAI_API_KEY",
-        "STRIPE_SECRET_KEY",
-        "STRIPE_WEBHOOK_SECRET"
+        "OPENAI_API_KEY"
       ]
     }
   }

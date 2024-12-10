@@ -18,7 +18,7 @@ module Api
 
           sign_in @user
 
-          assert_query_count 55 do
+          assert_query_count 54 do
             post organizations_path, params: { name: "Campsite Design", slug: "campsite-design" }
           end
 
@@ -214,7 +214,7 @@ module Api
         test("query count") do
           sign_in @user
 
-          assert_query_count 7 do
+          assert_query_count 6 do
             get organization_path(@organization.slug)
           end
         end

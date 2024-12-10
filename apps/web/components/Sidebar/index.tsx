@@ -25,7 +25,6 @@ import {
 import { SidebarHome, SidebarMyWorkItems } from '@/components/Sidebar/SidebarMyWorkGroup'
 import { SidebarProfile } from '@/components/Sidebar/SidebarProfile'
 import { SidebarProjectsGroup } from '@/components/Sidebar/SidebarProjectsGroup'
-import { TrialActiveBanner } from '@/components/Sidebar/TrialActiveBanner'
 import { SidebarSearchButton } from '@/components/SidebarSearchButton'
 import { useScope } from '@/contexts/scope'
 import { useChatSubscriptions } from '@/hooks/useChatSubscriptions'
@@ -182,7 +181,6 @@ function SidebarContent() {
         })}
       >
         <BrowserNotificationsUpsell />
-        <TrialActiveBanner />
         <SidebarMoreUnreadsBottom />
         <SidebarProfile />
       </SidebarGroup>

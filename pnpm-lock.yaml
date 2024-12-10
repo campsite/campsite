@@ -693,9 +693,6 @@ catalogs:
     storybook:
       specifier: ^8.0.0-beta.3
       version: 8.0.5
-    stripe:
-      specifier: ^16.11.0
-      version: 16.11.0
     supertest:
       specifier: ^6.3.3
       version: 6.3.4
@@ -914,9 +911,6 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 18.2.0(react@18.2.0)
-      stripe:
-        specifier: 'catalog:'
-        version: 16.11.0
     devDependencies:
       '@campsite/tsconfig':
         specifier: workspace:*
@@ -13181,10 +13175,6 @@ packages:
   strip-literal@2.1.0:
     resolution: {integrity: sha512-Op+UycaUt/8FbN/Z2TWPBLge3jWrP3xj10f3fnYxf052bKuS3EKs1ZQcVGjnEMdsNVAM+plXRdmjrZ/KgG3Skw==}
 
-  stripe@16.11.0:
-    resolution: {integrity: sha512-Rl4S2UAU/uWr3diETk3wkpXSe7LBPJ4BdXRzto5XVGGUhvLi8Q0MShwI5yhPH6Cdv2kmLu/Yl14QMlHgeRp7Qw==}
-    engines: {node: '>=12.*'}
-
   style-loader@3.3.4:
     resolution: {integrity: sha512-0WqXzrsMTyb8yjZJHDqwmnwRJvhALK9LfRtRc6B4UTWe8AijYLZYZ9thuJTZc2VfQWINADW/j+LiJnfy2RoC1w==}
     engines: {node: '>= 12.13.0'}
@@ -18531,7 +18521,7 @@ snapshots:
     dependencies:
       '@sanity/client': 6.22.0(debug@4.3.6)
       '@sanity/icons': 3.4.0(react@18.2.0)
-      '@sanity/preview-url-secret': 1.6.21(@sanity/client@6.22.0)
+      '@sanity/preview-url-secret': 1.6.21(@sanity/client@6.22.0(debug@4.3.6))
       '@sanity/ui': 2.8.9(react-dom@18.2.0(react@18.2.0))(react-is@18.2.0)(react@18.2.0)(styled-components@6.1.13(react-dom@18.2.0(react@18.2.0))(react@18.2.0))
       '@sanity/uuid': 3.0.2
       '@types/lodash.isequal': 4.5.8
@@ -18563,7 +18553,7 @@ snapshots:
     optionalDependencies:
       react: 18.2.0
 
-  '@sanity/preview-url-secret@1.6.21(@sanity/client@6.22.0)':
+  '@sanity/preview-url-secret@1.6.21(@sanity/client@6.22.0(debug@4.3.6))':
     dependencies:
       '@sanity/client': 6.22.0(debug@4.3.6)
       '@sanity/uuid': 3.0.2
@@ -18677,7 +18667,7 @@ snapshots:
 
   '@sanity/visual-editing@2.1.10(@sanity/client@6.22.0)(next@14.2.5(@babel/core@7.24.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.43.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(svelte@4.2.19)':
     dependencies:
-      '@sanity/preview-url-secret': 1.6.21(@sanity/client@6.22.0)
+      '@sanity/preview-url-secret': 1.6.21(@sanity/client@6.22.0(debug@4.3.6))
       '@vercel/stega': 0.1.2
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
@@ -28768,11 +28758,6 @@ snapshots:
   strip-literal@2.1.0:
     dependencies:
       js-tokens: 9.0.0
-
-  stripe@16.11.0:
-    dependencies:
-      '@types/node': 20.12.4
-      qs: 6.11.2
 
   style-loader@3.3.4(webpack@5.91.0(esbuild@0.20.2)):
     dependencies:

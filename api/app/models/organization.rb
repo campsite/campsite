@@ -12,7 +12,6 @@ class Organization < ApplicationRecord
   COVER_PHOTO_MAX_FILE_SIZE = 5.megabyte
   SLUG_MAX_LENGTH = 32
   TRIAL_DURATION = 14.days
-  TRIAL_ENDING_REMINDER_LEAD_TIME = 3.days
 
   RESERVED_NAMES = ["admin", "auth", "desktop", "invitations", "me", "new", "people", "settings", "sso"].freeze
   FEATURE_FLAGS = User::SHARED_FEATURE_FLAGS + [
@@ -55,8 +54,6 @@ class Organization < ApplicationRecord
   has_many :sso_domains, class_name: "OrganizationSsoDomain", dependent: :destroy_async
   has_many :post_digests, dependent: :destroy_async
   has_many :kept_post_digests, -> { kept }, class_name: "PostDigest"
-  has_many :organization_plan_add_ons, dependent: :destroy
-  has_many :scheduled_subscription_invoices, dependent: :destroy_async
   has_many :notes, through: :memberships, source: :notes
   has_many :call_rooms, dependent: :destroy_async
   has_many :calls, through: :call_rooms
@@ -105,8 +102,6 @@ class Organization < ApplicationRecord
   encrypts :invite_token, deterministic: true
 
   before_validation :set_tokenable
-  after_commit :delete_stripe_customer, on: :destroy
-  after_commit :reconcile_stripe_customer, if: -> { saved_change_to_billing_email? || saved_change_to_name? }, on: [:create, :update]
 
   def tokenable_attribute
     :invite_token
@@ -192,11 +187,6 @@ class Organization < ApplicationRecord
     return unless trial_active?
 
     (trial_ends_at.to_date - Date.current).to_i
-  end
-
-  def schedule_trial_ending_reminders
-    TrialEndingReminderJob.perform_at(trial_ends_at - Organization::TRIAL_ENDING_REMINDER_LEAD_TIME, id)
-    TrialEndedJob.perform_at(trial_ends_at, id)
   end
 
   def create_campsite_integration
@@ -471,47 +461,11 @@ class Organization < ApplicationRecord
   end
 
   def features
-    (Flipper.preload(FEATURE_FLAGS).select { |feature| feature.enabled?(self) }.map(&:name) + plan.features + plan_add_ons.flat_map(&:features)).uniq
+    (Flipper.preload(FEATURE_FLAGS).select { |feature| feature.enabled?(self) }.map(&:name) + plan.features).uniq
   end
 
   def plan
     Plan.by_name!(plan_name)
-  end
-
-  def plan_add_ons
-    organization_plan_add_ons.map(&:plan_add_on)
-  end
-
-  def plan_add_ons=(plan_add_ons)
-    self.organization_plan_add_ons = plan_add_ons.map do |plan_add_on|
-      organization_plan_add_ons.find_or_initialize_by(plan_add_on_name: plan_add_on.name)
-    end
-  end
-
-  def sync_with_stripe_subscription!(subscription)
-    if subscription.nil? || subscription.items.data.none? || !subscription.status.in?(ACTIVE_SUBSCRIPTION_STATUSES)
-      return update!(plan_name: Plan::FREE_NAME, plan_add_ons: [])
-    end
-
-    plan_items = subscription.items.data.select { |item| Plan::ALL_BY_STRIPE_PRODUCT_ID.key?(item.price.product) }
-
-    if plan_items.count > 1
-      raise MultiplePlanItemsError, "Expected Stripe subscription to have only one plan item, has multiple."
-    end
-
-    plan_item = plan_items.first
-    plan = Plan.by_stripe_product_id!(plan_item.price.product)
-
-    if plan.sync_members? && plan_item.quantity != member_count
-      Stripe::SubscriptionItem.update(plan_item.id, { quantity: member_count })
-    end
-
-    if plan.true_up_annual_subscriptions? && plan_item.price.recurring.interval == "year" && !subscription.cancel_at_period_end? && subscription.status != "trialing"
-      AnnualSubscriptionTrueUpJob.perform_async(id, subscription.id)
-    end
-
-    add_ons = subscription.items.data.select { |item| PlanAddOn::ALL_BY_STRIPE_PRODUCT_ID.key?(item.price.product) }.map { |item| PlanAddOn.by_stripe_product_id!(item.price.product) }
-    update!(plan_name: plan.name, plan_add_ons: add_ons)
   end
 
   def file_size_bytes_limit
@@ -527,16 +481,6 @@ class Organization < ApplicationRecord
   end
 
   private
-
-  def delete_stripe_customer
-    return unless stripe_customer_id
-
-    Stripe::Customer.delete(stripe_customer_id)
-  end
-
-  def reconcile_stripe_customer
-    ReconcileStripeCustomerJob.perform_async(id)
-  end
 
   def valid_domain
     return if email_domain.blank?

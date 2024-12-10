@@ -1024,18 +1024,6 @@ export type OrganizationIntegrationsSlackChannelsGetRequest = {
   limit?: number
 }
 
-export type StripeBillingPortalSession = {
-  url: string
-}
-
-export type StripeCheckoutSession = {
-  url: string
-}
-
-export type OrganizationIntegrationsStripeCheckoutSessionsPostRequest = {
-  price: 'essentials_monthly' | 'essentials_annual' | 'pro_monthly' | 'pro_annual'
-}
-
 export type ZapierComment = {
   id: string
   content: string
@@ -3246,10 +3234,6 @@ export type GetIntegrationsSlackChannelsParams = {
 export type GetIntegrationsSlackChannelsData = SlackChannelPage
 
 export type GetIntegrationsSlackChannelsByProviderChannelIdData = SlackChannel
-
-export type PostIntegrationsStripeBillingPortalSessionsData = StripeBillingPortalSession
-
-export type PostIntegrationsStripeCheckoutSessionsData = StripeCheckoutSession
 
 export type PostIntegrationsZapierCommentsData = ZapierComment
 
@@ -5813,56 +5797,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           this.request<GetIntegrationsSlackChannelsByProviderChannelIdData>({
             path: `/v1/organizations/${orgSlug}/integrations/slack/channels/${providerChannelId}`,
             method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @name PostIntegrationsStripeBillingPortalSessions
-     * @request POST:/v1/organizations/{org_slug}/integrations/stripe/billing_portal_sessions
-     */
-    postIntegrationsStripeBillingPortalSessions: () => {
-      const base = 'POST:/v1/organizations/{org_slug}/integrations/stripe/billing_portal_sessions' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostIntegrationsStripeBillingPortalSessionsData>([base]),
-        requestKey: (orgSlug: string) =>
-          dataTaggedQueryKey<PostIntegrationsStripeBillingPortalSessionsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
-          this.request<PostIntegrationsStripeBillingPortalSessionsData>({
-            path: `/v1/organizations/${orgSlug}/integrations/stripe/billing_portal_sessions`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @name PostIntegrationsStripeCheckoutSessions
-     * @request POST:/v1/organizations/{org_slug}/integrations/stripe/checkout_sessions
-     */
-    postIntegrationsStripeCheckoutSessions: () => {
-      const base = 'POST:/v1/organizations/{org_slug}/integrations/stripe/checkout_sessions' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostIntegrationsStripeCheckoutSessionsData>([base]),
-        requestKey: (orgSlug: string) =>
-          dataTaggedQueryKey<PostIntegrationsStripeCheckoutSessionsData>([base, orgSlug]),
-        request: (
-          orgSlug: string,
-          data: OrganizationIntegrationsStripeCheckoutSessionsPostRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostIntegrationsStripeCheckoutSessionsData>({
-            path: `/v1/organizations/${orgSlug}/integrations/stripe/checkout_sessions`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
             ...params
           })
       }

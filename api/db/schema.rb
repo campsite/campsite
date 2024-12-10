@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_11_07_222359) do
+ActiveRecord::Schema[7.2].define(version: 2024_12_10_210603) do
   create_table "attachments", id: { type: :bigint, unsigned: true }, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "public_id", limit: 12, null: false
     t.text "file_path", null: false
@@ -920,15 +920,6 @@ ActiveRecord::Schema[7.2].define(version: 2024_11_07_222359) do
     t.index ["user_id"], name: "index_organization_memberships_on_user_id"
   end
 
-  create_table "organization_plan_add_ons", id: { type: :bigint, unsigned: true }, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "organization_id", null: false
-    t.string "plan_add_on_name", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["organization_id", "plan_add_on_name"], name: "idx_org_plan_add_ons_on_org_and_name", unique: true
-    t.index ["organization_id"], name: "index_organization_plan_add_ons_on_organization_id"
-  end
-
   create_table "organization_settings", id: { type: :bigint, unsigned: true }, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "key", null: false
     t.string "value", null: false
@@ -952,7 +943,6 @@ ActiveRecord::Schema[7.2].define(version: 2024_11_07_222359) do
     t.string "public_id", limit: 12, null: false
     t.string "name", null: false
     t.string "slug", null: false
-    t.string "stripe_customer_id"
     t.string "email_domain"
     t.text "billing_email"
     t.string "avatar_path"
@@ -963,7 +953,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_11_07_222359) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "workos_organization_id"
-    t.string "plan_name", default: "free", null: false
+    t.string "plan_name", default: "pro", null: false
     t.integer "member_count", default: 0, null: false
     t.boolean "demo", default: false
     t.string "creator_role"
@@ -975,7 +965,6 @@ ActiveRecord::Schema[7.2].define(version: 2024_11_07_222359) do
     t.index ["invite_token"], name: "index_organizations_on_invite_token", unique: true
     t.index ["public_id"], name: "index_organizations_on_public_id", unique: true
     t.index ["slug"], name: "index_organizations_on_slug", unique: true
-    t.index ["stripe_customer_id"], name: "index_organizations_on_stripe_customer_id"
     t.index ["workos_organization_id"], name: "index_organizations_on_workos_organization_id"
   end
 
@@ -1400,16 +1389,6 @@ ActiveRecord::Schema[7.2].define(version: 2024_11_07_222359) do
     t.index ["schedulable_type", "schedulable_id", "name"], name: "idx_scheduled_notifications_on_schedulable_type_and_id_and_name"
     t.index ["schedulable_type", "schedulable_id"], name: "index_scheduled_notifications_on_schedulable"
     t.index ["time_zone", "delivery_time", "delivery_day"], name: "idx_scheduled_notifications_on_day_and_time_and_time_zone"
-  end
-
-  create_table "scheduled_subscription_invoices", id: { type: :bigint, unsigned: true }, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "organization_id", null: false, unsigned: true
-    t.string "stripe_subscription_id", null: false
-    t.datetime "scheduled_for", null: false
-    t.datetime "payment_attempted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["organization_id"], name: "index_scheduled_subscription_invoices_on_organization_id"
   end
 
   create_table "tags", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|

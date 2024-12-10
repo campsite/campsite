@@ -66,17 +66,6 @@ export function OrgSettingsPageWrapper(props: Props) {
                   Emojis
                 </SubnavigationTab>
               )}
-              {viewerIsAdmin && (
-                <>
-                  <SubnavigationTab
-                    href={`/${scope}/settings/billing`}
-                    active={router.pathname === '/[org]/settings/billing'}
-                    replace
-                  >
-                    Billing
-                  </SubnavigationTab>
-                </>
-              )}
               {viewerCanManageIntegrations && (
                 <>
                   <SubnavigationTab

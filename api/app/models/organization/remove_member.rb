@@ -16,7 +16,6 @@ class Organization
 
       if @membership.discard!
         OrganizationMailer.member_removed(@membership.user, @organization).deliver_later
-        SyncOrganizationPlanJob.perform_async(@organization.id)
       end
     end
   end

@@ -431,7 +431,6 @@ module Api
 
           assert_response :no_content
           assert_predicate @membership.reload, :discarded?
-          assert_enqueued_sidekiq_job(SyncOrganizationPlanJob, args: [@organization.id])
         end
 
         test "returns an error for a discarded member" do

@@ -25,7 +25,6 @@ end
 
 HIGH_RATE_PATHS = [
   "/v1/integrations/slack/events",
-  "/v1/integrations/stripe/events",
   "/v1/product_logs",
 ].to_set.freeze
 

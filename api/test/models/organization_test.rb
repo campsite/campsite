@@ -342,46 +342,6 @@ class OrganizationTest < ActiveSupport::TestCase
     end
   end
 
-  context "#create" do
-    test "queues a ReconcileStripeCustomerJob on billing email on create" do
-      org = create(:organization, :billing_email)
-
-      assert_enqueued_sidekiq_job(ReconcileStripeCustomerJob, args: [org.id])
-    end
-  end
-
-  context "#destroy" do
-    test "deletes the stripe customer" do
-      org = create(:organization, :stripe_customer)
-
-      Stripe::Customer.expects(:delete).with(org.stripe_customer_id)
-
-      org.destroy!
-    end
-  end
-
-  context "#update" do
-    test "queues a ReconcileStripeCustomerJob on billing email update" do
-      org = create(:organization, :billing_email)
-
-      Sidekiq::Queues.clear_all
-
-      org.update!(billing_email: "new-billing@example.com")
-
-      assert_enqueued_sidekiq_job(ReconcileStripeCustomerJob, args: [org.id])
-    end
-
-    test "queues a ReconcileStripeCustomerJob on name update" do
-      org = create(:organization)
-
-      Sidekiq::Queues.clear_all
-
-      org.update!(name: "New name")
-
-      assert_enqueued_sidekiq_job(ReconcileStripeCustomerJob, args: [org.id])
-    end
-  end
-
   context "#avatar_url" do
     test "returns a full formed url if avatar_path is a full formed url" do
       org = build(:organization, avatar_path: "https://example.com/path/to/image.png")
@@ -712,13 +672,6 @@ class OrganizationTest < ActiveSupport::TestCase
   end
 
   context "#features" do
-    test "includes plan add-on features" do
-      org = create(:organization)
-      org.plan_add_ons = [PlanAddOn.by_name!(PlanAddOn::SSO_NAME)]
-
-      assert_includes org.features, Plan::SSO_FEATURE
-    end
-
     test "organization on business plan has SSO feature" do
       org = create(:organization, plan_name: Plan::BUSINESS_NAME)
 

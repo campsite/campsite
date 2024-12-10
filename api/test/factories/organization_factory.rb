@@ -7,10 +7,6 @@ FactoryBot.define do
     sequence(:slug) { |n| "org-#{n}" }
     email_domain { "campsite.com" }
 
-    trait :stripe_customer do
-      stripe_customer_id { "cust_#{SecureRandom.urlsafe_base64(nil, false)}" }
-    end
-
     trait :billing_email do
       billing_email { "org-billing@example.com" }
     end

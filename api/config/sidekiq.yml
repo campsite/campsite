@@ -22,12 +22,6 @@ production:
       description: 'Pauses notifications for users with notification schedules that just ended'
       queue: background
       enabled: true
-    batch_sync_all_organization_plans_job:
-      class: 'BatchSyncAllOrganizationPlansJob'
-      cron: '0 8 * * *' # every day at 8am UTC
-      description: 'Syncs all organization plans with Stripe'
-      queue: within_30_minutes
-      enabled: true
     post_index_health_job:
       class: 'PostIndexHealthJob'
       cron: '14 * * * *' # every hour with some slop
