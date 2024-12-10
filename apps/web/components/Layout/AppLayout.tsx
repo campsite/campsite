@@ -5,7 +5,6 @@ import { useBreakpoint, useIsDesktopApp } from '@campsite/ui/src/hooks'
 
 import { MobileTabBar, NavigationBar, SignedOutNavigationBar } from '@/components/NavigationBar'
 import { RefreshAppBanner } from '@/components/NavigationSidebar/RefreshAppBanner'
-import { TrialExpiredBanner } from '@/components/NavigationSidebar/TrialExpiredBanner'
 import { SidebarContainer } from '@/components/Sidebar'
 import { SidebarOrgSwitcher } from '@/components/Sidebar/SidebarOrgSwitcher'
 import { useCurrentUserSubscriptions } from '@/hooks/useCurrentUserSubscriptions'
@@ -35,7 +34,6 @@ export function AppLayout({ children }: React.PropsWithChildren) {
         {lg && <SidebarContainer />}
 
         <main className='flex flex-1 flex-col overflow-hidden' id='main'>
-          <TrialExpiredBanner />
           {children}
         </main>
       </div>
