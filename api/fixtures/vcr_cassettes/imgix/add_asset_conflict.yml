@@ -2,7 +2,7 @@
 http_interactions:
   - request:
       method: post
-      uri: https://api.imgix.com/api/v1/sources/62b4f72dffcbff616be192da/assets/add/o/foklwviisxc1/p/6c6c54a9-e7ad-4a73-b990-62fd4f8a2e1c.png
+      uri: https://api.imgix.com/api/v1/sources/<IMGIX_SOURCE_ID>/assets/add/o/foklwviisxc1/p/6c6c54a9-e7ad-4a73-b990-62fd4f8a2e1c.png
       body:
         encoding: UTF-8
         string: '{}'

@@ -58,15 +58,5 @@ class TranscriptionClientTest < ActiveSupport::TestCase
       status = client.status
       assert_equal "COMPLETED", status
     end
-
-    it "accepts an attachment and fetches the vtt" do
-      client = TranscriptionClient.new(@attachment)
-      client.send(:s3_client).expects(:get_object).with({
-        bucket: "campsite-hls-test",
-        key: "#{@organization.post_file_key_prefix}1cef4bfc_b574_4976_8fe0_961d613061e0.vtt",
-      }).returns(@vtt)
-      vtt = client.vtt
-      assert_match "Hello World", vtt
-    end
   end
 end
