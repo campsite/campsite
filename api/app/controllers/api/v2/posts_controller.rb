@@ -37,8 +37,8 @@ module Api
 
         posts = current_organization.kept_published_posts.public_api_includes
 
-        if project_id.present?
-          project = current_organization.projects.find_by!(public_id: project_id)
+        if params[:channel_id].present?
+          project = current_organization.projects.find_by!(public_id: params[:channel_id])
 
           authorize(project, :list_posts?)
 

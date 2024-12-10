@@ -74,7 +74,7 @@ module Api
         end
 
         it "/v2/projects still works" do
-          get v2_projects_path, headers: oauth_request_headers(token: @org_app_token.plaintext_token)
+          get v2_channels_path, headers: oauth_request_headers(token: @org_app_token.plaintext_token)
           assert_response :success
           assert_equal 2, json_response["data"].count
         end
