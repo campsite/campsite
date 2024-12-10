@@ -23,7 +23,6 @@ module Admin
           assert_response :redirect
           assert_equal "Enabled #{feature_name} for staff", flash[:notice]
           assert_includes Flipper[feature_name].enabled_groups.map(&:name), :staff
-          assert_enqueued_sidekiq_job(HandleFlipperAuditLogJob)
         end
       end
 
@@ -38,7 +37,6 @@ module Admin
           assert_response :redirect
           assert_equal "Disabled #{feature_name} for staff", flash[:notice]
           assert_not_includes Flipper[feature_name].enabled_groups.map(&:name), :staff
-          assert_enqueued_sidekiq_job(HandleFlipperAuditLogJob)
         end
       end
     end

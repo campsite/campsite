@@ -24,7 +24,6 @@ module Admin
           assert_response :redirect
           assert_equal "Disabled #{feature_name} for #{user.flipper_id}", flash[:notice]
           assert_not Flipper.enabled?(feature_name, user)
-          assert_enqueued_sidekiq_job(HandleFlipperAuditLogJob)
         end
       end
     end

@@ -27,7 +27,6 @@ module Admin
 
           audit_log = FlipperAuditLog.last!
           assert_equal user.name, audit_log.target_display_name
-          assert_enqueued_sidekiq_job(HandleFlipperAuditLogJob, args: [audit_log.id])
         end
 
         test "it returns an error when user not found" do
@@ -51,7 +50,6 @@ module Admin
           assert_response :redirect
           assert_equal "Disabled #{feature_name} for #{user.email}", flash[:notice]
           assert_not Flipper.enabled?(feature_name, user)
-          assert_enqueued_sidekiq_job(HandleFlipperAuditLogJob)
         end
 
         test "it returns an error when user not found" do

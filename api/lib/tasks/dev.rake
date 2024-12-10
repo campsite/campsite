@@ -121,7 +121,6 @@ namespace :dev do
       campsite: {
         api_token: "TODO",
         api_url: "http://api.campsite.test:3001",
-        feature_flags_thread_id: "TODO",
       },
       figma: {
         client_id: "TODO",
