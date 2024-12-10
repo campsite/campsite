@@ -22,6 +22,7 @@ VCR.configure do |config|
   config.filter_sensitive_data("<FIGMA_OAUTH_REFRESH_TOKEN>") { Rails.application.credentials&.dig(:figma, :test_oauth_refresh_token) }
   config.filter_sensitive_data("<PLAIN_API_KEY>") { Rails.application.credentials&.dig(:plain, :api_key) }
   config.filter_sensitive_data("<IMGIX_API_KEY>") { Rails.application.credentials&.dig(:imgix, :api_key) }
+  config.filter_sensitive_data("<IMGIX_SOURCE_ID>") { Rails.application.credentials&.dig(:imgix, :source_id) }
   config.filter_sensitive_data("<OPENAI_API_KEY>") { Rails.application.credentials&.dig(:openai, :access_token) }
   config.filter_sensitive_data("<OPENAI_ORGANIZATION>") { Rails.application.credentials&.dig(:openai, :organization_id) }
   config.filter_sensitive_data("<TENOR_API_KEY>") { Rails.application.credentials&.dig(:tenor, :api_key) }

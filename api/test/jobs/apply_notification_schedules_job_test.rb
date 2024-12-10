@@ -12,7 +12,7 @@ class ApplyNotificationSchedulesTest < ActiveJob::TestCase
   context "#perform" do
     test "pauses notifications" do
       Timecop.freeze(Time.zone.parse("2024-09-26T17:00Z") - @pdt_offset) do
-        assert_query_count 11 do
+        assert_query_count 9 do
           ApplyNotificationSchedulesJob.new.perform
         end
 
