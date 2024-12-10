@@ -190,10 +190,6 @@ namespace :dev do
         client_secret: "TODO",
         signing_secret: "TODO",
       },
-      stripe: {
-        secret_key: "TODO",
-        webhook_signing_secret: "TODO",
-      },
       styled_text_api: {
         authtoken: "TODO",
       },

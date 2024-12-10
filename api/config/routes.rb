@@ -430,11 +430,6 @@ Rails.application.routes.draw do
           resources :channel_syncs, only: [:create]
         end
 
-        namespace :stripe do
-          resources :checkout_sessions, only: [:create]
-          resources :billing_portal_sessions, only: [:create]
-        end
-
         namespace :linear do
           get "installation", to: "installation#show", as: :installation
           delete "installation", to: "installation#destroy"
@@ -510,10 +505,6 @@ Rails.application.routes.draw do
 
     namespace :integrations, as: nil do
       namespace :slack, as: :slack_integration do
-        resource :events, only: [:create]
-      end
-
-      namespace :stripe, as: :stripe_integration do
         resource :events, only: [:create]
       end
 
