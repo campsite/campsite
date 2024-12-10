@@ -85,7 +85,6 @@ class Attachment < ApplicationRecord
 
   before_create :set_dimensions_on_create
   after_create_commit :enqueue_dimensions_job
-  after_create_commit :enqueue_transcription_job
   after_commit :broadcast_attachments_stale
 
   acts_as_list scope: [:subject, :gallery_id], add_new_at: :bottom, top_of_list: 0
@@ -112,27 +111,6 @@ class Attachment < ApplicationRecord
 
   def remote_figma_file_key
     figma_file&.remote_file_key
-  end
-
-  def update_transcription_job
-    # If we don't have a transcription job id, don't bother updating
-    return if transcription_job_id.blank?
-
-    # If the transcription job is not IN_PROGRESS don't bother updating
-    return if transcription_job_status != "IN_PROGRESS"
-
-    client = TranscriptionClient.new(self)
-    self.transcription_job_status = client.status
-
-    # Fetch the finished vtt file if the job is completed
-    if transcription_job_status == "COMPLETED"
-      # If we already have a transcription, don't bother updating
-      return if transcription_vtt.present?
-
-      self.transcription_vtt = client.vtt
-    end
-
-    save!
   end
 
   def image_urls
@@ -363,12 +341,6 @@ class Attachment < ApplicationRecord
     return if !image? && !video?
 
     AttachmentDimensionsJob.perform_async(id)
-  end
-
-  def enqueue_transcription_job
-    return unless video?
-
-    AttachmentTranscriptionJob.perform_async(id)
   end
 
   def broadcast_attachments_stale

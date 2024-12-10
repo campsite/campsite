@@ -65,11 +65,6 @@ export type OrganizationMember = {
   status: OrganizationMembershipStatus | null
 }
 
-export type Transcription = {
-  status: string
-  vtt: string | null
-}
-
 export type ImageUrls = {
   original_url: string
   thumbnail_url: string
@@ -3079,8 +3074,6 @@ export type PostActivityViewsData = UserNotificationCounts
 
 export type GetAttachmentsCommentersData = OrganizationMember[]
 
-export type GetAttachmentsTranscriptionData = Transcription
-
 export type PostAttachmentsData = Attachment
 
 export type GetAttachmentsByIdData = Attachment
@@ -4548,28 +4541,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         request: (orgSlug: string, attachmentId: string, params: RequestParams = {}) =>
           this.request<GetAttachmentsCommentersData>({
             path: `/v1/organizations/${orgSlug}/attachments/${attachmentId}/commenters`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @name GetAttachmentsTranscription
-     * @request GET:/v1/organizations/{org_slug}/attachments/{attachment_id}/transcription
-     */
-    getAttachmentsTranscription: () => {
-      const base = 'GET:/v1/organizations/{org_slug}/attachments/{attachment_id}/transcription' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetAttachmentsTranscriptionData>([base]),
-        requestKey: (orgSlug: string, attachmentId: string) =>
-          dataTaggedQueryKey<GetAttachmentsTranscriptionData>([base, orgSlug, attachmentId]),
-        request: (orgSlug: string, attachmentId: string, params: RequestParams = {}) =>
-          this.request<GetAttachmentsTranscriptionData>({
-            path: `/v1/organizations/${orgSlug}/attachments/${attachmentId}/transcription`,
             method: 'GET',
             ...params
           })

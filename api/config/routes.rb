@@ -191,9 +191,6 @@ Rails.application.routes.draw do
       put "/posts/:post_id", to: "posts#update"
       delete "/posts/:post_id", to: "posts#destroy"
 
-      # post attachment transcriptions
-      get "/posts/:post_id/transcriptions/:attachment_id", to: "posts/post_transcriptions#show", as: :post_attachment_transcription
-
       # post subscriptions
       post "/posts/:post_id/subscribe", to: "posts#subscribe", as: :post_subscribe
       delete "/posts/:post_id/unsubscribe", to: "posts#unsubscribe", as: :post_unsubscribe
@@ -249,7 +246,6 @@ Rails.application.routes.draw do
       resources :attachments, only: [:create, :show] do
         scope module: :attachments do
           resources :commenters, only: [:index]
-          resource :transcription, only: [:show]
         end
       end
 
