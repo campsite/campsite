@@ -233,7 +233,6 @@ catalog:
   slugify: ^1.6.6
   sonner: ^1.5.0
   storybook: ^8.0.0-beta.3
-  stripe: ^16.11.0
   supertest: ^6.3.3
   swagger-typescript-api: ^12.0.4
   tailwind-merge: ^2.3.0

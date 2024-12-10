@@ -17,8 +17,7 @@
     "jsdom": "^25.0.1",
     "next": "catalog:",
     "react": "catalog:",
-    "react-dom": "catalog:",
-    "stripe": "catalog:"
+    "react-dom": "catalog:"
   },
   "devDependencies": {
     "@campsite/tsconfig": "workspace:*",
