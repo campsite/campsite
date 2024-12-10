@@ -60,7 +60,6 @@ class Organization
         project.add_member!(admin, skip_notifications: true)
       end
 
-      org.schedule_trial_ending_reminders
       org.create_campsite_integration
 
       org

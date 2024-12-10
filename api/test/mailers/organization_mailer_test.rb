@@ -297,32 +297,6 @@ class OrganizationMailerTest < ActionMailer::TestCase
     end
   end
 
-  describe "#trial_ending_reminder" do
-    setup do
-      organization = create(:organization, trial_ends_at: Organization::TRIAL_ENDING_REMINDER_LEAD_TIME.from_now)
-      admin_member = create(:organization_membership, :admin, organization: organization)
-      mail = described_class.trial_ending_reminder(admin_member).deliver_now
-      @html_body = mail.html_part.body.to_s
-    end
-
-    test "renders email" do
-      assert_includes @html_body, "Your Campsite trial ends on"
-    end
-  end
-
-  describe "#trial_ended" do
-    setup do
-      organization = create(:organization, trial_ends_at: 1.second.ago)
-      admin_member = create(:organization_membership, :admin, organization: organization)
-      mail = described_class.trial_ended(admin_member).deliver_now
-      @html_body = mail.html_part.body.to_s
-    end
-
-    test "renders email" do
-      assert_includes @html_body, "Your Campsite trial is over"
-    end
-  end
-
   describe "#join_via_guest_link" do
     setup do
       @organization_membership = create(:organization_membership, :guest)

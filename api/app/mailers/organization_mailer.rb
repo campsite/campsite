@@ -104,31 +104,6 @@ class OrganizationMailer < ApplicationMailer
     campfire_mail(subject: @title, to: user.email, tag: "user-bundled-notifications")
   end
 
-  def trial_ending_reminder(admin_membership)
-    @organization = admin_membership.organization
-    @formatted_trial_ends_at = @organization.trial_ends_at.strftime("%A, %B %e")
-    @title = "🏕️ Your trial ends on #{@formatted_trial_ends_at}"
-
-    campfire_mail(
-      subject: @title,
-      from: support_email,
-      to: admin_membership.user.email,
-      tag: "trial-ending-reminder",
-    )
-  end
-
-  def trial_ended(admin_membership)
-    @organization = admin_membership.organization
-    @title = "🏕️ Your trial has ended"
-
-    campfire_mail(
-      subject: @title,
-      from: support_email,
-      to: admin_membership.user.email,
-      tag: "trial-ended",
-    )
-  end
-
   def data_export_completed(data_export)
     @data_export = data_export
     @user = data_export.member.user

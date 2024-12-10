@@ -12,7 +12,6 @@ class Organization < ApplicationRecord
   COVER_PHOTO_MAX_FILE_SIZE = 5.megabyte
   SLUG_MAX_LENGTH = 32
   TRIAL_DURATION = 14.days
-  TRIAL_ENDING_REMINDER_LEAD_TIME = 3.days
 
   RESERVED_NAMES = ["admin", "auth", "desktop", "invitations", "me", "new", "people", "settings", "sso"].freeze
   FEATURE_FLAGS = User::SHARED_FEATURE_FLAGS + [
@@ -188,11 +187,6 @@ class Organization < ApplicationRecord
     return unless trial_active?
 
     (trial_ends_at.to_date - Date.current).to_i
-  end
-
-  def schedule_trial_ending_reminders
-    TrialEndingReminderJob.perform_at(trial_ends_at - Organization::TRIAL_ENDING_REMINDER_LEAD_TIME, id)
-    TrialEndedJob.perform_at(trial_ends_at, id)
   end
 
   def create_campsite_integration

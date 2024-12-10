@@ -9,7 +9,7 @@ module Api
         include Devise::Test::IntegrationHelpers
 
         setup do
-          @organization = create(:organization)
+          @organization = create(:organization, plan_name: Plan::FREE_NAME)
           @feature_name = "test_feature"
           Flipper.enable(@feature_name, @organization)
         end

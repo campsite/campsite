@@ -76,16 +76,4 @@ class OrganizationMailerPreview < ActionMailer::Preview
 
     OrganizationMailer.bundled_notifications(member.user, member.organization, notifications, message_notifications)
   end
-
-  def trial_ending_reminder
-    admin_membership = OrganizationMembership.first
-
-    OrganizationMailer.trial_ending_reminder(admin_membership)
-  end
-
-  def trial_ended
-    admin_membership = OrganizationMembership.first
-
-    OrganizationMailer.trial_ended(admin_membership)
-  end
 end
