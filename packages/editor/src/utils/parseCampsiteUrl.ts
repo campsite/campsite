@@ -3,7 +3,7 @@ const COMMENT_HASH_REGEX = /#comment-(?<commentId>[a-zA-Z0-9]+)/
 
 export type CampsiteUrlSubjectType = 'notes' | 'posts' | 'projects' | 'calls' | 'comment'
 
-type ParsedCampsiteUrl = {
+interface ParsedCampsiteUrl {
   org: string
   subject: CampsiteUrlSubjectType
   id: string

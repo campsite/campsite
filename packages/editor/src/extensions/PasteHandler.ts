@@ -1,56 +1,21 @@
 import { Extension } from '@tiptap/core'
 import { toggleMark } from '@tiptap/pm/commands'
-import { Slice } from '@tiptap/pm/model'
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state'
 
+import cleanMarkdown from '../utils/cleanMarkdown'
 import { ALIAS_TO_LANGUAGE } from '../utils/codeHighlightedLanguages'
 import { createMarkdownParser } from '../utils/createMarkdownParser'
 import { inlineLinkAttachmentType } from '../utils/inlineLinkAttachmentType'
+import { isDropboxPaper } from '../utils/isDropboxPaper'
 import isInCode from '../utils/isInCode'
 import isInList from '../utils/isInList'
 import isInNewParagraph from '../utils/isInNewParagraph'
 import isMarkdown from '../utils/isMarkdown'
 import { isUrl } from '../utils/isUrl'
-import normalizePastedMarkdown from '../utils/normalizePastedMarkdown'
 import { parseCampsiteUrl } from '../utils/parseCampsiteUrl'
+import { parseSingleIframeSrc } from '../utils/parseSingleIframeSrc'
+import { singleNodeContent } from '../utils/singleNodeContent'
 import { supportedResourceMention } from './ResourceMention'
-
-function isDropboxPaper(html: string): boolean {
-  // real example: <meta charset='utf-8'><span class=" author-d-1gg9uz65z1iz85zgdz68zmqkz84zo2qotvotu4z70znz76z3lfyyz86zz77zz68zz68zz122zvz65zjeo5tyz122zlz89z1r">foo</span>
-  return html.startsWith("<meta charset='utf-8'>") && /author-d-[a-zA-Z0-9^"]+/.test(html)
-}
-
-function sliceSingleNode(slice: Slice) {
-  return slice.openStart === 0 && slice.openEnd === 0 && slice.content.childCount === 1
-    ? slice.content.firstChild
-    : null
-}
-
-/**
- * Parses the text contents of an HTML string and returns the src of the first
- * iframe if it exists.
- *
- * @param text The HTML string to parse.
- * @returns The src of the first iframe if it exists, or undefined.
- */
-function parseSingleIframeSrc(html: string) {
-  try {
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(html, 'text/html')
-
-    if (doc.body.children.length === 1 && doc.body.firstElementChild?.tagName === 'IFRAME') {
-      const iframe = doc.body.firstElementChild
-      const src = iframe.getAttribute('src')
-
-      if (src) {
-        return src
-      }
-    }
-  } catch (e) {
-    // Ignore the million ways parsing could fail.
-  }
-  return undefined
-}
 
 interface PasteHandlerOptions {
   enableInlineAttachments: boolean
@@ -98,7 +63,6 @@ export const PasteHandler = Extension.create<PasteHandlerOptions>({
             }
           },
           handlePaste: (view, event: ClipboardEvent) => {
-            // Do nothing if the document isn't currently editable
             if (view.props.editable && !view.props.editable(view.state)) {
               return false
             }
@@ -117,18 +81,13 @@ export const PasteHandler = Extension.create<PasteHandlerOptions>({
             const iframeSrc = parseSingleIframeSrc(event.clipboardData.getData('text/plain'))
             const text = iframeSrc && !inCode ? iframeSrc : textValue
 
-            const html = event.clipboardData.getData('text/html')
-            const vscode = event.clipboardData.getData('vscode-editor-data')
-
-            // If the users selection is currently in a code block then paste
-            // as plain text, ignore all formatting and HTML content.
             if (inCode) {
               event.preventDefault()
               view.dispatch(state.tr.insertText(text))
               return true
             }
 
-            // Check if the clipboard contents can be parsed as a single url
+            // is this a single URL?
             if (isUrl(text)) {
               // Handle converting links into attachments for supported services
               if (enableInlineAttachments && inlineLinkAttachmentType(text)) {
@@ -142,7 +101,7 @@ export const PasteHandler = Extension.create<PasteHandlerOptions>({
                 return false
               }
 
-              // If there is selected text then we want to wrap it in a link to the url
+              // wrap selected text in a link
               if (!state.selection.empty) {
                 toggleMark(this.editor.schema.marks.link, { href: text })(state, dispatch)
                 return true
@@ -156,6 +115,7 @@ export const PasteHandler = Extension.create<PasteHandlerOptions>({
                 }
               }
 
+              // If editor supports resource mentions and the url is internal, insert a resource mention
               if (schema.nodes.resourceMention) {
                 const parsedUrl = parseCampsiteUrl(text)
 
@@ -165,8 +125,6 @@ export const PasteHandler = Extension.create<PasteHandlerOptions>({
                 }
               }
 
-              // If it's not an embed and there is no text selected – just go ahead and insert the
-              // link directly
               const transaction = view.state.tr
                 .insertText(text, state.selection.from, state.selection.to)
                 .addMark(
@@ -180,21 +138,17 @@ export const PasteHandler = Extension.create<PasteHandlerOptions>({
               return true
             }
 
-            // Because VSCode is an especially popular editor that places metadata
-            // on the clipboard, we can parse it to find out what kind of content
-            // was pasted.
-            const vscodeMeta = vscode ? JSON.parse(vscode) : undefined
-            const pasteCodeLanguage = vscodeMeta?.mode
-            const supportsCodeBlock = !!state.schema.nodes.codeBlock
-            const supportsCodeMark = !!state.schema.marks.code
+            const vscodeEditorData = event.clipboardData.getData('vscode-editor-data')
+            const vscodeJSON = vscodeEditorData ? JSON.parse(vscodeEditorData) : undefined
+            const vscodeLanguage = vscodeJSON?.mode
 
-            if (pasteCodeLanguage && pasteCodeLanguage !== 'markdown') {
-              if (text.includes('\n') && supportsCodeBlock) {
+            if (vscodeLanguage && vscodeLanguage !== 'markdown') {
+              if (text.includes('\n') && !!state.schema.nodes.codeBlock) {
                 event.preventDefault()
 
                 const node = state.schema.nodes.codeBlock.create(
                   {
-                    language: Object.keys(ALIAS_TO_LANGUAGE).includes(vscodeMeta.mode) ? vscodeMeta.mode : null
+                    language: Object.keys(ALIAS_TO_LANGUAGE).includes(vscodeJSON.mode) ? vscodeJSON.mode : null
                   },
                   schema.text(text)
                 )
@@ -215,7 +169,7 @@ export const PasteHandler = Extension.create<PasteHandlerOptions>({
                 return true
               }
 
-              if (supportsCodeMark) {
+              if (state.schema.marks.code) {
                 event.preventDefault()
                 view.dispatch(
                   state.tr
@@ -226,33 +180,25 @@ export const PasteHandler = Extension.create<PasteHandlerOptions>({
               }
             }
 
-            // If the HTML on the clipboard is from Prosemirror then the best
-            // compatability is to just use the HTML parser, regardless of
-            // whether it "looks" like Markdown, see: outline/outline#2416
+            const html = event.clipboardData.getData('text/html')
+
             if (html?.includes('data-pm-slice')) {
               return false
             }
 
-            // If the text on the clipboard looks like Markdown OR there is no
-            // html on the clipboard then try to parse content as Markdown
-            if ((isMarkdown(text) && !isDropboxPaper(html)) || pasteCodeLanguage === 'markdown') {
+            if ((isMarkdown(text) && !isDropboxPaper(html)) || vscodeLanguage === 'markdown') {
               event.preventDefault()
 
-              // get pasted content as slice
-              const paste = pasteParser.parse(normalizePastedMarkdown(text))
+              const paste = pasteParser.parse(cleanMarkdown(text))
 
               if (!paste) {
                 return false
               }
 
               const slice = paste.slice(0)
+              const singleNode = singleNodeContent(slice)
               const tr = view.state.tr
               let currentPos = view.state.selection.from
-
-              // If the pasted content is a single paragraph then we loop over
-              // it's content and insert each node one at a time to allow it to
-              // be pasted inline with surrounding content.
-              const singleNode = sliceSingleNode(slice)
 
               if (singleNode?.type === this.editor.schema.nodes.paragraph) {
                 singleNode.forEach((node) => {
@@ -267,8 +213,6 @@ export const PasteHandler = Extension.create<PasteHandlerOptions>({
               return true
             }
 
-            // otherwise use the default HTML parser which will handle all paste
-            // "from the web" events
             return false
           }
         }

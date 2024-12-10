@@ -1,7 +1,7 @@
 import { isMarkActive, isNodeActive } from '@tiptap/core'
 import { EditorState } from '@tiptap/pm/state'
 
-type Options = {
+interface Options {
   onlyBlock?: boolean
   onlyMark?: boolean
 }

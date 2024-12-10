@@ -1,7 +1,7 @@
 import { Fragment, Node, Schema, Slice } from '@tiptap/pm/model'
 import { TextSelection, Transaction } from '@tiptap/pm/state'
 
-type InsertNodesOptions = {
+interface InsertNodesOptions {
   pos?: number | 'end'
   tr: Transaction
   nodes: Node[]

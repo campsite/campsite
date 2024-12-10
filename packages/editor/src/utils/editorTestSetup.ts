@@ -10,6 +10,7 @@ export function editorTestSetup() {
       top: 0,
       width: 0
     }
+
     return { ...rec, toJSON: () => rec }
   }
 
