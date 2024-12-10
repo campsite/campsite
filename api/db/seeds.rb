@@ -35,16 +35,6 @@ if Rails.env.development?
     secret: Doorkeeper.config.application_secret_strategy.transform_secret(Rails.application.credentials.cal_dot_com.client_secret),
   )
 
-  OauthApplication.create(
-    name: "Raycast",
-    provider: :raycast,
-    avatar_path: "static/avatars/service-raycast.png",
-    redirect_uri: Rails.application.credentials.raycast.redirect_uri, 
-    confidential: false, 
-    uid: Rails.application.credentials.raycast.client_id,
-    secret: Doorkeeper.config.application_secret_strategy.transform_secret(Rails.application.credentials.raycast.client_secret),
-  )
-
   # Set up the default dev org
   generator = DemoOrgs::Generator.new
   generator.update_content

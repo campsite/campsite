@@ -30,7 +30,6 @@ class OauthApplication < ApplicationRecord
     zapier: 2,
     google_calendar: 3,
     cal_dot_com: 4,
-    raycast: 5,
   }
 
   CAMPSITE_NOTIFICATION_POST_ID = "xbsbn74r4u9d"
