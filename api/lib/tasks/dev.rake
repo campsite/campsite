@@ -92,11 +92,6 @@ namespace :dev do
   task setup_credentials: :environment do
     # Default credentials structure
     DEFAULT_CREDENTIALS = {
-      active_record_encryption: {
-        primary_key: "TODO",
-        deterministic_key: "TODO",
-        key_derivation_salt: "TODO",
-      },
       aws: {
         s3_bucket: "TODO",
         access_key_id: "TODO",
@@ -241,7 +236,15 @@ namespace :dev do
         raise_if_missing_key: true,
       )
 
-      credentials.write(DEFAULT_CREDENTIALS.to_yaml)
+      credentials.write(
+        {
+          active_record_encryption: {
+            primary_key: SecureRandom.alphanumeric(32),
+            deterministic_key: SecureRandom.alphanumeric(32),
+            key_derivation_salt: SecureRandom.alphanumeric(32),
+          },
+        }.merge(DEFAULT_CREDENTIALS).to_yaml,
+      )
       puts "Created new #{environment} credentials at #{credentials_path}"
     end
 
