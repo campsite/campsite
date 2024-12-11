@@ -11,6 +11,7 @@ interface Props {
 }
 
 export const PusherProvider: React.FC<Props> = ({ children }) => {
+  // making a test change
   const [pusher, setPusher] = useState<Pusher | null>(null)
 
   useEffect(() => {
