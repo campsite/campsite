@@ -1,4 +1,82 @@
-# README
+# Campsite
+
+## Local dev setup
+
+To get started, run this command from the workspace root:
+
+```bash
+script/setup
+```
+
+Campsite requires setting up several services before you can run the basic version locally.
+
+### S3 (critical)
+
+S3 is needed to upload avatars and attachments. We recommend separate buckets for dev and production. For example, we use `campsite-media` and `campsite-media-dev` buckets.
+
+You should setup a IAM user with [these suggested policies](aws-policies.md) (make sure to use your buckets in the policy).
+
+Set your credentials for the API:
+
+```bash
+cd api
+script/credentials development
+```
+
+Configure these under the `aws` key.
+
+### Pusher (critical)
+
+[Pusher](https://pusher.com/) is used to send realtime updates and events. After creating your account, configure this under the `pusher` key in your credentials.
+
+### Imgix (critical)
+
+[Imgix](https://www.imgix.com/) is the CDN powering Campsite. On AWS IAM, you will need to create an imgix user + policy ([see recommended policy](aws-policies.md)).
+
+Then, add S3 as an [Imgix source](https://docs.imgix.com/en-US/getting-started/setup/creating-sources/amazon-s3). If you setup dev and prod S3 buckets, you will need a separate Imgix source for each.
+
+Lastly, create an API Key for Imgix in your account dropdown.
+
+Fill in all of these values in the credentials files:
+
+- `imgix.url` - The S3 sourced image domain. Should look like https://campsite-dev.imgix.net
+- `imgix.source_id` - The Imgix source ID (top of the source page or in the URL)
+- `imgix.api_key` - The API key you created
+- `imgix_video.url` - Same URL as `imgix.url` but with `.video` as the TLD (e.g. https://campsite-dev.imgix.video)
+
+> [!NOTE]
+> While here you can also setup [Imgix Web Folders](https://docs.imgix.com/en-US/getting-started/setup/creating-sources/web-folder) and put the URL in `imgix_folder.url`. This is used to cache doc thumbnails, but isn't necessary on local dev. The web folder is needed to host doc thumbnails in prod.
+
+### 100ms
+
+[100ms](https://www.100ms.live/) powers Campsite's video conferencing features. After creating an account, set these values under the `hms` credentials key.
+
+> [!NOTE]
+> Video calls with webhooks will only work when using a secure tunnel such as ngrok.
+
+### OpenAI
+
+We use the OpenAI API to generate summaries for calls and posts. You need both an API key and your organization ID (not the name, found in OpenAI platform settings). Add these under the `openai` credentials key.
+
+### Others
+
+There are many other services we use to power Campsite features. Create accounts and set up credentials as needed:
+
+- `aws_ecs` - run data exports on AWS Elastic Container Service
+- `cal_dot_com` - the Campsite [Cal.com](https://cal.com/) app
+- `figma` - render frames via the [Figma REST API](https://www.figma.com/developers/api)
+- `google_calendar` - the Campsite Google Calendar app (see details below)
+- `linear` - the Campsite Linear app (see [API docs](https://developers.linear.app/docs))
+- `omniauth_google` - Google OAuth
+- `plain` - customer feedback (likely not needed)
+- `postmark` - sending emails via the [Postmark API](https://postmarkapp.com/developer)
+- `sentry` - bug reports, just need the DSN
+- `slack` - Campsite Slack app
+- `vercel.revalidate_static_cache` - generate your own key to safely revalidate cached docs (ISR)
+- `webpush_vapid` - VAPID keys necessary to send web push notifications ([docs](https://github.com/pushpad/web-push#generating-vapid-keys))
+- `workos` - SSO (likely wont need this)
+- `zapier` - The Campsite Zapier app
+- `tenor` - GIF search ([docs](https://tenor.com/gifapi))
 
 ## Running Campsite in development
 

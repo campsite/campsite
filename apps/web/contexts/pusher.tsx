@@ -6,7 +6,7 @@ import { PUSHER_APP_CLUSTER, PUSHER_KEY, RAILS_API_URL } from '@campsite/config'
 
 const PusherContext = createContext<Pusher | null>(null)
 
-type Props = {
+interface Props {
   children: React.ReactNode
 }
 

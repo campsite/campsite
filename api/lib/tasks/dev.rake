@@ -107,12 +107,6 @@ namespace :dev do
         access_key_id: "TODO",
         secret_access_key: "TODO",
       },
-      aws_transcriber: {
-        source_media_bucket: "n/a",
-        output_bucket: "n/a",
-        access_key_id: "n/a",
-        secret_access_key: "n/a",
-      },
       cal_dot_com: {
         client_id: "TODO",
         client_secret: "TODO",
@@ -191,7 +185,7 @@ namespace :dev do
         signing_secret: "TODO",
       },
       styled_text_api: {
-        authtoken: "TODO",
+        authtoken: "d8c0a2827589659ff292a8999b024f24a185ed82",
       },
       userlist: {
         push_key: "TODO",
