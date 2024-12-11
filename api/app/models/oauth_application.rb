@@ -28,7 +28,6 @@ class OauthApplication < ApplicationRecord
     editor_sync: 0,
     figma: 1,
     zapier: 2,
-    google_calendar: 3,
     cal_dot_com: 4,
   }
 

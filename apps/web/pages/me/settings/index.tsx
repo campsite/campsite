@@ -12,7 +12,6 @@ import { ThemePicker } from '@/components/ThemePicker'
 import { Behaviors } from '@/components/UserSettings/Behaviors'
 import { CalDotComIntegration } from '@/components/UserSettings/CalDotComIntegration'
 import { FigmaIntegration } from '@/components/UserSettings/FigmaIntegration'
-import { GoogleCalendarIntegration } from '@/components/UserSettings/GoogleCalendarIntegration'
 import { NotificationSettings } from '@/components/UserSettings/Notifications/NotificationSettings'
 import { PushNotificationSettings } from '@/components/UserSettings/Notifications/PushNotificationSettings'
 import { NotificationSchedule } from '@/components/UserSettings/NotificationSchedule'
@@ -49,7 +48,6 @@ const UserSettingsPage: PageWithProviders<any> = () => {
         <DesktopAppUpsell />
         <PWAUpsell />
         <FigmaIntegration />
-        <GoogleCalendarIntegration />
         <CalDotComIntegration />
         <PersonalCallLinks />
         <ThemePicker />

@@ -38,7 +38,6 @@ export const IMGIX_DOMAIN = IS_PRODUCTION ? 'https://campsite.imgix.net' : 'http
 
 export const FIGMA_PLUGIN_URL = 'https://www.figma.com/community/plugin/1108886817260186751'
 export const ZAPIER_APP_URL = 'https://zapier.com/apps/campsite/integrations'
-export const GOOGLE_CALENDAR_ADD_ON_URL = 'https://workspace.google.com/marketplace/app/campsite/723431485517'
 export const CAL_DOT_COM_APP_URL = 'https://app.cal.com/apps/campsite'
 
 export const LINEAR_CALLBACK_URL = `${RAILS_API_URL}/v1/integrations/linear/callback`

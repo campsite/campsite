@@ -16,16 +16,6 @@ if Rails.env.development?
   )
 
   OauthApplication.create(
-    name: "Google Calendar",
-    provider: :google_calendar,
-    avatar_path: "static/avatars/service-google-calendar.png",
-    redirect_uri: Rails.application.credentials.google_calendar.redirect_uri, 
-    confidential: true, 
-    uid: Rails.application.credentials.google_calendar.client_id,
-    secret: Doorkeeper.config.application_secret_strategy.transform_secret(Rails.application.credentials.google_calendar.client_secret),
-  )
-
-  OauthApplication.create(
     name: "Cal.com",
     provider: :cal_dot_com,
     avatar_path: "static/avatars/service-cal-dot-com.png",

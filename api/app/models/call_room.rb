@@ -20,7 +20,7 @@ class CallRoom < ApplicationRecord
       )
     }
 
-  enum :source, { subject: 0, google_calendar: 3, new_call_button: 4, cal_dot_com: 5 }
+  enum :source, { subject: 0, new_call_button: 4, cal_dot_com: 5 }
 
   def url
     "#{organization.url}/calls/join/#{public_id}"

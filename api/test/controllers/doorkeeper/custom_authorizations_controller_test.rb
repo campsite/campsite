@@ -14,7 +14,7 @@ module Doorkeeper
 
     context "#new" do
       test "does not include the organization picker when creating an AccessGrant for a user" do
-        oauth_application = create(:oauth_application, :google_calendar)
+        oauth_application = create(:oauth_application)
 
         sign_in @user
         get oauth_authorization_path, params: {
@@ -28,7 +28,7 @@ module Doorkeeper
       end
 
       test "redirects with code if matching access token exists" do
-        oauth_application = create(:oauth_application, :google_calendar)
+        oauth_application = create(:oauth_application)
         access_token = create(:access_token, application: oauth_application, resource_owner_id: @user.id)
 
         sign_in @user
@@ -58,7 +58,7 @@ module Doorkeeper
       end
 
       test "returns not found when the application is discarded" do
-        oauth_application = create(:oauth_application, :google_calendar, discarded_at: 5.minutes.ago)
+        oauth_application = create(:oauth_application, discarded_at: 5.minutes.ago)
 
         sign_in @user
         get oauth_authorization_path, params: {

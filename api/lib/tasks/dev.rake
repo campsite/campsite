@@ -114,11 +114,6 @@ namespace :dev do
         client_id: "TODO",
         client_secret: "TODO",
       },
-      google_calendar: {
-        client_id: "TODO",
-        client_secret: "TODO",
-        redirect_uri: "TODO",
-      },
       hms: {
         app_access_key: "TODO",
         app_secret: "TODO",

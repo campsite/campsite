@@ -16,11 +16,6 @@ FactoryBot.define do
       use_refresh_token { true }
     end
 
-    trait :google_calendar do
-      association :application, factory: [:oauth_application, :google_calendar]
-      scopes { "read_organization read_user write_call_room" }
-    end
-
     trait :cal_dot_com do
       association :application, factory: [:oauth_application, :cal_dot_com]
       scopes { "read_organization read_user write_call_room" }

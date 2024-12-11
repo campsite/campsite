@@ -2,15 +2,11 @@ import { memo, useMemo, useState } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { useAtomValue } from 'jotai'
-import Image from 'next/image'
 import { useRouter } from 'next/router'
 import { useDebounce } from 'use-debounce'
 
-import { CAL_DOT_COM_APP_URL, GOOGLE_CALENDAR_ADD_ON_URL } from '@campsite/config'
 import { Call, CallPage, Project } from '@campsite/types'
 import {
-  Button,
-  CloseIcon,
   Command,
   HighlightedCommandItem,
   Link,
@@ -55,12 +51,8 @@ import {
 } from '@/components/Titlebar/BreadcrumbTitlebar'
 import { useScope } from '@/contexts/scope'
 import { useCallsSubscriptions } from '@/hooks/useCallsSubscriptions'
-import { useGetCalDotComIntegration } from '@/hooks/useGetCalDotComIntegration'
 import { useGetCalls } from '@/hooks/useGetCalls'
-import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
-import { useGetGoogleCalendarIntegration } from '@/hooks/useGetGoogleCalendarIntegration'
 import { useIsCommunity } from '@/hooks/useIsCommunity'
-import { useUpdatePreference } from '@/hooks/useUpdatePreference'
 import { encodeCommandListSubject } from '@/utils/commandListSubject'
 import { flattenInfiniteData } from '@/utils/flattenInfiniteData'
 import { getGroupDateHeading } from '@/utils/getGroupDateHeading'
@@ -106,7 +98,6 @@ export function CallsIndex() {
           <RefetchingPageIndicator isRefetching={isRefetching} />
 
           <IndexPageContent id='/[org]/calls'>
-            <CalendarIntegrationsUpsell />
             <CallsContent getCalls={getCalls} isSearching={isSearching} />
           </IndexPageContent>
         </IndexPageContainer>
@@ -386,81 +377,6 @@ export function CompactCallRow({ call, display }: CompactCallRowProps) {
       </div>
 
       {call.project && <ProjectTag project={call.project} />}
-    </div>
-  )
-}
-
-export function CalendarIntegrationsUpsell() {
-  const { data: googleCalendarIntegration } = useGetGoogleCalendarIntegration()
-  const { data: calDotComIntegration } = useGetCalDotComIntegration()
-  const { data: currentUser } = useGetCurrentUser()
-  const { mutate: updateUserPreference } = useUpdatePreference()
-
-  if (currentUser?.preferences?.feature_tip_calls_index_integrations === 'true') return null
-  if (!googleCalendarIntegration || googleCalendarIntegration.installed) return null
-  if (!calDotComIntegration || calDotComIntegration.installed) return null
-
-  return (
-    <div className='bg-tertiary flex flex-col items-start justify-between rounded-2xl'>
-      <div className='flex w-full items-center gap-3 border-b p-4'>
-        <CallBreadcrumbIcon />
-
-        <UIText className='flex-1' weight='font-semibold'>
-          Use Campsite calls in more places
-        </UIText>
-        <Button
-          iconOnly={<CloseIcon strokeWidth='2' />}
-          accessibilityLabel='Dismiss'
-          round
-          variant='plain'
-          onClick={() => {
-            updateUserPreference({
-              preference: 'feature_tip_calls_index_integrations',
-              value: 'true'
-            })
-          }}
-        />
-      </div>
-
-      <div className='flex w-full flex-col gap-4 p-4'>
-        {!calDotComIntegration?.installed && (
-          <div className='flex items-center gap-3'>
-            <Image
-              src='/img/services/cal-dot-com.png'
-              width='36'
-              height='36'
-              alt='Cal.com icon'
-              className='rounded-md dark:ring-1 dark:ring-white/10'
-            />
-            <div className='flex-1'>
-              <UIText weight='font-semibold'>Cal.com</UIText>
-              <UIText secondary>Use Campsite calls for new bookings</UIText>
-            </div>
-            <Button href={CAL_DOT_COM_APP_URL} externalLink variant='primary'>
-              Add to Cal.com
-            </Button>
-          </div>
-        )}
-
-        {!googleCalendarIntegration?.installed && (
-          <div className='flex items-center gap-3'>
-            <Image
-              src='/img/services/google-calendar.png'
-              width='36'
-              height='36'
-              alt='Google Calendar icon'
-              className='rounded-md'
-            />
-            <div className='flex-1'>
-              <UIText weight='font-semibold'>Google Calendar</UIText>
-              <UIText secondary>Attach call links to calendar events in a single click</UIText>
-            </div>
-            <Button href={GOOGLE_CALENDAR_ADD_ON_URL} externalLink variant='primary'>
-              Add to Google Calendar
-            </Button>
-          </div>
-        )}
-      </div>
     </div>
   )
 }

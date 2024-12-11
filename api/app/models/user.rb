@@ -493,21 +493,6 @@ class User < ApplicationRecord
     )
   end
 
-  def google_calendar_organization
-    if google_calendar_organization_id
-      organization = organizations.find_by(id: google_calendar_organization_id)
-      return organization if organization
-
-      update!(google_calendar_organization_id: nil)
-    end
-
-    likely_primary_work_organization
-  end
-
-  def installed_google_calendar_integration?
-    access_tokens.joins(:application).where(application: { provider: :google_calendar }).any?
-  end
-
   def cal_dot_com_organization
     preferred_cal_dot_com_organization || likely_primary_work_organization
   end

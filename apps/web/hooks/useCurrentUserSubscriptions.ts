@@ -60,9 +60,6 @@ export const useCurrentUserSubscriptions = () => {
 
   const invalidateAccessTokens = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: apiClient.integrations.getIntegrationsCalDotComIntegration().baseKey })
-    queryClient.invalidateQueries({
-      queryKey: apiClient.integrations.getIntegrationsGoogleCalendarIntegration().baseKey
-    })
   }, [queryClient])
 
   useBindCurrentUserEvent('current-user-stale', updateCurrentUser)

@@ -24,13 +24,6 @@ FactoryBot.define do
       scopes { "read_organization write_organization" }
     end
 
-    trait :google_calendar do
-      name { "Google Calendar" }
-      provider { :google_calendar }
-      owner { nil }
-      scopes { "read_organization write_organization" }
-    end
-
     trait :cal_dot_com do
       name { "Cal.com" }
       provider { :cal_dot_com }

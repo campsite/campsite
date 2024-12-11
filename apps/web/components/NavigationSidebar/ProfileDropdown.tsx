@@ -14,7 +14,6 @@ import {
   DotsHorizontal,
   FigmaOutlineIcon,
   GearIcon,
-  GoogleIcon,
   HelpIcon,
   LinearIcon,
   Link,
@@ -148,13 +147,6 @@ export function ProfileDropdown({
           leftSlot: <FigmaOutlineIcon />,
           external: true,
           url: `${SITE_URL}/figma/plugin`
-        },
-        {
-          type: 'item',
-          label: 'Google Calendar',
-          leftSlot: <GoogleIcon />,
-          external: true,
-          url: 'https://workspace.google.com/marketplace/app/campsite/723431485517'
         },
         {
           type: 'item',

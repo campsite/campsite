@@ -5,7 +5,6 @@ module Api
     class BaseController < ActionController::API
       class FigmaUnauthorizedAccess < StandardError; end
       class SyncUnauthorizedAccess < StandardError; end
-      class GoogleCalendarUnauthorizedAccess < StandardError; end
       class CalDotComUnauthorizedAccess < StandardError; end
       include Pundit::Authorization
       include ActionController::MimeResponds
@@ -24,7 +23,6 @@ module Api
       before_action :ensure_figma_token_access_restricted
       before_action :log_figma_token_access
       before_action :ensure_sync_token_access_restricted
-      before_action :ensure_google_calendar_token_access_restricted
       before_action :ensure_cal_dot_com_token_access_restricted
       before_action :authorize_rack_mini_profiler
       before_action :set_user_preferred_timezone, if: proc { user_signed_in? && current_user.preferred_timezone.blank? }
@@ -174,14 +172,6 @@ module Api
         end
       end
 
-      def ensure_google_calendar_token_access_restricted
-        return unless google_calendar_token_auth?
-
-        unless GoogleCalendarTokenAccess.allowed?(controller: params[:controller], action: params[:action])
-          render_forbidden(GoogleCalendarUnauthorizedAccess.new("Unauthorized Google Calendar API request"))
-        end
-      end
-
       def ensure_cal_dot_com_token_access_restricted
         return unless cal_dot_com_token_auth?
 
@@ -217,12 +207,6 @@ module Api
 
       def sync_token_auth?
         @sync_token_auth ||= doorkeeper_token&.application&.editor_sync?
-      end
-
-      def google_calendar_token_auth?
-        return @google_calendar_token_auth if defined?(@google_calendar_token_auth)
-
-        @google_calendar_token_auth = doorkeeper_token&.application&.google_calendar?
       end
 
       def cal_dot_com_token_auth?

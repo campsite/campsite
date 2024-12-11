@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_12_10_210603) do
+ActiveRecord::Schema[7.2].define(version: 2024_12_11_233239) do
   create_table "attachments", id: { type: :bigint, unsigned: true }, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "public_id", limit: 12, null: false
     t.text "file_path", null: false
@@ -1479,7 +1479,6 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_10_210603) do
     t.datetime "scheduled_email_notifications_from"
     t.boolean "demo", default: false
     t.boolean "staff", default: false, null: false
-    t.bigint "google_calendar_organization_id", unsigned: true
     t.string "referrer", limit: 2048
     t.string "landing_url", limit: 2048
     t.datetime "notification_pause_expires_at"
@@ -1487,7 +1486,6 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_10_210603) do
     t.datetime "notifications_paused_at"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true, length: 320
-    t.index ["google_calendar_organization_id"], name: "index_users_on_google_calendar_organization_id"
     t.index ["login_token"], name: "index_users_on_login_token", unique: true
     t.index ["omniauth_provider", "omniauth_uid"], name: "index_users_on_omniauth_provider_and_omniauth_uid", unique: true
     t.index ["public_id"], name: "index_users_on_public_id", unique: true

@@ -87,9 +87,6 @@ export function Footer() {
               <FooterLink href='https://www.figma.com/community/plugin/1108886817260186751/campsite' target='_blank'>
                 Figma
               </FooterLink>
-              <FooterLink href='https://workspace.google.com/marketplace/app/campsite/723431485517' target='_blank'>
-                Google Calendar
-              </FooterLink>
               <FooterLink href='https://app.cal.com/apps/campsite' target='_blank'>
                 Cal.com
               </FooterLink>

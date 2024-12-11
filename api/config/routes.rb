@@ -525,12 +525,6 @@ Rails.application.routes.draw do
         resources :projects, only: [:index]
       end
 
-      namespace :google do
-        resources :calendar_events, only: [:create]
-        resource :calendar_integration, only: [:show]
-        resource :calendar_events_organization, only: [:update]
-      end
-
       namespace :cal_dot_com do
         resources :call_rooms, only: [:create]
         resource :integration, only: [:show]

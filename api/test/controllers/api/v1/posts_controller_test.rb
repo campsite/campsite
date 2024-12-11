@@ -993,14 +993,6 @@ module Api
           assert_equal "Foo Post Title bar Note Title baz Call Title", json_response["truncated_description_text"]
         end
 
-        test "returns 403 for a Google Calendar access token" do
-          @access_token = create(:access_token, :google_calendar, resource_owner: @author_member.user)
-
-          get organization_post_path(@organization.slug, @post.public_id), headers: bearer_token_header(@access_token.plaintext_token)
-
-          assert_response :forbidden
-        end
-
         test "returns 403 for a Cal.com access token" do
           @access_token = create(:access_token, :cal_dot_com, resource_owner: @author_member.user)
 
