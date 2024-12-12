@@ -4,7 +4,6 @@ module Api
   module V1
     class DataExportCallbacksController < BaseController
       skip_before_action :require_authenticated_user, only: :update
-      skip_before_action :require_org_sso_authentication, only: :update
       skip_before_action :require_org_two_factor_authentication, only: :update
       skip_before_action :require_authenticated_organization_membership, only: :update
 

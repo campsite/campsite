@@ -183,7 +183,7 @@ export type CallRoom = {
 }
 
 export type OrganizationCallRoomsPostRequest = {
-  source: 'subject' | 'google_calendar' | 'new_call_button' | 'cal_dot_com'
+  source: 'subject' | 'new_call_button' | 'cal_dot_com'
 }
 
 export type OrganizationCallAllRecordingsDeleteResponse = object
@@ -974,23 +974,6 @@ export type IntegrationsCalDotComOrganizationPutRequest = {
 
 export type FigmaIntegrationGetResponse = {
   has_figma_integration: boolean
-}
-
-export type GoogleCalendarEvent = {
-  adminEmail: string
-  id: string
-  videoUri: string
-}
-
-export type IntegrationsGoogleCalendarEventsOrganizationPutResponse = object
-
-export type IntegrationsGoogleCalendarEventsOrganizationPutRequest = {
-  organization_id: string
-}
-
-export type GoogleCalendarIntegration = {
-  installed: boolean
-  organization: PublicOrganization
 }
 
 export type LinearIntegration = {
@@ -1884,7 +1867,6 @@ export type OrganizationFeaturesGetResponse = {
     | 'channel_split_view'
     | 'no_emoji_accessories'
     | 'export'
-    | 'organization_sso'
     | 'api_endpoint_list_members'
     | 'api_endpoint_list_posts'
     | 'multi_org_apps'
@@ -1894,13 +1876,8 @@ export type OrganizationFeaturesGetResponse = {
   )[]
 }
 
-export type OrganizationSsoConfigurationPostResponse = {
-  sso_portal_url: string
-}
-
 export type OrganizationSettings = {
   enforce_two_factor_authentication: boolean
-  enforce_sso_authentication: boolean
 }
 
 export type Organization = {
@@ -1914,7 +1891,6 @@ export type Organization = {
   invitation_url: string
   paid: boolean
   plan_name: string
-  sso_enabled: boolean
   show_upgrade_banner: boolean
   trial_expired: boolean
   trial_active: boolean
@@ -1952,7 +1928,6 @@ export type Organization = {
     | 'channel_split_view'
     | 'no_emoji_accessories'
     | 'export'
-    | 'organization_sso'
     | 'api_endpoint_list_members'
     | 'api_endpoint_list_posts'
     | 'multi_org_apps'
@@ -3207,13 +3182,6 @@ export type PutIntegrationsCalDotComOrganizationData = IntegrationsCalDotComOrga
 
 export type GetIntegrationsFigmaIntegrationData = FigmaIntegrationGetResponse
 
-export type PostIntegrationsGoogleCalendarEventsData = GoogleCalendarEvent
-
-export type PutIntegrationsGoogleCalendarEventsOrganizationData =
-  IntegrationsGoogleCalendarEventsOrganizationPutResponse
-
-export type GetIntegrationsGoogleCalendarIntegrationData = GoogleCalendarIntegration
-
 export type GetIntegrationsLinearInstallationData = LinearIntegration
 
 export type DeleteIntegrationsLinearInstallationData = OrganizationsOrgSlugIntegrationsLinearInstallationDeleteResponse
@@ -3630,8 +3598,6 @@ export type GetOrganizationMembershipsData = PublicOrganizationMembership[]
 export type PostBulkInvitesData = OrganizationInvitation[]
 
 export type GetFeaturesData = OrganizationFeaturesGetResponse
-
-export type PostSsoConfigurationData = OrganizationSsoConfigurationPostResponse
 
 export type PostSsoData = Organization
 
@@ -8333,27 +8299,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name PostSsoConfiguration
-     * @request POST:/v1/organizations/{org_slug}/sso/configuration
-     */
-    postSsoConfiguration: () => {
-      const base = 'POST:/v1/organizations/{org_slug}/sso/configuration' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostSsoConfigurationData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostSsoConfigurationData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
-          this.request<PostSsoConfigurationData>({
-            path: `/v1/organizations/${orgSlug}/sso/configuration`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
      * @name PostSso
      * @request POST:/v1/organizations/{org_slug}/sso
      */
@@ -11319,71 +11264,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         request: (params: RequestParams = {}) =>
           this.request<GetIntegrationsFigmaIntegrationData>({
             path: `/v1/integrations/figma_integration`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @name PostIntegrationsGoogleCalendarEvents
-     * @request POST:/v1/integrations/google/calendar_events
-     */
-    postIntegrationsGoogleCalendarEvents: () => {
-      const base = 'POST:/v1/integrations/google/calendar_events' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostIntegrationsGoogleCalendarEventsData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostIntegrationsGoogleCalendarEventsData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<PostIntegrationsGoogleCalendarEventsData>({
-            path: `/v1/integrations/google/calendar_events`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @name PutIntegrationsGoogleCalendarEventsOrganization
-     * @request PUT:/v1/integrations/google/calendar_events_organization
-     */
-    putIntegrationsGoogleCalendarEventsOrganization: () => {
-      const base = 'PUT:/v1/integrations/google/calendar_events_organization' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PutIntegrationsGoogleCalendarEventsOrganizationData>([base]),
-        requestKey: () => dataTaggedQueryKey<PutIntegrationsGoogleCalendarEventsOrganizationData>([base]),
-        request: (data: IntegrationsGoogleCalendarEventsOrganizationPutRequest, params: RequestParams = {}) =>
-          this.request<PutIntegrationsGoogleCalendarEventsOrganizationData>({
-            path: `/v1/integrations/google/calendar_events_organization`,
-            method: 'PUT',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @name GetIntegrationsGoogleCalendarIntegration
-     * @request GET:/v1/integrations/google/calendar_integration
-     */
-    getIntegrationsGoogleCalendarIntegration: () => {
-      const base = 'GET:/v1/integrations/google/calendar_integration' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetIntegrationsGoogleCalendarIntegrationData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetIntegrationsGoogleCalendarIntegrationData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetIntegrationsGoogleCalendarIntegrationData>({
-            path: `/v1/integrations/google/calendar_integration`,
             method: 'GET',
             ...params
           })

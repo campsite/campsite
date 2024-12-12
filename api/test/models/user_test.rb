@@ -235,106 +235,9 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  context "#from_sso" do
-    context "existing authenticated sso user" do
-      before do
-        @organization = create(:organization, :workos)
-        @user = create(:user, :omniauth, :workos)
-        @profile = workos_profile_fixture(
-          email: @user.email,
-          id: @user.workos_profile_id,
-          organization_id: @organization.workos_organization_id,
-        )
-      end
-
-      test "updates the user with workos info" do
-        assert_no_difference -> { User.count } do
-          user = User.from_sso(profile: @profile, organization: @organization)
-
-          assert_predicate user.reload, :valid?
-          assert_predicate user, :confirmed?
-          assert_equal @profile.full_name, user.name
-          assert_equal @profile.id, user.workos_profile_id
-        end
-      end
-
-      test "clears out existing omniauth info" do
-        assert_no_difference -> { User.count } do
-          user = User.from_sso(profile: @profile, organization: @organization)
-          assert_not_nil user.omniauth_uid
-          assert_not_nil user.omniauth_provider
-          assert @organization.reload.member?(user)
-        end
-      end
-
-      test "adds the user to the organization" do
-        assert_no_difference -> { User.count } do
-          user = User.from_sso(profile: @profile, organization: @organization)
-          assert @organization.reload.member?(user)
-        end
-      end
-    end
-
-    context "existing user with sso profile email" do
-      before do
-        @organization = create(:organization, :workos)
-        @user = create(:user, :omniauth)
-        @profile = workos_profile_fixture(email: @user.email, organization_id: @organization.workos_organization_id)
-      end
-
-      test "updates the user with workos info" do
-        assert_no_difference -> { User.count } do
-          user = User.from_sso(profile: @profile, organization: @organization)
-
-          assert_predicate user.reload, :valid?
-          assert_predicate user, :confirmed?
-          assert_equal @profile.full_name, user.name
-          assert_equal @profile.id, user.workos_profile_id
-        end
-      end
-
-      test "clears out existing omniauth info" do
-        assert_no_difference -> { User.count } do
-          user = User.from_sso(profile: @profile, organization: @organization)
-          assert_not_nil user.omniauth_uid
-          assert_not_nil user.omniauth_provider
-          assert @organization.reload.member?(user)
-        end
-      end
-
-      test "adds the user to the organization" do
-        assert_no_difference -> { User.count } do
-          user = User.from_sso(profile: @profile, organization: @organization)
-          assert @organization.reload.member?(user)
-        end
-      end
-    end
-
-    context "new user" do
-      before do
-        @organization = create(:organization, :workos)
-        @profile = workos_profile_fixture(organization_id: @organization.workos_organization_id)
-      end
-
-      test "creates the user, confirms their email and adds them to the org" do
-        assert_difference -> { User.count } do
-          user = User.from_sso(profile: @profile, organization: @organization)
-          assert_predicate user, :valid?
-          assert_predicate user, :confirmed?
-          assert @organization.reload.member?(user)
-        end
-      end
-    end
-  end
-
   context "#managed?" do
     test "returns true if the user is managed through omniauth" do
       user = build(:user, :omniauth)
-      assert_predicate user, :managed?
-    end
-
-    test "returns true if user is managed through sso" do
-      user = build(:user, :workos)
       assert_predicate user, :managed?
     end
 
@@ -345,11 +248,6 @@ class UserTest < ActiveSupport::TestCase
   end
 
   context "managed_provider" do
-    test "return sso for sso managed user" do
-      user = build(:user, :workos)
-      assert_equal "sso", user.managed_provider
-    end
-
     test "returns google for omniauth managaed user" do
       user = build(:user, :omniauth)
       assert_equal "google", user.managed_provider

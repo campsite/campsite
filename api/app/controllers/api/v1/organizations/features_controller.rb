@@ -9,7 +9,6 @@ module Api
         skip_before_action :require_authenticated_user, only: :index
         skip_before_action :require_authenticated_organization_membership, only: :index
         skip_before_action :require_org_two_factor_authentication, only: :index
-        skip_before_action :require_org_sso_authentication, only: :index
 
         response code: 200 do
           { features: { type: :string, is_array: true, enum: (Organization::FEATURE_FLAGS + Plan::FEATURES).uniq } }

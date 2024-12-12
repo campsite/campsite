@@ -237,32 +237,6 @@ module Api
             assert_equal @attachment.public_id, json_response["id"]
           end
 
-          test "public note attachment in SSO-enforced org can be fetched by org member who hasn't signed in with sso" do
-            @note.update!(visibility: :public)
-            @org.update_setting(:workos_organization_id, "work-os-org-id")
-            @org.update_setting(:enforce_sso_authentication, true)
-
-            sign_in(@member.user)
-            get organization_attachment_path(@org.slug, @attachment.public_id)
-
-            assert_response :ok
-            assert_response_gen_schema
-            assert_equal @attachment.public_id, json_response["id"]
-          end
-
-          test "public note attachment in SSO-enforced org can be fetched by non-org member" do
-            other_member = create(:organization_membership, :member)
-            @note.update!(visibility: :public)
-            @org.update_setting(:enforce_sso_authentication, true)
-
-            sign_in(other_member.user)
-            get organization_attachment_path(@org.slug, @attachment.public_id)
-
-            assert_response :ok
-            assert_response_gen_schema
-            assert_equal @attachment.public_id, json_response["id"]
-          end
-
           test "public note attachment in 2FA-enforced org can be fetched by non-org member" do
             other_member = create(:organization_membership, :member)
             @note.update!(visibility: :public)

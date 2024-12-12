@@ -164,45 +164,6 @@ class User < ApplicationRecord
     found
   end
 
-  def self.from_sso(profile:, organization:)
-    # existing user who has already authenticated with sso
-    existing_profile = find_by(workos_profile_id: profile.id).tap do |user|
-      break unless user
-
-      user.name = profile.full_name
-      user.save
-
-      organization.join(user: user, confirmed: true, role_name: organization.new_sso_member_role_name)
-    end
-    return existing_profile if existing_profile
-
-    # existing user authenticating with sso for the first time
-    existing_user = find_by(email: profile.email).tap do |user|
-      break unless user
-
-      user.name = profile.full_name
-      user.workos_profile_id = profile.id
-      user.save
-      user.skip_confirmation! unless user.confirmed?
-
-      organization.join(user: user, confirmed: true, role_name: organization.new_sso_member_role_name)
-    end
-    return existing_user if existing_user
-
-    # new user authenticating with sso
-    User.new.tap do |user|
-      user.email = profile.email
-      user.name = profile.full_name
-      user.password = SecureRandom.hex(PASSWORD_ENTROPY)
-      user.workos_profile_id = profile.id
-      user.save
-      break user unless user.valid?
-
-      organization.join(user: user, confirmed: true, role_name: organization.new_sso_member_role_name)
-      user.skip_confirmation!
-    end
-  end
-
   def self.dev_user
     # this should match the user marked as "owner" in packages/demo-content/index.ts
     User.new(
@@ -239,17 +200,11 @@ class User < ApplicationRecord
   end
 
   def managed?
-    omniauth? || workos_profile?
+    omniauth?
   end
 
   def managed_provider
-    return "google" if omniauth?
-
-    "sso" if workos_profile?
-  end
-
-  def workos_profile?
-    workos_profile_id.present?
+    "google" if omniauth?
   end
 
   def api_type_name
@@ -592,8 +547,6 @@ class User < ApplicationRecord
   end
 
   def join_verified_domain_organizations
-    return if workos_profile?
-
     verified_domain_organizations.each do |organization|
       organization.join(user: self, role_name: Role::MEMBER_NAME, notify_admins_source: :verified_domain)
     end

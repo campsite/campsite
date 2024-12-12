@@ -4,7 +4,6 @@ ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require_relative "support/assertions"
 require_relative "support/action_mailer_test_helper"
-require_relative "test_helpers/workos_fixtures"
 
 require "rails/test_help"
 require "mocha/minitest"
@@ -48,7 +47,6 @@ end
 module ActiveSupport
   class TestCase
     include FactoryBot::Syntax::Methods
-    include WorkOSFixtures
     include ActionMailer::TestHelper
 
     # Run tests in parallel with specified workers

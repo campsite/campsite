@@ -75,7 +75,6 @@ There are many other services we use to power Campsite features. Create accounts
 - `slack` - Campsite Slack app
 - `vercel.revalidate_static_cache` - generate your own key to safely revalidate cached docs (ISR)
 - `webpush_vapid` - VAPID keys necessary to send web push notifications ([docs](https://github.com/pushpad/web-push#generating-vapid-keys))
-- `workos` - SSO (likely wont need this)
 - `zapier` - The Campsite Zapier app
 - `tenor` - GIF search ([docs](https://tenor.com/gifapi))
 

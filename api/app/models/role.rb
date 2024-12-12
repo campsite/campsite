@@ -9,9 +9,8 @@ class Role
     end
   end
 
-  attr_accessor :name, :permissions, :counted, :enforce_sso_authentication, :join_default_projects
+  attr_accessor :name, :permissions, :counted, :join_default_projects
   alias_method :counted?, :counted
-  alias_method :enforce_sso_authentication?, :enforce_sso_authentication
   alias_method :join_default_projects?, :join_default_projects
 
   RESOURCES = [
@@ -97,7 +96,6 @@ class Role
         GUEST_WITHOUT_SHARED_PROJECT_RESOURCE => [VIEW_ANY_ACTION],
       },
       counted: true,
-      enforce_sso_authentication: true,
       join_default_projects: true,
     ),
     new(
@@ -139,7 +137,6 @@ class Role
         GUEST_WITHOUT_SHARED_PROJECT_RESOURCE => [VIEW_ANY_ACTION],
       },
       counted: true,
-      enforce_sso_authentication: true,
       join_default_projects: true,
     ),
     new(
@@ -157,7 +154,6 @@ class Role
         GUEST_WITHOUT_SHARED_PROJECT_RESOURCE => [VIEW_ANY_ACTION],
       },
       counted: false,
-      enforce_sso_authentication: true,
       join_default_projects: true,
     ),
     new(
@@ -168,7 +164,6 @@ class Role
         CALL_ROOM_RESOURCE => [CREATE_ACTION],
       },
       counted: false,
-      enforce_sso_authentication: false,
       join_default_projects: false,
     ),
   ].freeze

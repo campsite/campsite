@@ -267,10 +267,6 @@ class OrganizationMembership < ApplicationRecord
     active_call_peers.any?
   end
 
-  def enforce_sso_authentication?
-    organization.enforce_sso_authentication? && role.enforce_sso_authentication?
-  end
-
   def update_project_member_counts
     ProjectMembership.counter_culture_fix_counts(only: :project, where: { id: kept_projects.pluck(:id) })
   end

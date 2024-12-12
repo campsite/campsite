@@ -25,9 +25,5 @@ FactoryBot.define do
       omniauth_provider { "google_oauth2" }
       omniauth_uid { "123456789" }
     end
-
-    trait :workos do
-      workos_profile_id { "workos_profile_id" }
-    end
   end
 end

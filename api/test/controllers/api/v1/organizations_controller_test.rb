@@ -18,7 +18,7 @@ module Api
 
           sign_in @user
 
-          assert_query_count 54 do
+          assert_query_count 53 do
             post organizations_path, params: { name: "Campsite Design", slug: "campsite-design" }
           end
 
@@ -180,37 +180,6 @@ module Api
           end
         end
 
-        context "with sso required" do
-          setup do
-            @organization.update!(workos_organization_id: "work-os-org-id")
-            @organization.update_setting(:enforce_sso_authentication, true)
-          end
-
-          test "works for a sso authenticated user" do
-            sso_sign_in(user: @user, organization: @organization)
-            get organization_path(@organization.slug)
-            assert_response :ok
-          end
-
-          test "works for a guest in an SSO organization" do
-            guest_member = create(:organization_membership, :guest, organization: @organization)
-
-            sign_in guest_member.user
-            get organization_path(@organization.slug)
-
-            assert_response :ok
-          end
-
-          test "returns 403 for a user without sso authentication" do
-            sign_in @user
-            get organization_path(@organization.slug)
-
-            assert_response :forbidden
-            assert_match(/Your organization requires SSO authentication/, json_response["message"])
-            assert_match(/sso_required/, json_response["code"])
-          end
-        end
-
         test("query count") do
           sign_in @user
 
@@ -320,28 +289,6 @@ module Api
             assert_match(/Your organization has enforced two-factor authentication/, json_response["message"])
           end
         end
-
-        context "with sso required" do
-          setup do
-            @organization.update!(workos_organization_id: "work-os-org-id")
-            @organization.update_setting(:enforce_sso_authentication, true)
-          end
-
-          test "works for a sso authenticated user" do
-            sso_sign_in(user: @user, organization: @organization)
-            put organization_path(@organization.slug), params: { name: "new-name" }
-            assert_response :ok
-          end
-
-          test "returns 403 for a user without sso authentication" do
-            sign_in @user
-            put organization_path(@organization.slug), params: { name: "new-name" }
-
-            assert_response :forbidden
-            assert_match(/Your organization requires SSO authentication/, json_response["message"])
-            assert_match(/sso_required/, json_response["code"])
-          end
-        end
       end
 
       context "#reset_invite_token" do
@@ -436,28 +383,6 @@ module Api
             delete organization_path(@organization.slug)
             assert_response :forbidden
             assert_match(/Your organization has enforced two-factor authentication/, json_response["message"])
-          end
-        end
-
-        context "with sso required" do
-          setup do
-            @organization.update!(workos_organization_id: "work-os-org-id")
-            @organization.update_setting(:enforce_sso_authentication, true)
-          end
-
-          test "works for a sso authenticated user" do
-            sso_sign_in(user: @user, organization: @organization)
-            delete organization_path(@organization.slug)
-            assert_response :no_content
-          end
-
-          test "returns 403 for a user without sso authentication" do
-            sign_in @user
-            delete organization_path(@organization.slug)
-
-            assert_response :forbidden
-            assert_match(/Your organization requires SSO authentication/, json_response["message"])
-            assert_match(/sso_required/, json_response["code"])
           end
         end
       end

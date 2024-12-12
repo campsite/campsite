@@ -16,7 +16,6 @@ module Api
       before_action :require_authenticated_user
       before_action :require_authenticated_organization_membership
       before_action :require_org_two_factor_authentication
-      before_action :require_org_sso_authentication
       before_action :set_sentry_info
       before_action :set_user_last_seen_at, if: proc { user_signed_in? && (!current_user.last_seen_at || current_user.last_seen_at < 1.hour.ago) }
       before_action :set_organization_membership_last_seen_at, if: proc { current_organization_membership && (!current_organization_membership.last_seen_at || current_organization_membership.last_seen_at < 1.hour.ago) }
@@ -107,7 +106,7 @@ module Api
         @current_organization_membership ||= current_user
           &.kept_organization_memberships
           &.joins(:organization)
-          &.eager_load(:latest_status, organization: [:enforce_two_factor_authentication_setting, :enforce_sso_authentication_setting])
+          &.eager_load(:latest_status, organization: [:enforce_two_factor_authentication_setting])
           &.find_by(organization: { slug: params[:org_slug] })
       end
 
@@ -128,12 +127,6 @@ module Api
 
       def current_project
         @current_project ||= current_organization.projects.find_by!(public_id: params[:project_id])
-      end
-
-      def current_user_sso_session?
-        return false unless current_user.workos_profile_id?
-
-        session[:sso_session_id] == current_user.workos_profile_id
       end
 
       def require_org_two_factor_authentication
@@ -177,21 +170,6 @@ module Api
 
         unless CalDotComTokenAccess.allowed?(controller: params[:controller], action: params[:action])
           render_forbidden(CalDotComUnauthorizedAccess.new("Unauthorized Cal.com API request"))
-        end
-      end
-
-      def require_org_sso_authentication
-        return unless current_organization
-        return unless current_organization_membership&.enforce_sso_authentication?
-        return if figma_token_auth?
-        return if sync_token_auth?
-
-        unless current_user_sso_session?
-          render_error(
-            status: :forbidden,
-            code: "sso_required",
-            message: "Your organization requires SSO authentication, please authenticate through SSO to continue.",
-          )
         end
       end
 

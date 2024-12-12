@@ -33,9 +33,6 @@ Rails.application.routes.draw do
       post "/sign-in/otp", to: "users/otp/sessions#create"
       get "/sign-in/recovery-code", to: "users/recovery_code/sessions#new"
       post "/sign-in/recovery-code", to: "users/recovery_code/sessions#create"
-      get "/sign-in/sso", to: "users/sso/sessions#new"
-      post "/sign-in/sso", to: "users/sso/sessions#create"
-      get "/sign-in/sso/callback", to: "users/sso/sessions#callback"
     end
 
     get "/", to: redirect("/sign-in"), as: :auth_root
@@ -43,7 +40,6 @@ Rails.application.routes.draw do
     get "/sign-in/desktop/open", to: "users/desktop/sessions#show", as: :open_desktop_session
     post "/sign-in/figma", to: "users/figma/sessions#create", as: :create_figma_session
     get "/sign-in/figma/open", to: "users/figma/sessions#show", as: :open_figma_session
-    get "/sign-in/sso/reauthorize", to: "users/sso/reauthorize_sessions#show", as: :reauthorize_sso_sessions
 
     use_doorkeeper do
       skip_controllers :applications
@@ -96,9 +92,6 @@ Rails.application.routes.draw do
 
     resources :public_projects, only: [:show], param: :token
 
-    # sso webhooks
-    post "/organizations/sso/webhooks", to: "organizations/sso_webhooks#create", as: :organizations_sso_webhooks
-
     resources :image_urls, only: :create
 
     resources :organization_memberships, only: [:index] do
@@ -120,8 +113,6 @@ Rails.application.routes.draw do
       # enable/disable sso
       post "/sso", to: "organizations/sso#create", as: :sso
       delete "/sso", to: "organizations/sso#destroy"
-      # configure sso
-      post "/sso/configuration", to: "organizations/sso_configuration#create", as: :sso_configuration
 
       get "/invitations", to: "organization_invitations#index", as: :invitations
       post "/invitations", to: "organization_invitations#create"

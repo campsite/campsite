@@ -6,7 +6,6 @@ module Api
       extend Apigen::Controller
 
       skip_before_action :require_authenticated_user, only: :show
-      skip_before_action :require_org_sso_authentication, only: :show
       skip_before_action :require_org_two_factor_authentication, only: :show
       skip_before_action :require_authenticated_organization_membership, only: :show
 

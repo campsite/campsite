@@ -15,7 +15,6 @@ class Organization < ApplicationRecord
 
   RESERVED_NAMES = ["admin", "auth", "desktop", "invitations", "me", "new", "people", "settings", "sso"].freeze
   FEATURE_FLAGS = User::SHARED_FEATURE_FLAGS + [
-    Plan::SSO_FEATURE,
     :api_endpoint_list_members, # deprecated on 10/21/24
     :api_endpoint_list_posts, # deprecated on 10/14/24
     :multi_org_apps,
@@ -51,7 +50,6 @@ class Organization < ApplicationRecord
   has_many :kept_published_posts, -> { kept.with_published_state }, class_name: "Post"
   has_many :post_subscriptions, through: :posts, source: :subscriptions
   has_many :settings, class_name: "OrganizationSetting", dependent: :destroy_async
-  has_many :sso_domains, class_name: "OrganizationSsoDomain", dependent: :destroy_async
   has_many :post_digests, dependent: :destroy_async
   has_many :kept_post_digests, -> { kept }, class_name: "PostDigest"
   has_many :notes, through: :memberships, source: :notes
@@ -407,57 +405,9 @@ class Organization < ApplicationRecord
   end
 
   has_one :enforce_two_factor_authentication_setting, -> { where(key: "enforce_two_factor_authentication") }, class_name: "OrganizationSetting"
-  has_one :enforce_sso_authentication_setting, -> { where(key: "enforce_sso_authentication") }, class_name: "OrganizationSetting"
-  has_one :new_sso_member_role_name_setting, -> { where(key: OrganizationSetting::NEW_SSO_MEMBER_ROLE_NAME_KEY) }, class_name: "OrganizationSetting"
 
   def enforce_two_factor_authentication?
     enforce_two_factor_authentication_setting&.value == "1"
-  end
-
-  def enforce_sso_authentication?
-    enforce_sso_authentication_setting&.value == "1"
-  end
-
-  def new_sso_member_role_name
-    new_sso_member_role_name_setting&.value || Role::MEMBER_NAME
-  end
-
-  def workos_organization?
-    workos_organization_id.present?
-  end
-
-  def enable_sso!(domains:)
-    return if workos_organization?
-
-    ActiveRecord::Base.transaction do
-      domains.each { |domain| sso_domains.create!(domain: domain) }
-      workos_org = WorkOS::Organizations.create_organization(name: name, domains: domains)
-      update!(workos_organization_id: workos_org.id)
-    end
-  end
-
-  def disable_sso!
-    return unless workos_organization?
-
-    transaction do
-      WorkOS::Organizations.delete_organization(id: workos_organization_id)
-      update!(workos_organization_id: nil)
-      sso_domains.destroy_all
-      update_setting(:enforce_sso_authentication, false)
-    end
-  end
-
-  def sso_portal_url
-    return unless workos_organization?
-
-    WorkOS::Portal.generate_link(organization: workos_organization_id, intent: "sso")
-  end
-
-  def sso_connection
-    return unless workos_organization?
-
-    connections = WorkOS::SSO.list_connections
-    connections.data.find { |c| c.state == "active" && c.organization_id == workos_organization_id }
   end
 
   def features

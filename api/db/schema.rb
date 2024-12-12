@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_12_11_233239) do
+ActiveRecord::Schema[7.2].define(version: 2024_12_12_002307) do
   create_table "attachments", id: { type: :bigint, unsigned: true }, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "public_id", limit: 12, null: false
     t.text "file_path", null: false
@@ -930,15 +930,6 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_11_233239) do
     t.index ["organization_id"], name: "index_organization_settings_on_organization_id"
   end
 
-  create_table "organization_sso_domains", id: { type: :bigint, unsigned: true }, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "domain", null: false
-    t.bigint "organization_id", null: false, unsigned: true
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["domain"], name: "index_organization_sso_domains_on_domain"
-    t.index ["organization_id"], name: "index_organization_sso_domains_on_organization_id"
-  end
-
   create_table "organizations", id: { type: :bigint, unsigned: true }, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "public_id", limit: 12, null: false
     t.string "name", null: false
@@ -952,7 +943,6 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_11_233239) do
     t.datetime "onboarded_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "workos_organization_id"
     t.string "plan_name", default: "pro", null: false
     t.integer "member_count", default: 0, null: false
     t.boolean "demo", default: false
@@ -965,7 +955,6 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_11_233239) do
     t.index ["invite_token"], name: "index_organizations_on_invite_token", unique: true
     t.index ["public_id"], name: "index_organizations_on_public_id", unique: true
     t.index ["slug"], name: "index_organizations_on_slug", unique: true
-    t.index ["workos_organization_id"], name: "index_organizations_on_workos_organization_id"
   end
 
   create_table "permissions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -1473,7 +1462,6 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_11_233239) do
     t.json "otp_backup_codes"
     t.boolean "otp_enabled"
     t.string "otp_secret"
-    t.string "workos_profile_id"
     t.datetime "last_seen_at"
     t.string "login_token_sso_id"
     t.datetime "scheduled_email_notifications_from"
@@ -1491,7 +1479,6 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_11_233239) do
     t.index ["public_id"], name: "index_users_on_public_id", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["username"], name: "index_users_on_username", unique: true
-    t.index ["workos_profile_id"], name: "index_users_on_workos_profile_id"
   end
 
   create_table "web_push_subscriptions", id: { type: :bigint, unsigned: true }, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|

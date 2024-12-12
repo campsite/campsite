@@ -401,46 +401,6 @@ module Api
           end
         end
 
-        test "can authenticate with a figma token on an sso enforced org and create a post" do
-          Timecop.freeze do
-            @organization.update_setting(:enforce_sso_authentication, true)
-
-            sign_in @user
-            access_token = create_token(user: @user, provider: :figma)
-
-            Api::V1::PostsController.any_instance.stubs(:doorkeeper_token).returns(access_token)
-
-            assert_difference -> { @general_project.posts.count } do
-              post organization_posts_path(@organization.slug),
-                params: {
-                  title: "My new post",
-                  description_html: "<p>checkout my new work</p>",
-                }
-            end
-
-            assert_response :created
-            assert_equal "My new post", json_response["title"]
-            assert_in_delta Time.current, Time.zone.parse(json_response["published_at"]), 2.seconds
-          end
-        end
-
-        test "can not authenticate with a non-figma token on an sso enforced org and create a post" do
-          @organization.update_setting(:enforce_sso_authentication, true)
-
-          sign_in @user
-          access_token = create_token(user: @user, provider: :zapier)
-
-          Api::V1::PostsController.any_instance.stubs(:doorkeeper_token).returns(access_token)
-
-          post organization_posts_path(@organization.slug),
-            params: {
-              title: "My new post",
-              description_html: "<p>checkout my new work</p>",
-            }
-
-          assert_response :forbidden
-        end
-
         test "creates a post for a project" do
           sign_in @user
 

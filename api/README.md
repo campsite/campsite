@@ -43,16 +43,6 @@ When you invite users in dev, or create new accounts etc you'll send/receive ema
 (currently the stylesheet is broken, but you have a list of the emails at the top and then you can view them in an iframe at the bottom). If you're inviting a new user, make sure you log out with your existing user before you
 click the link in the email :)
 
-### SAML SSO
-
-To set up SSO for the seeded Campsite organization in development using Auth0 as the identity provider (IdP), follow these steps:
-
-1. From the `api` directory, run `bin/rails dev:setup_sso_user` to set up Campsite and Auth0 users with your Campsite email address.
-2. Start the API and client servers with ngrok (`script/dev --ngrok` from the root directory).
-3. Visit https://app-dev.campsite.com/campsite/settings using your Campsite email address.
-4. Scroll down to "Single Sign-On." Click "Enable." Add the domain "campsite.com" and click "Enable."
-5. Click "Configure" and follow the WorkOS Admin Portal prompts to create and connect a SAML2 web app in Auth0.
-
 ## Deploying
 
 ### Steps

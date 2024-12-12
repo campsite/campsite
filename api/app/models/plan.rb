@@ -7,7 +7,6 @@ class Plan
 
   FEATURES = [
     SMART_DIGESTS_FEATURE = "smart_digests",
-    SSO_FEATURE = "organization_sso",
     SYNC_MEMBERS_FEATURE = "sync_members",
     TRUE_UP_ANNUAL_SUBSCRIPTIONS_FEATURE = "true_up_annual_subscriptions",
   ].freeze
@@ -67,7 +66,6 @@ class Plan
       name: BUSINESS_NAME,
       features: [
         SMART_DIGESTS_FEATURE,
-        SSO_FEATURE,
       ],
       limits: {
         FILE_SIZE_BYTES_LIMIT => 1.gigabyte,

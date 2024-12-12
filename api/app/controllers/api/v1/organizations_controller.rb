@@ -4,7 +4,6 @@ module Api
   module V1
     class OrganizationsController < BaseController
       skip_before_action :require_authenticated_organization_membership, only: [:index, :create, :join]
-      skip_before_action :require_org_sso_authentication, only: [:join]
       skip_before_action :require_org_two_factor_authentication, only: [:join]
 
       extend Apigen::Controller

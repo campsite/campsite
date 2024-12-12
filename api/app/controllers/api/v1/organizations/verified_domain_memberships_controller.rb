@@ -5,7 +5,6 @@ module Api
     module Organizations
       class VerifiedDomainMembershipsController < BaseController
         skip_before_action :require_authenticated_organization_membership, only: [:create]
-        skip_before_action :require_org_sso_authentication, only: [:create]
         skip_before_action :require_org_two_factor_authentication, only: [:create]
 
         extend Apigen::Controller

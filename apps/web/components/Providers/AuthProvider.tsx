@@ -14,8 +14,6 @@ import { useGetCurrentOrganization } from '@/hooks/useGetCurrentOrganization'
 import { useGetOrganizationMemberships } from '@/hooks/useGetOrganizationMemberships'
 import { signinUrl } from '@/utils/queryClient'
 
-import SingleSignOn from '../SingleSignOn'
-
 interface Props {
   children: React.ReactNode
   allowLoggedOut: boolean
@@ -92,10 +90,6 @@ export function AuthProvider({ children, allowLoggedOut }: Props) {
 
   // Handle unauthenticated users
   if (orgError instanceof ApiError) {
-    if (orgError.code === 'sso_required') {
-      return <SingleSignOn />
-    }
-
     // user is trying to view the community org but isn't a member yet
     if (orgError.code === 'forbidden') {
       if (router.asPath === `/${COMMUNITY_SLUG}`) {

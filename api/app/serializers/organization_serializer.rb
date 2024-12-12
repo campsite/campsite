@@ -15,7 +15,6 @@ class OrganizationSerializer < ApiSerializer
 
   api_field :paid?, name: :paid, type: :boolean
   api_field :plan_name
-  api_field :workos_organization?, name: :sso_enabled, type: :boolean
   api_field :trial_ended?, name: :show_upgrade_banner, type: :boolean # deprecated, use trial_expired
   api_field :trial_ended?, name: :trial_expired, type: :boolean
   api_field :trial_active?, name: :trial_active, type: :boolean
@@ -100,7 +99,6 @@ class OrganizationSerializer < ApiSerializer
   api_association :settings, blueprint: OrganizationSettingsSerializer do |org|
     {
       enforce_two_factor_authentication: org.enforce_two_factor_authentication?,
-      enforce_sso_authentication: org.enforce_sso_authentication?,
     }
   end
 
