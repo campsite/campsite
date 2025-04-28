@@ -21,7 +21,7 @@
     "@create-figma-plugin/utilities": "catalog:",
     "@hookform/resolvers": "catalog:",
     "@radix-ui/react-select": "catalog:",
-    "@tanstack/react-query": "^4.29.12",
+    "@tanstack/react-query": "^5.74.7",
     "@tiptap/react": "catalog:",
     "framer-motion": "catalog:",
     "pusher-js": "catalog:",
