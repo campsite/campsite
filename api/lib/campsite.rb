@@ -11,7 +11,7 @@ module Campsite
   PROD_STYLED_TEXT_API_URL = URI.parse("https://camp-styled-text.polo-apps.com")
 
   DEV_HTML_TO_IMAGE_URL = URI.parse("http://localhost:9222")
-  PROD_HTML_TO_IMAGE_URL = URI.parse("http://html-to-image.internal:9222")
+  PROD_HTML_TO_IMAGE_URL = URI.parse("https://camp-html-to-image.polo-apps.com")
 
   DEV_MARKETING_SITE_URL = URI.parse("http://localhost:3003")
   PROD_MARKETING_SITE_URL = URI.parse("https://campsite.com")
