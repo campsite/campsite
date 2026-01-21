@@ -414,10 +414,20 @@ Rails.application.routes.draw do
       get "/integrations/slack", to: "slack_integrations#show", as: :slack_integration
       delete "/integrations/slack", to: "slack_integrations#destroy"
 
+      # discord integration
+      get "/integrations/discord/callback", to: "integrations/discord/organization_installation_callbacks#show", as: :discord_integration_callback
+      get "/integrations/discord", to: "discord_integrations#show", as: :discord_integration
+      delete "/integrations/discord", to: "discord_integrations#destroy"
+
       namespace :integrations do
         namespace :slack do
           resource :notifications_callback, only: [:show]
           resources :channels, only: [:index, :show], controller: "channels", param: :provider_channel_id
+          resources :channel_syncs, only: [:create]
+        end
+
+        namespace :discord do
+          resources :channels, only: [:index, :show], controller: "channels", param: :channel_id
           resources :channel_syncs, only: [:create]
         end
 
@@ -486,6 +496,9 @@ Rails.application.routes.draw do
 
     # slack ack endpoint
     post "/integrations/slack/ack", to: "slack_integrations#ack", as: :slack_integration_ack
+
+    # discord webhook endpoint
+    post "/integrations/discord/webhook", to: "discord_integrations#webhook", as: :discord_integration_webhook
 
     resources :product_logs, only: [:create], to: "product_logs#create"
     resources :batched_post_views, only: [:create], to: "batched_post_views#create"

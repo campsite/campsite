@@ -29,7 +29,9 @@ class Organization < ApplicationRecord
   has_one  :slack_integration, -> { where(provider: :slack) }, class_name: "Integration", as: :owner
   has_one  :linear_integration, -> { where(provider: :linear) }, class_name: "Integration", as: :owner
   has_one  :campsite_integration, -> { where(provider: :campsite) }, class_name: "Integration", as: :owner
+  has_one  :discord_integration, -> { where(provider: :discord) }, class_name: "Integration", as: :owner
   has_many :slack_channels, through: :slack_integration, source: :channels
+  has_many :discord_channels, through: :discord_integration, source: :channels
   has_many :invitations, class_name: "OrganizationInvitation", dependent: :destroy_async
   has_many :invited_members, through: :invitations, source: :recipient
   has_many :memberships, class_name: "OrganizationMembership", dependent: :destroy_async
@@ -302,6 +304,10 @@ class Organization < ApplicationRecord
 
   def slack_token
     slack_integration&.token
+  end
+
+  def discord_token
+    discord_integration&.token
   end
 
   def update_slack_channel!(id:, is_private:)

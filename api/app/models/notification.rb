@@ -226,6 +226,12 @@ class Notification < ApplicationRecord
     DeliverNotificationSlackMessageJob.perform_async(id)
   end
 
+  def deliver_discord_notification_later
+    return if !organization_membership.discord_notifications_enabled? || discord_message_delivered? || user.notifications_paused?
+
+    DeliverDiscordNotificationJob.perform_async(id)
+  end
+
   def deliver_slack_message!
     return unless organization_membership.linked_to_slack?
     return if slack_message_delivered?
@@ -327,6 +333,10 @@ class Notification < ApplicationRecord
 
   def slack_message_delivered?
     !!slack_message_ts
+  end
+
+  def discord_message_delivered?
+    !!discord_message_id
   end
 
   def user_must_have_permission_to_view_target

@@ -228,6 +228,25 @@ class OrganizationMembership < ApplicationRecord
       &.present?
   end
 
+  def discord_notifications_enabled?
+    preference = preferences.find_by(key: Preference::DISCORD_NOTIFICATIONS)
+    return false unless preference
+
+    preference.value == "enabled"
+  end
+
+  def enable_discord_notifications!
+    raise "Discord notifications already enabled" if discord_notifications_enabled?
+
+    find_or_initialize_preference(Preference::DISCORD_NOTIFICATIONS).update!(value: "enabled")
+  end
+
+  def disable_discord_notifications!
+    raise "Discord notifications not enabled" unless discord_notifications_enabled?
+
+    find_or_initialize_preference(Preference::DISCORD_NOTIFICATIONS).update!(value: "disabled")
+  end
+
   def welcomed_to_slack!
     slack_integration_organization_membership
       &.data

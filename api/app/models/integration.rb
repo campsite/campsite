@@ -25,6 +25,10 @@ class Integration < ApplicationRecord
       display_name: "Zapier",
       avatar_path: "static/avatars/service-zapier.png",
     },
+    discord: {
+      display_name: "Discord",
+      avatar_path: "static/avatars/service-discord.png",
+    },
   }.freeze
 
   scope :campsite, -> { where(provider: :campsite) }
@@ -32,6 +36,7 @@ class Integration < ApplicationRecord
   scope :figma, -> { where(provider: :figma) }
   scope :linear, -> { where(provider: :linear) }
   scope :zapier, -> { where(provider: :zapier) }
+  scope :discord, -> { where(provider: :discord) }
 
   belongs_to :creator, class_name: "User"
   belongs_to :owner, polymorphic: true
@@ -113,6 +118,10 @@ class Integration < ApplicationRecord
 
   def zapier_integration?
     provider == "zapier"
+  end
+
+  def discord_integration?
+    provider == "discord"
   end
 
   def has_link_unfurling_scopes?
