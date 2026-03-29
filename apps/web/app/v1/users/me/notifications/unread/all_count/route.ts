@@ -1,17 +1,19 @@
-import { withAuth } from '@workos-inc/authkit-nextjs'
 import { NextResponse } from 'next/server'
 
 import { getLegacyUnreadNotificationCounts } from '@/lib/convex/notifications'
-import { ensureWorkspace } from '@/lib/convex/server'
+import { routeErrorResponse } from '@/lib/routeErrors'
+import { getRouteAccess } from '@/lib/routeSession'
 
 export async function GET() {
-  const { accessToken, user } = await withAuth()
+  try {
+    const auth = await getRouteAccess()
 
-  if (!user || !accessToken) {
-    return NextResponse.json({ inbox: {}, messages: {}, activity: {}, home_inbox: {} })
+    if (!auth) {
+      return NextResponse.json({ inbox: {}, messages: {}, activity: {}, home_inbox: {} })
+    }
+
+    return NextResponse.json(await getLegacyUnreadNotificationCounts(auth.accessToken))
+  } catch (error) {
+    return routeErrorResponse(error)
   }
-
-  await ensureWorkspace(accessToken, user)
-
-  return NextResponse.json(await getLegacyUnreadNotificationCounts(accessToken))
 }

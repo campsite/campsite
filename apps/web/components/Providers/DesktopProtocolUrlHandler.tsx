@@ -28,6 +28,13 @@ export function DesktopProtocolUrlHandler() {
           // Instead, we have to blur the current window to make the new window visible.
           // https://campsite-software.slack.com/archives/C04R260LUMV/p1719310578668499?thread_ts=1719279333.167369&cid=C04R260LUMV
           await nativeWindow.blur()
+        } else if (e.url.includes('://auth/desktop')) {
+          e.preventDefault()
+
+          const protocolUrl = new URL(e.url)
+          const routePath = `/${protocolUrl.host}${protocolUrl.pathname}${protocolUrl.search}`
+
+          window.location.assign(routePath)
         }
       })
 

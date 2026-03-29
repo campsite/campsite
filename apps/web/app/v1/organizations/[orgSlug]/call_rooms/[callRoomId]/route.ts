@@ -1,9 +1,9 @@
-import { withAuth } from '@workos-inc/authkit-nextjs'
 import { NextResponse } from 'next/server'
 
 import { createHmsRoom, createHmsViewerToken } from '@/lib/calls/hmsCompat'
 import { ensureWorkspace, getLegacyCurrentUser } from '@/lib/convex/server'
 import { routeErrorResponse } from '@/lib/routeErrors'
+import { getFreshRouteAuth } from '@/lib/routeSession'
 
 import { getCallRoomsCompatClient } from '../_compat'
 
@@ -12,7 +12,7 @@ interface Context {
 }
 
 export async function GET(_: Request, context: Context) {
-  const { accessToken, user } = await withAuth()
+  const { accessToken, user } = await getFreshRouteAuth()
   const { orgSlug, callRoomId } = await context.params
   const client = getCallRoomsCompatClient(accessToken)
 
@@ -23,17 +23,19 @@ export async function GET(_: Request, context: Context) {
     })
 
     if (!callRoom.remote_room_id) {
-      const remoteRoomId = await createHmsRoom().catch(() => null)
+      const remoteRoomId = await createHmsRoom()
 
-      if (remoteRoomId) {
-        await client.updateRemoteRoomId({
-          callRoomId: callRoom.id,
-          remoteRoomId
-        })
-        callRoom = {
-          ...callRoom,
-          remote_room_id: remoteRoomId
-        }
+      if (!remoteRoomId) {
+        throw new Error('service_unavailable: Calls are not configured yet.')
+      }
+
+      await client.updateRemoteRoomId({
+        callRoomId: callRoom.id,
+        remoteRoomId
+      })
+      callRoom = {
+        ...callRoom,
+        remote_room_id: remoteRoomId
       }
     }
 
@@ -50,6 +52,10 @@ export async function GET(_: Request, context: Context) {
         roomId: callRoom.remote_room_id,
         userId: currentUser.id
       })
+    }
+
+    if (!viewerToken) {
+      throw new Error('service_unavailable: Calls are not configured yet.')
     }
 
     return NextResponse.json({

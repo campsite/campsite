@@ -14,6 +14,7 @@ import type * as callRooms from "../callRooms.js";
 import type * as callsRealtime from "../callsRealtime.js";
 import type * as collaboration from "../collaboration.js";
 import type * as content from "../content.js";
+import type * as desktopSessions from "../desktopSessions.js";
 import type * as digests from "../digests.js";
 import type * as engagement from "../engagement.js";
 import type * as externalPlatforms from "../externalPlatforms.js";
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   callsRealtime: typeof callsRealtime;
   collaboration: typeof collaboration;
   content: typeof content;
+  desktopSessions: typeof desktopSessions;
   digests: typeof digests;
   engagement: typeof engagement;
   externalPlatforms: typeof externalPlatforms;

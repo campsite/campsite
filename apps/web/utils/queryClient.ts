@@ -8,9 +8,14 @@ import { ApiErrorResponse } from './types'
 interface UrlProps {
   inviteToken?: string
   from?: string
+  desktop?: boolean
 }
 
-export function signinUrl({ inviteToken, from }: UrlProps = {}): string {
+function isDesktopRuntime() {
+  return typeof window !== 'undefined' && 'todesktop' in window
+}
+
+export function signinUrl({ inviteToken, from, desktop }: UrlProps = {}): string {
   const url = new URL(APP_AUTH_URL)
 
   url.pathname = '/login'
@@ -23,10 +28,14 @@ export function signinUrl({ inviteToken, from }: UrlProps = {}): string {
     url.searchParams.append('from', from)
   }
 
+  if (desktop ?? isDesktopRuntime()) {
+    url.searchParams.append('desktop', 'true')
+  }
+
   return url.toString()
 }
 
-export function signUpUrl({ inviteToken, from }: UrlProps = {}): string {
+export function signUpUrl({ inviteToken, from, desktop }: UrlProps = {}): string {
   const url = new URL(APP_AUTH_URL)
 
   url.pathname = '/sign-up'
@@ -37,6 +46,10 @@ export function signUpUrl({ inviteToken, from }: UrlProps = {}): string {
 
   if (from) {
     url.searchParams.append('from', from)
+  }
+
+  if (desktop ?? isDesktopRuntime()) {
+    url.searchParams.append('desktop', 'true')
   }
 
   return url.toString()

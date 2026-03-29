@@ -1,4 +1,3 @@
-import { withAuth } from '@workos-inc/authkit-nextjs'
 import { NextResponse } from 'next/server'
 
 import {
@@ -13,17 +12,18 @@ import {
 } from '@/lib/auth/accountCompat'
 import { buildCurrentUser } from '@/lib/auth/campsiteCompat'
 import { ensureWorkspace, updateViewerProfile } from '@/lib/convex/server'
+import { getFreshRouteAuth } from '@/lib/routeSession'
 
 export async function GET(request: Request) {
-  const { accessToken, user } = await withAuth()
+  const { accessToken, user } = await getFreshRouteAuth()
 
   if (!user || !accessToken) {
     return NextResponse.json(buildCurrentUser(null))
   }
 
-  await ensureWorkspace(accessToken, user)
-
   try {
+    await ensureWorkspace(accessToken, user)
+
     return NextResponse.json(
       await buildCurrentUserResponse(accessToken, {
         clientTimeZone: getClientTimeZone(request),
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const { accessToken, user } = await withAuth()
+  const { accessToken, user } = await getFreshRouteAuth()
 
   if (!user || !accessToken) {
     return NextResponse.json({ code: 'unauthorized', message: 'Sign in required' }, { status: 401 })
@@ -47,8 +47,6 @@ export async function PATCH(request: Request) {
   const nextName = typeof body.name === 'string' ? body.name.trim() : undefined
   const nextUsername = typeof body.username === 'string' ? body.username : undefined
 
-  await ensureWorkspace(accessToken, user)
-
   if (typeof body.name === 'string' && !nextName) {
     return NextResponse.json({ code: 'invalid_request', message: 'Name is required.' }, { status: 422 })
   }
@@ -58,6 +56,8 @@ export async function PATCH(request: Request) {
   }
 
   try {
+    await ensureWorkspace(accessToken, user)
+
     let workosUser = await getFreshViewerAccount(user.id)
     const managed = isManagedWorkOSUser(workosUser)
 

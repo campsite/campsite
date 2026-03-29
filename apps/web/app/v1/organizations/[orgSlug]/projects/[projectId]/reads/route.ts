@@ -46,7 +46,7 @@ export async function DELETE(_: Request, { params }: { params: { orgSlug: string
       projectId: params.projectId
     })
 
-    return NextResponse.json({}, { status: 204 })
+    return new NextResponse(null, { status: 204 })
   } catch (error) {
     return NextResponse.json(
       {

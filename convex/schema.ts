@@ -270,6 +270,21 @@ export default defineSchema({
     .index('by_public_id', ['publicId'])
     .index('by_expires_at', ['expiresAt'])
     .index('by_organization_and_note', ['organizationId', 'noteId']),
+  desktopSessionGrants: defineTable({
+    publicId: v.string(),
+    userTokenIdentifier: v.string(),
+    accessToken: v.string(),
+    refreshToken: v.string(),
+    userJson: v.string(),
+    impersonatorJson: v.optional(v.string()),
+    returnTo: v.optional(v.string()),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+    consumedAt: v.optional(v.number())
+  })
+    .index('by_public_id', ['publicId'])
+    .index('by_expires_at', ['expiresAt'])
+    .index('by_user_token_identifier', ['userTokenIdentifier']),
   notifications: defineTable({
     organizationId: v.id('organizations'),
     recipientTokenIdentifier: v.string(),
@@ -721,7 +736,7 @@ export default defineSchema({
     ),
     parentId: v.optional(v.id('posts')),
     rootPostId: v.optional(v.id('posts')),
-    version: v.number(),
+    version: v.optional(v.number()),
     resolvedAt: v.optional(v.number()),
     resolvedByMembershipId: v.optional(v.id('organizationMemberships')),
     resolvedHtml: v.optional(v.string()),

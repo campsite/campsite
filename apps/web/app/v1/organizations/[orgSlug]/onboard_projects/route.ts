@@ -23,7 +23,7 @@ export async function POST(request: Request, { params }: { params: { orgSlug: st
       projects: Array.isArray(body.projects) ? body.projects : []
     })
 
-    return NextResponse.json({}, { status: 204 })
+    return new NextResponse(null, { status: 204 })
   } catch (error) {
     return NextResponse.json(
       {

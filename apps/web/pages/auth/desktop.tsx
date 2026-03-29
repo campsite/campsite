@@ -12,13 +12,18 @@ const DesktopAuthPage: PageWithProviders<any> = () => {
   const createDesktopSession = useCreateDesktopSession()
 
   useEffect(() => {
-    if (router.query.email && router.query.token) {
+    const grant = typeof router.query.grant === 'string' ? router.query.grant : null
+    const legacyToken = typeof router.query.token === 'string' ? router.query.token : null
+    const token = grant ?? legacyToken
+    const returnTo = typeof router.query.from === 'string' ? router.query.from : '/'
+
+    if (token) {
       const createSession = async () => {
         createDesktopSession.mutate(
-          { user: { email: router.query.email as string, token: router.query.token as string } },
+          { user: { email: (router.query.email as string) || 'desktop@campsite.local', token } },
           {
-            onSuccess() {
-              router.push('/')
+            onSuccess(data: any) {
+              router.push(data?.return_to || returnTo)
             }
           }
         )
@@ -26,7 +31,7 @@ const DesktopAuthPage: PageWithProviders<any> = () => {
 
       createSession()
     }
-  }, [router.query.email, router.query.token]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [router.query.email, router.query.from, router.query.grant, router.query.token]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const error = createDesktopSession.error as any
 

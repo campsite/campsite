@@ -161,6 +161,8 @@ To find an app or package name, navigate to the `package.json` for each `app/` o
 1. [Download the ToDesktop build macOS App](https://dl.todesktop.com/2108257l5oobyoe).
 2. Look for the app switcher in the ToDesktop title bar. If you do not see our org apps here, you may need to create a dummy application.
 3. Switch to "Campsite Dev" and click "Run" in the bottom left corner of the app.
+4. Run the web app locally with `pnpm --filter @campsite/web dev`.
+5. Sign in from inside the desktop shell. The desktop auth handoff now uses the migrated `WorkOS + Vercel + Convex` session flow rather than the archived Rails login-token flow.
 
 <details>
   <summary>View screenshot</summary>

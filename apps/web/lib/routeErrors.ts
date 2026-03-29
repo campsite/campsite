@@ -29,6 +29,10 @@ export function routeErrorResponse(error: unknown) {
     return NextResponse.json({ code, message }, { status: 422 })
   }
 
+  if (code === 'service_unavailable') {
+    return NextResponse.json({ code, message }, { status: 503 })
+  }
+
   return NextResponse.json(
     {
       code: 'unprocessable',

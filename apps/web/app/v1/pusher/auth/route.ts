@@ -1,8 +1,8 @@
-import { withAuth } from '@workos-inc/authkit-nextjs'
 import { NextResponse } from 'next/server'
 
 import { ensureWorkspace, getLegacyCurrentUser, getLegacyOrganization } from '@/lib/convex/server'
 import { buildPusherAuthPayload, isPusherConfigured } from '@/lib/realtime/pusherCompat'
+import { getFreshRouteAuth } from '@/lib/routeSession'
 
 function extractChannelName(channelName: string) {
   if (channelName.startsWith('presence-org-')) {
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     return NextResponse.json(buildPusherAuthPayload({ channelName, socketId }))
   }
 
-  const { accessToken, user } = await withAuth()
+  const { accessToken, user } = await getFreshRouteAuth()
 
   if (!accessToken || !user) {
     return NextResponse.json({ code: 'forbidden', message: 'You are not allowed to access this channel.' }, { status: 403 })
