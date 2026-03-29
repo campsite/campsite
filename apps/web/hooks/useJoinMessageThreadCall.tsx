@@ -6,7 +6,7 @@ import { desktopJoinCall } from '@campsite/ui/Link'
 
 import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
 
-type Props = {
+interface Props {
   thread?: MessageThread
 }
 
@@ -23,7 +23,10 @@ export function useJoinMessageThreadCall({ thread }: Props) {
     if (isDesktopApp) {
       desktopJoinCall(thread.call_room_url)
     } else {
-      window.open(thread.call_room_url)
+      const callUrl = new URL(thread.call_room_url)
+
+      callUrl.searchParams.set('browser', 'true')
+      window.open(callUrl.toString(), '_blank')
     }
   }, [isDesktopApp, thread?.call_room_url])
 

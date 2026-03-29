@@ -332,6 +332,14 @@ function Create({
   const isDesktop = useIsDesktopApp()
   const { data: organization } = useGetCurrentOrganization()
 
+  function toBrowserCallUrl(url: string) {
+    const nextUrl = new URL(url)
+
+    nextUrl.searchParams.set('im', 'open')
+    nextUrl.searchParams.set('browser', 'true')
+    return nextUrl.toString()
+  }
+
   function onInstantCall() {
     createCallRoom(
       { source: 'new_call_button' },
@@ -341,7 +349,7 @@ function Create({
             if (isDesktop) {
               desktopJoinCall(`${data?.url}?im=open`)
             } else {
-              window.open(`${data?.url}?im=open`, '_blank')
+              window.open(toBrowserCallUrl(data.url), '_blank')
             }
           })
           close()
@@ -374,7 +382,7 @@ function Create({
     if (isDesktop) {
       desktopJoinCall(`${personalCallRoom.url}?im=open`)
     } else {
-      window.open(`${personalCallRoom.url}?im=open`, '_blank')
+      window.open(toBrowserCallUrl(personalCallRoom.url), '_blank')
     }
     close()
   }
