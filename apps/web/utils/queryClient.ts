@@ -1,6 +1,6 @@
 import { InfiniteData, QueryClient, QueryKey } from '@tanstack/react-query'
 
-import { RAILS_API_URL, RAILS_AUTH_URL } from '@campsite/config'
+import { APP_API_URL, APP_AUTH_URL } from '@campsite/config'
 import { Api, ApiError, DataTag } from '@campsite/types'
 
 import { ApiErrorResponse } from './types'
@@ -11,7 +11,7 @@ interface UrlProps {
 }
 
 export function signinUrl({ inviteToken, from }: UrlProps = {}): string {
-  const url = new URL(RAILS_AUTH_URL)
+  const url = new URL(APP_AUTH_URL)
 
   url.pathname = '/login'
 
@@ -27,7 +27,7 @@ export function signinUrl({ inviteToken, from }: UrlProps = {}): string {
 }
 
 export function signUpUrl({ inviteToken, from }: UrlProps = {}): string {
-  const url = new URL(RAILS_AUTH_URL)
+  const url = new URL(APP_AUTH_URL)
 
   url.pathname = '/sign-up'
 
@@ -135,7 +135,7 @@ export const queryClient = () =>
   })
 
 export const apiClient = new Api({
-  baseUrl: RAILS_API_URL,
+  baseUrl: APP_API_URL,
   baseApiParams: {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

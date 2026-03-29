@@ -38,3 +38,13 @@ export async function getLegacySearchResourceMentions(
 ) {
   return await getConvexServerClient(accessToken).query(searchApi.search.getLegacySearchResourceMentions, data)
 }
+
+export async function getLegacyResourceMentionByUrl(
+  accessToken: string,
+  data: {
+    slug: string
+    url: string
+  }
+) {
+  return await getConvexServerClient(accessToken).query(searchApi.search.getLegacyResourceMentionByUrl, data)
+}

@@ -3,7 +3,7 @@ import { AnimatePresence, m } from 'framer-motion'
 import { useRouter } from 'next/router'
 import pluralize from 'pluralize'
 
-import { RAILS_AUTH_URL } from '@campsite/config'
+import { APP_AUTH_URL } from '@campsite/config'
 import type { PollOption as PollOptionType, Post } from '@campsite/types'
 import { BoxCheckIcon, Button, CheckCircleIcon, EyeIcon, PencilIcon, TrashIcon, UIText } from '@campsite/ui'
 import * as Dialog from '@campsite/ui/src/Dialog'
@@ -249,7 +249,7 @@ function UpsellDialog({ open, onOpenChange }: UpsellDialogProps) {
                 <Button href={signinUrl({ from: asPath })} variant='flat'>
                   Log in
                 </Button>
-                <Button href={`${RAILS_AUTH_URL}/sign-up`} variant='brand'>
+                <Button href={`${APP_AUTH_URL}/sign-up`} variant='brand'>
                   Sign up
                 </Button>
               </div>

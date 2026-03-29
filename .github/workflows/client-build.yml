@@ -79,13 +79,8 @@ jobs:
       - run: pnpm config set "//registry.tiptap.dev/:_authToken" ${{ secrets.TIPTAP_PRIVATE_REGISTRY_KEY }}
       - run: pnpm install
 
-      - run: pnpm format
-      - run: pnpm lint:fix
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: 🤖 linting with autofix
-          branch: ${{ github.head_ref }}
+      - run: pnpm format --check
+      - run: pnpm lint
       - name: Run tests
         run: pnpm turbo run test --filter=@campsite/web
 

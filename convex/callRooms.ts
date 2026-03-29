@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 
+import { api, internal } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { generateToken, getViewerIdentity, getWorkspaceMemberships } from './workspace'
@@ -71,11 +72,21 @@ async function getUserByTokenIdentifier(ctx: any, tokenIdentifier: string) {
     .unique()
 }
 
-async function buildLegacyCallRoomPayload(ctx: any, args: { organization: any; room: any }) {
+async function buildLegacyCallRoomPayload(ctx: any, args: { organization: any; room: any }): Promise<any> {
   const creatorMembership = args.room.creatorMembershipId ? await ctx.db.get(args.room.creatorMembershipId) : null
   const personalMembership = args.room.personalMembershipId ? await ctx.db.get(args.room.personalMembershipId) : null
   const titleMembership = personalMembership ?? creatorMembership
   const titleUser = titleMembership ? await getUserByTokenIdentifier(ctx, titleMembership.userTokenIdentifier) : null
+  const [activeCall, callPeerState] = await Promise.all([
+    ctx.runQuery((api as any).callsRealtime.getLegacyCallCompatByCallRoomId, {
+      slug: args.organization.slug,
+      callRoomId: args.room.publicId
+    }),
+    ctx.runQuery((internal as any).callsRealtime.getLegacyCallPeersByCallRoomId, {
+      organizationId: args.organization._id,
+      callRoomId: args.room.publicId
+    })
+  ])
 
   return {
     id: args.room.publicId,
@@ -87,11 +98,12 @@ async function buildLegacyCallRoomPayload(ctx: any, args: { organization: any; r
         organizationName: args.organization.name,
         personalDisplayName: titleUser?.displayName ?? null,
         source: args.room.source
-      }),
+    }),
     viewer_token: null,
     viewer_can_invite_participants: true,
-    active_peers: [],
-    peers: [],
+    active_peers: callPeerState.activePeers,
+    peers: callPeerState.peers,
+    active_call: activeCall,
     remote_room_id: args.room.remoteRoomId ?? null
   }
 }

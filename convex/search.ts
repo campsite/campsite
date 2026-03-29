@@ -2,7 +2,14 @@ import { v } from 'convex/values'
 
 import { query } from './_generated/server'
 import { buildLegacyGroupedReactions, buildLegacySubjectFollowUps, hasLegacyFavorite, hasLegacyPostSubscription } from './engagement'
-import { buildLegacyMember as buildLegacyMemberRecord, emptyAvatarUrls, formatDate } from './legacy'
+import { buildLegacyAvatarUrls, buildLegacyMediaUrl, buildLegacyMember as buildLegacyMemberRecord, formatDate } from './legacy'
+import {
+  buildCallResourceMention,
+  buildNoteResourceMention,
+  buildPostResourceMention,
+  getLegacyResourceMentionsFromHtml,
+  getLegacyResourceMentionByUrl as resolveLegacyResourceMentionByUrl
+} from './resourceMentions'
 import { buildWorkspaceState } from './workspace'
 
 const MAX_MIXED_RESULTS = 20
@@ -195,6 +202,14 @@ async function getOrganizationComments(ctx: any, organizationId: any) {
   return await ctx.db.query('comments').withIndex('by_organization_id', (q: any) => q.eq('organizationId', organizationId)).collect()
 }
 
+async function getOrganizationNotes(ctx: any, organizationId: any) {
+  return await ctx.db.query('notes').withIndex('by_organization_id', (q: any) => q.eq('organizationId', organizationId)).collect()
+}
+
+async function getOrganizationCalls(ctx: any, organizationId: any) {
+  return await ctx.db.query('calls').withIndex('by_organization_id', (q: any) => q.eq('organizationId', organizationId)).collect()
+}
+
 function getFallbackProject(projects: any[]) {
   const generalProject = projects.find((project: any) => project.isGeneral)
 
@@ -208,7 +223,7 @@ function getFallbackProject(projects: any[]) {
     accessory: generalProject.accessory ?? null,
     private: generalProject.private,
     archived: !!generalProject.archivedAt,
-    message_thread_id: null
+    message_thread_id: generalProject.messageThreadId ?? null
   }
 }
 
@@ -223,15 +238,17 @@ function buildMiniProject(project: any, fallbackProject: typeof defaultProject) 
     accessory: project.accessory ?? null,
     private: project.private,
     archived: !!project.archivedAt,
-    message_thread_id: null
+    message_thread_id: project.messageThreadId ?? null
   }
 }
 
 function buildLegacyPublicOrganization(organization: any, viewerMembership: any) {
+  const avatarUrl = buildLegacyMediaUrl(organization.avatarPath ?? organization.avatar_url)
+
   return {
     id: organization._id,
-    avatar_url: '',
-    avatar_urls: emptyAvatarUrls,
+    avatar_url: avatarUrl || '',
+    avatar_urls: buildLegacyAvatarUrls(avatarUrl),
     name: organization.name,
     slug: organization.slug,
     viewer_is_admin: viewerMembership.role === 'admin',
@@ -255,6 +272,41 @@ function buildAttachmentTypeFlags(fileType: string) {
   }
 }
 
+function buildAttachmentImageUrls(attachment: any, flags: ReturnType<typeof buildAttachmentTypeFlags>) {
+  if (!flags.image && !flags.gif) {
+    return null
+  }
+
+  const originalUrl = buildLegacyMediaUrl(attachment.filePath)
+  const previewUrl = buildLegacyMediaUrl(attachment.previewFilePath || attachment.filePath)
+
+  return {
+    original_url: originalUrl,
+    thumbnail_url: previewUrl,
+    feed_url: previewUrl,
+    email_url: originalUrl,
+    slack_url: previewUrl,
+    large_url: originalUrl
+  }
+}
+
+function pickSubjectThumbnailUrl(attachments: any[]) {
+  for (const attachment of attachments) {
+    const flags = buildAttachmentTypeFlags(attachment.fileType || '')
+
+    if (flags.image || flags.gif || flags.video || flags.lottie) {
+      return buildLegacyMediaUrl(attachment.previewFilePath || attachment.filePath)
+    }
+  }
+
+  return null
+}
+
+async function hasPostIterations(ctx: any, postId: string) {
+  const children = await ctx.db.query('posts').withIndex('by_parent_id', (q: any) => q.eq('parentId', postId as any)).collect()
+  return children.length > 0
+}
+
 function buildLegacyAttachment(
   attachment: any,
   subjectType: 'Post' | 'Comment',
@@ -262,17 +314,20 @@ function buildLegacyAttachment(
   isSubjectComment: boolean
 ) {
   const url = attachment.previewFilePath || attachment.filePath
+  const originalUrl = buildLegacyMediaUrl(attachment.filePath)
+  const previewUrl = buildLegacyMediaUrl(attachment.previewFilePath || attachment.filePath)
+  const flags = buildAttachmentTypeFlags(attachment.fileType)
 
   return {
     id: attachment.id,
     file_type: attachment.fileType,
-    url,
-    app_url: url,
-    download_url: url,
-    preview_url: attachment.previewFilePath || null,
-    preview_thumbnail_url: attachment.previewFilePath || null,
-    image_urls: null,
-    ...buildAttachmentTypeFlags(attachment.fileType),
+    url: buildLegacyMediaUrl(url),
+    app_url: originalUrl,
+    download_url: originalUrl,
+    preview_url: previewUrl,
+    preview_thumbnail_url: previewUrl,
+    image_urls: buildAttachmentImageUrls(attachment, flags),
+    ...flags,
     duration: attachment.duration ?? 0,
     width: attachment.width ?? 0,
     height: attachment.height ?? 0,
@@ -280,8 +335,8 @@ function buildLegacyAttachment(
     name: attachment.name ?? null,
     size: attachment.size ?? null,
     remote_figma_url: null,
-    no_video_track: false,
-    gallery_id: null,
+    no_video_track: attachment.noVideoTrack ?? false,
+    gallery_id: attachment.galleryId ?? null,
     type_name: 'attachment',
     subject_id: subjectId,
     is_subject_comment: isSubjectComment,
@@ -311,6 +366,7 @@ async function buildPreviewCommenters(ctx: any, organizationId: any, comments: a
 
 async function buildSearchPost(ctx: any, params: { organizationId: any; post: any; project: any; fallbackProject: typeof defaultProject }) {
   const author = await buildLegacyMember(ctx, params.organizationId, params.post.authorTokenIdentifier)
+  const thumbnailUrl = pickSubjectThumbnailUrl(params.post.attachments ?? [])
 
   return {
     id: params.post._id,
@@ -319,7 +375,7 @@ async function buildSearchPost(ctx: any, params: { organizationId: any; post: an
     truncated_description_text: stripHtml(params.post.descriptionHtml),
     created_at: new Date(params.post.createdAt).toISOString(),
     published_at: formatDate(params.post.publishedAt),
-    thumbnail_url: null,
+    thumbnail_url: thumbnailUrl,
     member: author,
     project: buildMiniProject(params.project, params.fallbackProject)
   }
@@ -344,9 +400,11 @@ async function buildLegacyPost(
   const latestCommentMember =
     latestComment ? await buildLegacyMember(ctx, organization._id, latestComment.authorTokenIdentifier) : null
   const viewerHasCommented = comments.some((comment: any) => comment.authorTokenIdentifier === viewerTokenIdentifier)
+  const resolvedCommentsCount = comments.filter((comment: any) => !!comment.resolvedAt).length
   const path = `/${organization.slug}/posts/${post._id}`
   const descriptionText = stripHtml(post.descriptionHtml)
-  const [groupedReactions, followUps, viewerHasFavorited, viewerHasSubscribed] = await Promise.all([
+  const thumbnailUrl = pickSubjectThumbnailUrl(post.attachments ?? [])
+  const [groupedReactions, followUps, viewerHasFavorited, viewerHasSubscribed, hasIterations] = await Promise.all([
     buildLegacyGroupedReactions(ctx, {
       organizationId: organization._id,
       subjectType: 'Post',
@@ -369,7 +427,8 @@ async function buildLegacyPost(
       organizationId: organization._id,
       tokenIdentifier: viewerTokenIdentifier,
       postId: post._id
-    })
+    }),
+    hasPostIterations(ctx, post._id)
   ])
 
   return {
@@ -381,16 +440,16 @@ async function buildLegacyPost(
     published: !post.draft,
     last_activity_at: new Date(post.lastActivityAt).toISOString(),
     comments_count: comments.length,
-    resolved_comments_count: 0,
-    version: 1,
+    resolved_comments_count: resolvedCommentsCount,
+    version: typeof post.version === 'number' ? post.version : 1,
     path,
     channel_name: `post-${post._id}`,
     views_count: 0,
     non_member_views_count: 0,
     status: post.status,
     visibility: post.visibility,
-    open_graph_image_url: null,
-    thumbnail_url: null,
+    open_graph_image_url: thumbnailUrl,
+    thumbnail_url: thumbnailUrl,
     unfurled_link: post.unfurledLink ?? null,
     description_html: post.descriptionHtml,
     truncated_description_html: post.descriptionHtml,
@@ -410,7 +469,7 @@ async function buildLegacyPost(
     grouped_reactions: groupedReactions,
     project: buildMiniProject(project, fallbackProject),
     has_parent: !!post.parentId,
-    has_iterations: false,
+    has_iterations: hasIterations,
     viewer_is_organization_member: true,
     viewer_is_author: post.authorTokenIdentifier === viewerTokenIdentifier,
     viewer_has_commented: viewerHasCommented,
@@ -435,7 +494,11 @@ async function buildLegacyPost(
       ? latestComment.authorTokenIdentifier === viewerTokenIdentifier
       : false,
     project_pin_id: null,
-    resource_mentions: []
+    resource_mentions: await getLegacyResourceMentionsFromHtml(ctx, {
+      organizationId: organization._id,
+      organizationSlug: organization.slug,
+      html: post.descriptionHtml
+    })
   }
 }
 
@@ -713,9 +776,11 @@ export const getLegacySearchResourceMentions = query({
       return { items: [] }
     }
 
-    const [posts, projects] = await Promise.all([
+    const [posts, projects, notes, calls] = await Promise.all([
       getOrganizationPosts(ctx, context.organization._id),
-      getOrganizationProjects(ctx, context.organization._id)
+      getOrganizationProjects(ctx, context.organization._id),
+      getOrganizationNotes(ctx, context.organization._id),
+      getOrganizationCalls(ctx, context.organization._id)
     ])
     const fallbackProject = getFallbackProject(projects)
     const projectsById = new Map<string, any>(projects.map((project: any) => [project._id, project]))
@@ -744,7 +809,52 @@ export const getLegacySearchResourceMentions = query({
       matches.push({
         score,
         createdAt: post.publishedAt ?? post.createdAt,
+        type: 'post',
         post,
+        project
+      })
+    }
+
+    for (const note of notes) {
+      const project = note.projectId ? projectsById.get(note.projectId) ?? null : null
+      const searchableText = [note.title || '', stripHtml(note.descriptionHtml), project?.name || fallbackProject.name].join(' ')
+
+      if (!matchesAllTokens(searchableText, tokens)) {
+        continue
+      }
+
+      const score =
+        scoreTextMatch(note.title || '', tokens, { exact: 500, prefix: 360, include: 220 }) +
+        scoreTextMatch(stripHtml(note.descriptionHtml), tokens, { exact: 180, prefix: 140, include: 100 }) +
+        scoreTextMatch(project?.name || fallbackProject.name, tokens, { exact: 180, prefix: 140, include: 100 })
+
+      matches.push({
+        score,
+        createdAt: note.lastActivityAt ?? note.createdAt,
+        type: 'note',
+        note,
+        project
+      })
+    }
+
+    for (const call of calls) {
+      const project = call.projectId ? projectsById.get(call.projectId) ?? null : null
+      const searchableText = [call.title || '', stripHtml(call.summaryHtml), project?.name || fallbackProject.name].join(' ')
+
+      if (!matchesAllTokens(searchableText, tokens)) {
+        continue
+      }
+
+      const score =
+        scoreTextMatch(call.title || '', tokens, { exact: 500, prefix: 360, include: 220 }) +
+        scoreTextMatch(stripHtml(call.summaryHtml), tokens, { exact: 180, prefix: 140, include: 100 }) +
+        scoreTextMatch(project?.name || fallbackProject.name, tokens, { exact: 180, prefix: 140, include: 100 })
+
+      matches.push({
+        score,
+        createdAt: call.startedAt ?? call.createdAt,
+        type: 'call',
+        call,
         project
       })
     }
@@ -752,22 +862,41 @@ export const getLegacySearchResourceMentions = query({
     const sorted = sortByScoreAndDate(matches).slice(0, MAX_MIXED_RESULTS)
 
     return {
-      items: sorted.map(({ post, project }) => ({
-        item: {
-          id: post._id,
-          post: {
-            id: post._id,
-            title: post.title,
-            created_at: new Date(post.createdAt).toISOString(),
-            published_at: formatDate(post.publishedAt),
-            url: `/${context.organization.slug}/posts/${post._id}`
-          },
-          call: null,
-          note: null,
-          type_name: 'resource_mention'
-        },
-        project: buildMiniProject(project, fallbackProject)
+      items: sorted.map((match) => ({
+        item:
+          match.type === 'note'
+            ? buildNoteResourceMention(context.organization.slug, match.note)
+            : match.type === 'call'
+              ? buildCallResourceMention(context.organization.slug, match.call)
+              : buildPostResourceMention(context.organization.slug, match.post),
+        project: buildMiniProject(match.project, fallbackProject)
       }))
     }
+  }
+})
+
+export const getLegacyResourceMentionByUrl = query({
+  args: {
+    slug: v.string(),
+    url: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw createError('Organization not found', 'not_found')
+    }
+
+    const mention = await resolveLegacyResourceMentionByUrl(ctx, {
+      organizationId: context.organization._id,
+      organizationSlug: context.organization.slug,
+      url: args.url
+    })
+
+    if (!mention) {
+      throw createError('Resource mention not found', 'not_found')
+    }
+
+    return mention
   }
 })

@@ -46,23 +46,6 @@ export async function uninstallLegacyCustomReactionPack(
   return await getConvexServerClient(accessToken).mutation(api.collaboration.uninstallLegacyCustomReactionPack, data)
 }
 
-export async function getLegacyNoteSyncState(accessToken: string, data: { slug: string; noteId: string }) {
-  return await getConvexServerClient(accessToken).query(api.collaboration.getLegacyNoteSyncState, data)
-}
-
-export async function updateLegacyNoteSyncState(
-  accessToken: string,
-  data: {
-    slug: string
-    noteId: string
-    descriptionHtml: string
-    descriptionState: string
-    descriptionSchemaVersion: number
-  }
-) {
-  return await getConvexServerClient(accessToken).mutation(api.collaboration.updateLegacyNoteSyncState, data)
-}
-
 export async function getLegacyOauthApplications(accessToken: string, data: { slug: string }) {
   return await getConvexServerClient(accessToken).query(api.collaboration.getLegacyOauthApplications, data)
 }

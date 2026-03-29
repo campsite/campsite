@@ -1,4 +1,5 @@
 import { mutation, query } from './_generated/server'
+import { seedUserPreferences } from './accountShell'
 import { fallbackName, fallbackUsername, getViewerIdentity, resolveViewerProfile, defaultPreferences } from './workspace'
 
 export const viewer = query({
@@ -53,15 +54,19 @@ export const syncViewer = mutation({
     }
 
     if (existing) {
-      await ctx.db.patch(existing._id, fields)
+      await ctx.db.patch(existing._id, { ...fields, updatedAt: Date.now() })
+      await seedUserPreferences(ctx, { ...existing, ...fields }, defaultPreferences)
       return await ctx.db.get(existing._id)
     }
 
     const userId = await ctx.db.insert('users', {
       ...fields,
       createdAt: Date.now(),
+      publicId: fallbackUsername(profile).slice(0, 12),
+      updatedAt: Date.now(),
       tokenIdentifier: profile.tokenIdentifier
     })
+    await seedUserPreferences(ctx, { _id: userId, ...fields }, defaultPreferences)
 
     return await ctx.db.get(userId)
   }

@@ -22,8 +22,16 @@ export async function getLegacyNotesPage(
   return await getNotesClient(accessToken).action(api.notes.getLegacyNotesPage, data)
 }
 
+export async function promoteLegacyNotesCompat(accessToken: string, data: { slug: string }) {
+  return await getNotesClient(accessToken).mutation(api.notes.promoteLegacyNotesCompat, data)
+}
+
 export async function getLegacyNote(accessToken: string, data: { slug: string; noteId: string }) {
   return await getNotesClient(accessToken).action(api.notes.getLegacyNoteById, data)
+}
+
+export async function getLegacyDigestMigration(accessToken: string, data: { slug: string; digestId: string }) {
+  return await getNotesClient(accessToken).query(api.digests.getLegacyDigestMigration, data)
 }
 
 export async function createLegacyNote(
@@ -84,6 +92,7 @@ export async function createLegacyNoteComment(
     body_html?: string | null
     file_id?: string | null
     note_highlight?: string | null
+    parent_comment_id?: string | null
     timestamp?: number | null
     x?: number | null
     y?: number | null
@@ -189,6 +198,17 @@ export async function getLegacyNoteSyncState(accessToken: string, data: { slug: 
   return await getNotesClient(accessToken).action(api.notes.getLegacyNoteSyncState, data)
 }
 
+export async function createLegacyNoteSyncGrant(
+  accessToken: string,
+  data: { slug: string; noteId: string; resourceType: 'Note' }
+) {
+  return await getNotesClient(accessToken).mutation(api.notes.createLegacyNoteSyncGrant, data)
+}
+
+export async function getLegacyNoteSyncStateByGrant(data: { grantId: string; slug: string; noteId: string }) {
+  return await getNotesClient(null).action(api.notes.getLegacyNoteSyncStateByGrant, data)
+}
+
 export async function updateLegacyNoteSyncState(
   accessToken: string,
   data: {
@@ -200,6 +220,19 @@ export async function updateLegacyNoteSyncState(
   }
 ) {
   return await getNotesClient(accessToken).action(api.notes.updateLegacyNoteSyncState, data)
+}
+
+export async function updateLegacyNoteSyncStateByGrant(
+  data: {
+    grantId: string
+    slug: string
+    noteId: string
+    description_html: string
+    description_state: string
+    description_schema_version: number
+  }
+) {
+  return await getNotesClient(null).action(api.notes.updateLegacyNoteSyncStateByGrant, data)
 }
 
 export async function getLegacyNoteTimelineEventsPage(
@@ -220,7 +253,7 @@ export async function getLegacyNoteViews(accessToken: string, data: { slug: stri
 
 export async function createLegacyNoteView(
   accessToken: string | null | undefined,
-  data: { slug: string; noteId: string }
+  data: { slug: string; noteId: string; anonymized_ip?: string; user_agent?: string }
 ) {
   return await getNotesClient(accessToken).action(api.notes.createLegacyNoteView, data)
 }

@@ -1,18 +1,14 @@
 import { v } from 'convex/values'
 
 import { api, internal } from './_generated/api'
-import { action, internalMutation, internalQuery } from './_generated/server'
+import { action, internalMutation, internalQuery, mutation } from './_generated/server'
 import { buildLegacyGroupedReactions } from './engagement'
-import { buildLegacyMember, emptyAvatarUrls, formatDate } from './legacy'
+import { buildLegacyAvatarUrls, buildLegacyMediaUrl, buildLegacyMember, emptyAvatarUrls, formatDate } from './legacy'
 import { buildWorkspaceState, generateToken } from './workspace'
 
-const THREAD_SCOPE_PREFIX = 'compat:threads:org:'
-const THREAD_MEMBERSHIP_SCOPE_PREFIX = 'compat:threads:memberships:'
-const THREAD_MESSAGE_SCOPE_PREFIX = 'compat:threads:messages:'
 const DEFAULT_NOTIFICATION_LEVEL = 'all'
 const DELETED_MESSAGE_CONTENT = '<p><em>This message has been deleted.</em></p>'
 const TABLE_STORAGE_MODE = 'table' as const
-const BLOB_STORAGE_MODE = 'blob' as const
 
 type StoredAttachment = {
   id: string
@@ -24,6 +20,7 @@ type StoredAttachment = {
   width?: number
   height?: number
   duration?: number
+  galleryId?: string | null
   noVideoTrack?: boolean
 }
 
@@ -40,10 +37,14 @@ type StoredThread = {
   integrationDm: boolean
   oauthApplicationIds: string[]
   participantTokenIdentifiers: string[]
+  projectId?: any
+  callRoomId?: any
   lastMessageAt?: number | null
+  latestMessagePublicId?: string | null
   latestMessageTruncated?: string | null
   forceNotificationSentBy: string[]
-  storageMode?: typeof TABLE_STORAGE_MODE | typeof BLOB_STORAGE_MODE
+  discardedAt?: number | null
+  storageMode?: typeof TABLE_STORAGE_MODE
 }
 
 type StoredThreadMembership = {
@@ -54,7 +55,7 @@ type StoredThreadMembership = {
   unreadCount: number
   manuallyMarkedUnread: boolean
   joinedAt: number
-  storageMode?: typeof TABLE_STORAGE_MODE | typeof BLOB_STORAGE_MODE
+  storageMode?: typeof TABLE_STORAGE_MODE
 }
 
 type StoredMessage = {
@@ -63,17 +64,16 @@ type StoredMessage = {
   senderTokenIdentifier: string
   content: string
   attachments: StoredAttachment[]
+  unfurledLink?: string | null
   createdAt: number
   updatedAt: number
   replyToMessageId?: string
+  callId?: any
+  integrationId?: string | null
+  oauthApplicationId?: string | null
+  systemSharedPostId?: any
   discardedAt?: number
-  storageMode?: typeof TABLE_STORAGE_MODE | typeof BLOB_STORAGE_MODE
-}
-
-type StoredFileRow = {
-  _id: any
-  storageId: any
-  name: string
+  storageMode?: typeof TABLE_STORAGE_MODE
 }
 
 type OrganizationSnapshot = {
@@ -92,30 +92,20 @@ function createError(message: string, code: string) {
   return new Error(`${code}:${message}`)
 }
 
-function threadScopeKey(organizationId: string) {
-  return `${THREAD_SCOPE_PREFIX}${organizationId}`
-}
-
-function threadMembershipScopeKey(threadId: string) {
-  return `${THREAD_MEMBERSHIP_SCOPE_PREFIX}${threadId}`
-}
-
-function threadMessageScopeKey(threadId: string) {
-  return `${THREAD_MESSAGE_SCOPE_PREFIX}${threadId}`
-}
-
 function buildThreadAvatarUrls(imagePath?: string | null) {
-  if (!imagePath) {
+  const imageUrl = buildLegacyMediaUrl(imagePath)
+
+  if (!imageUrl) {
     return null
   }
 
   return {
-    xs: imagePath,
-    sm: imagePath,
-    base: imagePath,
-    lg: imagePath,
-    xl: imagePath,
-    xxl: imagePath
+    xs: imageUrl,
+    sm: imageUrl,
+    base: imageUrl,
+    lg: imageUrl,
+    xl: imageUrl,
+    xxl: imageUrl
   }
 }
 
@@ -167,19 +157,40 @@ function buildAttachmentTypeFlags(fileType: string) {
   }
 }
 
+function buildAttachmentImageUrls(attachment: StoredAttachment, flags: ReturnType<typeof buildAttachmentTypeFlags>) {
+  if (!flags.image && !flags.gif) {
+    return null
+  }
+
+  const originalUrl = buildLegacyMediaUrl(attachment.filePath)
+  const previewUrl = buildLegacyMediaUrl(attachment.previewFilePath || attachment.filePath)
+
+  return {
+    original_url: originalUrl,
+    thumbnail_url: previewUrl,
+    feed_url: previewUrl,
+    email_url: originalUrl,
+    slack_url: previewUrl,
+    large_url: originalUrl
+  }
+}
+
 function buildLegacyAttachment(attachment: StoredAttachment, messageId: string) {
   const url = attachment.previewFilePath || attachment.filePath
+  const originalUrl = buildLegacyMediaUrl(attachment.filePath)
+  const previewUrl = buildLegacyMediaUrl(attachment.previewFilePath || attachment.filePath)
   const flags = buildAttachmentTypeFlags(attachment.fileType)
+  const imageUrls = buildAttachmentImageUrls(attachment, flags)
 
   return {
     id: attachment.id,
     file_type: attachment.fileType,
-    url,
-    app_url: url,
-    download_url: url,
-    preview_url: attachment.previewFilePath || null,
-    preview_thumbnail_url: attachment.previewFilePath || null,
-    image_urls: null,
+    url: buildLegacyMediaUrl(url),
+    app_url: originalUrl,
+    download_url: originalUrl,
+    preview_url: previewUrl,
+    preview_thumbnail_url: previewUrl,
+    image_urls: imageUrls,
     ...flags,
     duration: attachment.duration ?? 0,
     width: attachment.width ?? 0,
@@ -189,7 +200,7 @@ function buildLegacyAttachment(attachment: StoredAttachment, messageId: string) 
     size: attachment.size ?? null,
     remote_figma_url: null,
     no_video_track: attachment.noVideoTrack ?? false,
-    gallery_id: null,
+    gallery_id: attachment.galleryId ?? null,
     type_name: 'attachment',
     subject_id: messageId,
     is_subject_comment: false,
@@ -220,7 +231,42 @@ function buildPlaceholderOauthApplication(id: string) {
   }
 }
 
-function buildThreadTitle(thread: StoredThread, otherMembers: any[]) {
+async function getStoredOauthApplications(ctx: any, organizationId: string, publicIds: string[]) {
+  const uniquePublicIds = Array.from(new Set(publicIds.filter(Boolean)))
+  const rows = await Promise.all(
+    uniquePublicIds.map((publicId) =>
+      ctx.db.query('oauthApplications').withIndex('by_public_id', (q: any) => q.eq('publicId', publicId)).unique()
+    )
+  )
+
+  return new Map(rows.filter((row: any) => row && row.organizationId === organizationId).map((row: any) => [row.publicId, row]))
+}
+
+function buildStoredOauthApplication(row: any) {
+  const avatarUrl = buildLegacyMediaUrl(row.avatarPath)
+
+  return {
+    id: row.publicId,
+    name: row.name,
+    redirect_uri: row.redirectUri ?? null,
+    avatar_path: row.avatarPath ?? null,
+    avatar_url: avatarUrl || '',
+    avatar_urls: avatarUrl ? buildLegacyAvatarUrls(avatarUrl) : emptyAvatarUrls,
+    client_id: row.uid,
+    last_copied_secret_at: row.lastCopiedSecretAt ? new Date(row.lastCopiedSecretAt).toISOString() : null,
+    client_secret: null,
+    mentionable: false,
+    direct_messageable: true,
+    webhooks: row.webhooks.map((webhook: any) => ({
+      id: webhook.id,
+      url: webhook.url,
+      state: webhook.state,
+      event_types: webhook.eventTypes
+    }))
+  }
+}
+
+function buildThreadTitle(thread: StoredThread, otherMembers: any[], oauthApplicationsById: Map<string, any>) {
   const explicitTitle = normalizeTitle(thread.title)
 
   if (explicitTitle) {
@@ -228,7 +274,7 @@ function buildThreadTitle(thread: StoredThread, otherMembers: any[]) {
   }
 
   if (thread.integrationDm && thread.oauthApplicationIds.length > 0) {
-    return buildPlaceholderOauthApplication(thread.oauthApplicationIds[0]).name
+    return oauthApplicationsById.get(thread.oauthApplicationIds[0])?.name ?? buildPlaceholderOauthApplication(thread.oauthApplicationIds[0]).name
   }
 
   if (!thread.group && otherMembers.length === 1) {
@@ -264,16 +310,6 @@ function normalizeStoredAttachments(attachments?: any[]) {
   }))
 }
 
-async function parseStoredBlob(ctx: any, storageId: any) {
-  const blob = await ctx.storage.get(storageId)
-
-  if (!blob) {
-    return null
-  }
-
-  return JSON.parse(await blob.text())
-}
-
 function buildStoredThreadFromRow(row: any): StoredThread {
   return {
     id: row.publicId,
@@ -288,9 +324,13 @@ function buildStoredThreadFromRow(row: any): StoredThread {
     integrationDm: row.integrationDm,
     oauthApplicationIds: row.oauthApplicationIds ?? [],
     participantTokenIdentifiers: row.participantTokenIdentifiers ?? [],
+    projectId: row.projectId ?? null,
+    callRoomId: row.callRoomId ?? null,
     lastMessageAt: row.lastMessageAt ?? null,
+    latestMessagePublicId: row.latestMessagePublicId ?? null,
     latestMessageTruncated: row.latestMessageTruncated ?? null,
     forceNotificationSentBy: row.forceNotificationSentBy ?? [],
+    discardedAt: row.discardedAt ?? null,
     storageMode: TABLE_STORAGE_MODE
   }
 }
@@ -315,87 +355,16 @@ function buildStoredMessageFromRow(row: any, threadPublicId: string): StoredMess
     senderTokenIdentifier: row.senderTokenIdentifier,
     content: row.content,
     attachments: row.attachments ?? [],
+    unfurledLink: row.unfurledLink ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     replyToMessageId: row.replyToPublicId,
+    callId: row.callId ?? null,
+    integrationId: row.integrationId ?? null,
+    oauthApplicationId: row.oauthApplicationId ?? null,
+    systemSharedPostId: row.systemSharedPostId ?? null,
     discardedAt: row.discardedAt,
     storageMode: TABLE_STORAGE_MODE
-  }
-}
-
-async function listBlobStoredDocuments<T>(ctx: any, scopeKey: string): Promise<T[]> {
-  const rows = (await ctx.runQuery((internal as any).threads.listScopedFileRows, { scopeKey })) as StoredFileRow[]
-  const docs = await Promise.all(
-    rows.map(async (row) => {
-      const parsed = await parseStoredBlob(ctx, row.storageId)
-
-      if (!parsed) {
-        return null
-      }
-
-      return parsed as T
-    })
-  )
-
-  return docs.filter(Boolean) as T[]
-}
-
-async function getBlobStoredDocument<T>(ctx: any, scopeKey: string, name: string): Promise<T | null> {
-  const row = (await ctx.runQuery((internal as any).threads.getScopedFileRow, { scopeKey, name })) as StoredFileRow | null
-
-  if (!row) {
-    return null
-  }
-
-  return (await parseStoredBlob(ctx, row.storageId)) as T | null
-}
-
-async function upsertBlobStoredDocument(ctx: any, scopeKey: string, name: string, value: any) {
-  const existing = (await ctx.runQuery((internal as any).threads.getScopedFileRow, {
-    scopeKey,
-    name
-  })) as StoredFileRow | null
-  const serialized = JSON.stringify(value)
-  const storageId = await ctx.storage.store(new Blob([serialized], { type: 'application/json' }))
-
-  await ctx.runMutation((internal as any).threads.upsertScopedFileRow, {
-    existingId: existing?._id,
-    scopeKey,
-    name,
-    storageId,
-    size: new TextEncoder().encode(serialized).length
-  })
-
-  if (existing?.storageId) {
-    await ctx.storage.delete(existing.storageId)
-  }
-}
-
-async function deleteBlobStoredDocument(ctx: any, scopeKey: string, name: string) {
-  const existing = (await ctx.runQuery((internal as any).threads.getScopedFileRow, {
-    scopeKey,
-    name
-  })) as StoredFileRow | null
-
-  if (!existing) {
-    return
-  }
-
-  await ctx.runMutation((internal as any).threads.deleteScopedFileRows, { ids: [existing._id] })
-  await ctx.storage.delete(existing.storageId)
-}
-
-async function deleteAllBlobStoredDocuments(ctx: any, scopeKey: string) {
-  const rows = (await ctx.runQuery((internal as any).threads.listScopedFileRows, { scopeKey })) as StoredFileRow[]
-
-  if (!rows.length) {
-    return
-  }
-
-  await ctx.runMutation((internal as any).threads.deleteScopedFileRows, { ids: rows.map((row) => row._id) })
-
-  for (const row of rows) {
-    await ctx.storage.delete(row.storageId)
   }
 }
 
@@ -403,14 +372,8 @@ async function listStoredThreads(ctx: any, organizationId: string) {
   const tableRows = (await ctx.runQuery((internal as any).threads.listMessageThreadRowsByOrganization, {
     organizationId
   })) as any[]
-  const tableThreads = tableRows.map(buildStoredThreadFromRow)
-  const tableIds = new Set(tableThreads.map((thread) => thread.id))
-  const blobThreads = ((await listBlobStoredDocuments<StoredThread>(ctx, threadScopeKey(organizationId))) ?? []).map((thread) => ({
-    ...thread,
-    storageMode: BLOB_STORAGE_MODE
-  }))
 
-  return [...tableThreads, ...blobThreads.filter((thread) => !tableIds.has(thread.id))]
+  return tableRows.map(buildStoredThreadFromRow)
 }
 
 async function getStoredThread(ctx: any, organizationId: string, threadId: string) {
@@ -423,19 +386,10 @@ async function getStoredThread(ctx: any, organizationId: string, threadId: strin
     return buildStoredThreadFromRow(row)
   }
 
-  const blob = await getBlobStoredDocument<StoredThread>(ctx, threadScopeKey(organizationId), threadId)
-  return blob ? { ...blob, storageMode: BLOB_STORAGE_MODE } : null
+  return null
 }
 
 async function saveStoredThread(ctx: any, thread: StoredThread) {
-  if (thread.storageMode === BLOB_STORAGE_MODE) {
-    await upsertBlobStoredDocument(ctx, threadScopeKey(thread.organizationId), thread.id, {
-      ...thread,
-      storageMode: undefined
-    })
-    return
-  }
-
   await ctx.runMutation((internal as any).threads.upsertMessageThreadRow, {
     organizationId: thread.organizationId,
     threadPublicId: thread.id,
@@ -448,9 +402,13 @@ async function saveStoredThread(ctx: any, thread: StoredThread) {
       integrationDm: thread.integrationDm,
       oauthApplicationIds: thread.oauthApplicationIds,
       participantTokenIdentifiers: thread.participantTokenIdentifiers,
+      projectId: thread.projectId ?? null,
+      callRoomId: thread.callRoomId ?? null,
       forceNotificationSentBy: thread.forceNotificationSentBy,
       lastMessageAt: thread.lastMessageAt ?? null,
+      latestMessagePublicId: thread.latestMessagePublicId ?? null,
       latestMessageTruncated: thread.latestMessageTruncated ?? null,
+      discardedAt: thread.discardedAt ?? null,
       createdAt: thread.createdAt,
       updatedAt: thread.updatedAt,
       membersCount: thread.participantTokenIdentifiers.length
@@ -459,11 +417,6 @@ async function saveStoredThread(ctx: any, thread: StoredThread) {
 }
 
 async function deleteStoredThread(ctx: any, thread: StoredThread) {
-  if (thread.storageMode === BLOB_STORAGE_MODE) {
-    await deleteBlobStoredDocument(ctx, threadScopeKey(thread.organizationId), thread.id)
-    return
-  }
-
   await ctx.runMutation((internal as any).threads.deleteMessageThreadRowByPublicId, {
     organizationId: thread.organizationId,
     threadPublicId: thread.id
@@ -471,12 +424,6 @@ async function deleteStoredThread(ctx: any, thread: StoredThread) {
 }
 
 async function listThreadMemberships(ctx: any, thread: StoredThread) {
-  if (thread.storageMode === BLOB_STORAGE_MODE) {
-    return ((await listBlobStoredDocuments<StoredThreadMembership>(ctx, threadMembershipScopeKey(thread.id))) ?? []).map(
-      (membership) => ({ ...membership, storageMode: BLOB_STORAGE_MODE })
-    ).sort((a, b) => a.joinedAt - b.joinedAt)
-  }
-
   const rows = (await ctx.runQuery((internal as any).threads.listMessageThreadMembershipRows, {
     organizationId: thread.organizationId,
     threadPublicId: thread.id
@@ -486,16 +433,6 @@ async function listThreadMemberships(ctx: any, thread: StoredThread) {
 }
 
 async function getThreadMembership(ctx: any, thread: StoredThread, tokenIdentifier: string) {
-  if (thread.storageMode === BLOB_STORAGE_MODE) {
-    const membership = await getBlobStoredDocument<StoredThreadMembership>(
-      ctx,
-      threadMembershipScopeKey(thread.id),
-      tokenIdentifier
-    )
-
-    return membership ? { ...membership, storageMode: BLOB_STORAGE_MODE } : null
-  }
-
   const row = (await ctx.runQuery((internal as any).threads.getMessageThreadMembershipRowByUser, {
     organizationId: thread.organizationId,
     threadPublicId: thread.id,
@@ -506,14 +443,6 @@ async function getThreadMembership(ctx: any, thread: StoredThread, tokenIdentifi
 }
 
 async function saveThreadMembership(ctx: any, thread: StoredThread, membership: StoredThreadMembership) {
-  if (thread.storageMode === BLOB_STORAGE_MODE) {
-    await upsertBlobStoredDocument(ctx, threadMembershipScopeKey(thread.id), membership.userTokenIdentifier, {
-      ...membership,
-      storageMode: undefined
-    })
-    return
-  }
-
   await ctx.runMutation((internal as any).threads.upsertMessageThreadMembershipRow, {
     organizationId: thread.organizationId,
     threadPublicId: thread.id,
@@ -534,11 +463,6 @@ async function saveThreadMembership(ctx: any, thread: StoredThread, membership: 
 }
 
 async function deleteThreadMembership(ctx: any, thread: StoredThread, tokenIdentifier: string) {
-  if (thread.storageMode === BLOB_STORAGE_MODE) {
-    await deleteBlobStoredDocument(ctx, threadMembershipScopeKey(thread.id), tokenIdentifier)
-    return
-  }
-
   await ctx.runMutation((internal as any).threads.deleteMessageThreadMembershipRowByUser, {
     organizationId: thread.organizationId,
     threadPublicId: thread.id,
@@ -547,13 +471,6 @@ async function deleteThreadMembership(ctx: any, thread: StoredThread, tokenIdent
 }
 
 async function listThreadMessages(ctx: any, thread: StoredThread) {
-  if (thread.storageMode === BLOB_STORAGE_MODE) {
-    return ((await listBlobStoredDocuments<StoredMessage>(ctx, threadMessageScopeKey(thread.id))) ?? []).map((message) => ({
-      ...message,
-      storageMode: BLOB_STORAGE_MODE
-    })).sort((a, b) => a.createdAt - b.createdAt)
-  }
-
   const rows = (await ctx.runQuery((internal as any).threads.listMessageRowsByThread, {
     organizationId: thread.organizationId,
     threadPublicId: thread.id
@@ -563,11 +480,6 @@ async function listThreadMessages(ctx: any, thread: StoredThread) {
 }
 
 async function getThreadMessage(ctx: any, thread: StoredThread, messageId: string) {
-  if (thread.storageMode === BLOB_STORAGE_MODE) {
-    const message = await getBlobStoredDocument<StoredMessage>(ctx, threadMessageScopeKey(thread.id), messageId)
-    return message ? { ...message, storageMode: BLOB_STORAGE_MODE } : null
-  }
-
   const row = (await ctx.runQuery((internal as any).threads.getMessageRowByPublicId, {
     organizationId: thread.organizationId,
     threadPublicId: thread.id,
@@ -578,14 +490,6 @@ async function getThreadMessage(ctx: any, thread: StoredThread, messageId: strin
 }
 
 async function saveThreadMessage(ctx: any, thread: StoredThread, message: StoredMessage) {
-  if (thread.storageMode === BLOB_STORAGE_MODE) {
-    await upsertBlobStoredDocument(ctx, threadMessageScopeKey(thread.id), message.id, {
-      ...message,
-      storageMode: undefined
-    })
-    return
-  }
-
   await ctx.runMutation((internal as any).threads.upsertMessageRow, {
     organizationId: thread.organizationId,
     threadPublicId: thread.id,
@@ -594,7 +498,12 @@ async function saveThreadMessage(ctx: any, thread: StoredThread, message: Stored
       senderTokenIdentifier: message.senderTokenIdentifier,
       content: message.content,
       attachments: message.attachments,
+      unfurledLink: message.unfurledLink ?? null,
       replyToPublicId: message.replyToMessageId,
+      callId: message.callId ?? null,
+      integrationId: message.integrationId ?? null,
+      oauthApplicationId: message.oauthApplicationId ?? null,
+      systemSharedPostId: message.systemSharedPostId ?? null,
       discardedAt: message.discardedAt,
       createdAt: message.createdAt,
       updatedAt: message.updatedAt
@@ -603,12 +512,6 @@ async function saveThreadMessage(ctx: any, thread: StoredThread, message: Stored
 }
 
 async function deleteAllStoredThreadArtifacts(ctx: any, thread: StoredThread) {
-  if (thread.storageMode === BLOB_STORAGE_MODE) {
-    await deleteAllBlobStoredDocuments(ctx, threadMembershipScopeKey(thread.id))
-    await deleteAllBlobStoredDocuments(ctx, threadMessageScopeKey(thread.id))
-    return
-  }
-
   await ctx.runMutation((internal as any).threads.deleteMessageThreadArtifactsByPublicId, {
     organizationId: thread.organizationId,
     threadPublicId: thread.id
@@ -643,11 +546,26 @@ async function getThreadByIdOrThrow(ctx: any, organizationId: string, threadId: 
   return thread
 }
 
+async function getLinkedProjectForThread(ctx: any, organizationId: string, thread: StoredThread) {
+  if (thread.projectId) {
+    const project = await ctx.db.get(thread.projectId)
+
+    if (project && project.organizationId === organizationId) {
+      return project
+    }
+  }
+
+  return await ctx.db
+    .query('projects')
+    .withIndex('by_message_thread_id', (q: any) => q.eq('messageThreadId', thread.id))
+    .unique()
+}
+
 async function buildLegacyThread(
   ctx: any,
   snapshot: OrganizationSnapshot,
   thread: StoredThread
-) {
+): Promise<any> {
   const { membershipByToken, userByToken, favoriteThreadIds } = buildSnapshotMaps(snapshot)
   const viewerTokenIdentifier = snapshot.identity.tokenIdentifier
   const threadMemberships = await listThreadMemberships(ctx, thread)
@@ -679,9 +597,21 @@ async function buildLegacyThread(
     }
   }
 
+  const [oauthApplicationsById, callRoom, linkedProject] = await Promise.all([
+    getStoredOauthApplications(ctx, snapshot.organization._id, thread.oauthApplicationIds),
+    thread.callRoomId ? ctx.db.get(thread.callRoomId) : Promise.resolve(null),
+    getLinkedProjectForThread(ctx, snapshot.organization._id, thread)
+  ])
+  const activeCall =
+    callRoom && !thread.discardedAt
+      ? await ctx.runQuery((api as any).callsRealtime.getLegacyCallCompatByCallRoomId, {
+          slug: snapshot.organization.slug,
+          callRoomId: callRoom.publicId
+        })
+      : null
   const sortedOtherMembers = sortMembers(otherMembers)
   const sortedDeactivatedMembers = sortMembers(deactivatedMembers)
-  const title = buildThreadTitle(thread, sortedOtherMembers)
+  const title = buildThreadTitle(thread, sortedOtherMembers, oauthApplicationsById)
   const imageUrl = thread.imagePath ?? null
   const otherMember = sortedOtherMembers[0]
   const viewerCanForceNotification =
@@ -701,20 +631,21 @@ async function buildLegacyThread(
     channel_name: `thread-${thread.id}`,
     organization_slug: snapshot.organization.slug,
     path: `/${snapshot.organization.slug}/chat/${thread.id}`,
-    call_room_url: null,
-    remote_call_room_id: null,
+    call_room_url: callRoom ? `/${snapshot.organization.slug}/calls/join/${callRoom.publicId}` : null,
+    remote_call_room_id: callRoom?.remoteRoomId ?? null,
     integration_dm: thread.integrationDm,
-    active_call: null,
+    active_call: activeCall,
     deactivated_members: sortedDeactivatedMembers,
     type_name: 'message_thread',
     title,
-    project_id: null,
+    project_id: linkedProject?._id ?? thread.projectId ?? null,
     unread_count: viewerThreadMembership?.unreadCount ?? 0,
     manually_marked_unread: viewerThreadMembership?.manuallyMarkedUnread ?? false,
     viewer_has_favorited: favoriteThreadIds.has(thread.id),
     other_members: sortedOtherMembers,
     viewer_is_thread_member: !!viewerThreadMembership,
-    viewer_can_manage_integrations: false,
+    viewer_can_manage_integrations:
+      snapshot.viewerMembership.role === 'admin' || thread.creatorTokenIdentifier === viewerTokenIdentifier,
     viewer_can_delete: thread.creatorTokenIdentifier === viewerTokenIdentifier,
     viewer_can_force_notification: viewerCanForceNotification
   }
@@ -772,7 +703,7 @@ async function buildLegacyMessage(
 ): Promise<{
   id: string
   content: string
-  unfurled_link: null
+  unfurled_link: string | null
   created_at: string
   updated_at: string
   discarded_at: string | null
@@ -780,11 +711,11 @@ async function buildLegacyMessage(
   sender: ReturnType<typeof buildLegacyMember>
   reply: Awaited<ReturnType<typeof buildLegacyReplyPreview>>
   attachments: Array<ReturnType<typeof buildLegacyAttachment>>
-  call: null
+  call: any
   viewer_is_sender: boolean
   viewer_can_delete: boolean
   grouped_reactions: unknown
-  shared_post_url: null
+  shared_post_url: string | null
   optimistic_id: null
 }> {
   const { membershipByToken, userByToken } = buildSnapshotMaps(snapshot)
@@ -795,10 +726,26 @@ async function buildLegacyMessage(
     throw createError('Message sender not found', 'not_found')
   }
 
+  const [callRow, sharedPost] = await Promise.all([
+    message.callId ? ctx.db.get(message.callId) : Promise.resolve(null),
+    message.systemSharedPostId ? ctx.db.get(message.systemSharedPostId) : Promise.resolve(null)
+  ])
+  const call =
+    callRow && callRow.organizationId === snapshot.organization._id
+      ? await ctx.runQuery((api as any).callsRealtime.getLegacyCallCompatById, {
+          slug: snapshot.organization.slug,
+          callId: callRow.publicId
+        })
+      : null
+  const sharedPostUrl =
+    sharedPost && sharedPost.organizationId === snapshot.organization._id
+      ? `/${snapshot.organization.slug}/posts/${sharedPost._id}`
+      : null
+
   return {
     id: message.id,
     content: message.discardedAt ? DELETED_MESSAGE_CONTENT : message.content,
-    unfurled_link: null,
+    unfurled_link: message.unfurledLink ?? null,
     created_at: new Date(message.createdAt).toISOString(),
     updated_at: new Date(message.updatedAt).toISOString(),
     discarded_at: formatDate(message.discardedAt),
@@ -806,7 +753,7 @@ async function buildLegacyMessage(
     sender: buildLegacyMember(senderMembership, senderUser),
     reply: await buildLegacyReplyPreview(message.replyToMessageId, allMessages, snapshot),
     attachments: message.attachments.map((attachment) => buildLegacyAttachment(attachment, message.id)),
-    call: null,
+    call,
     viewer_is_sender: message.senderTokenIdentifier === snapshot.identity.tokenIdentifier,
     viewer_can_delete: message.senderTokenIdentifier === snapshot.identity.tokenIdentifier,
     grouped_reactions: await ctx.runQuery((internal as any).threads.getLegacyMessageGroupedReactions, {
@@ -814,7 +761,7 @@ async function buildLegacyMessage(
       messageId: message.id,
       viewerTokenIdentifier: snapshot.identity.tokenIdentifier
     }),
-    shared_post_url: null,
+    shared_post_url: sharedPostUrl,
     optimistic_id: null
   }
 }
@@ -827,6 +774,7 @@ async function recalculateThreadMetadata(ctx: any, thread: StoredThread) {
     return {
       ...thread,
       lastMessageAt: null,
+      latestMessagePublicId: null,
       latestMessageTruncated: null,
       updatedAt: Date.now()
     }
@@ -839,6 +787,7 @@ async function recalculateThreadMetadata(ctx: any, thread: StoredThread) {
   return {
     ...thread,
     lastMessageAt: lastMessage.createdAt,
+    latestMessagePublicId: lastMessage.id,
     latestMessageTruncated:
       buildMessagePreview(
         lastMessage.content,
@@ -916,6 +865,7 @@ async function appendMessageToThread(
   const nextThread: StoredThread = {
     ...thread,
     lastMessageAt: now,
+    latestMessagePublicId: message.id,
     latestMessageTruncated:
       buildMessagePreview(message.content, attachments, snapshot.user.displayName, true) ?? thread.latestMessageTruncated ?? null,
     updatedAt: now
@@ -940,20 +890,6 @@ async function findThreadContainingMessage(ctx: any, organizationId: string, mes
     return {
       thread: buildStoredThreadFromRow(tableMatch.thread),
       message: buildStoredMessageFromRow(tableMatch.message, tableMatch.thread.publicId)
-    }
-  }
-
-  const threads = await listStoredThreads(ctx, organizationId)
-
-  for (const thread of threads) {
-    if (thread.storageMode === TABLE_STORAGE_MODE) {
-      continue
-    }
-
-    const message = await getThreadMessage(ctx, thread, messageId)
-
-    if (message) {
-      return { thread, message }
     }
   }
 
@@ -1072,75 +1008,6 @@ export const getViewerIdentityForThreads = internalQuery({
   }
 })
 
-export const listScopedFileRows = internalQuery({
-  args: {
-    scopeKey: v.string()
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query('files')
-      .withIndex('by_owner', (q: any) => q.eq('ownerTokenIdentifier', args.scopeKey))
-      .collect()
-  }
-})
-
-export const getScopedFileRow = internalQuery({
-  args: {
-    scopeKey: v.string(),
-    name: v.string()
-  },
-  handler: async (ctx, args) => {
-    const rows = await ctx.db
-      .query('files')
-      .withIndex('by_owner', (q: any) => q.eq('ownerTokenIdentifier', args.scopeKey))
-      .collect()
-
-    return rows.find((row: any) => row.name === args.name) ?? null
-  }
-})
-
-export const upsertScopedFileRow = internalMutation({
-  args: {
-    existingId: v.optional(v.id('files')),
-    scopeKey: v.string(),
-    name: v.string(),
-    storageId: v.id('_storage'),
-    size: v.number()
-  },
-  handler: async (ctx, args) => {
-    if (args.existingId) {
-      await ctx.db.patch(args.existingId, {
-        storageId: args.storageId,
-        size: args.size,
-        createdAt: Date.now()
-      })
-      return args.existingId
-    }
-
-    return await ctx.db.insert('files', {
-      ownerTokenIdentifier: args.scopeKey,
-      storageId: args.storageId,
-      name: args.name,
-      contentType: 'application/json',
-      size: args.size,
-      createdAt: Date.now()
-    })
-  }
-})
-
-export const deleteScopedFileRows = internalMutation({
-  args: {
-    ids: v.array(v.id('files'))
-  },
-  handler: async (ctx, args) => {
-    for (const id of args.ids) {
-      await ctx.db.delete(id)
-    }
-
-    return {}
-  }
-})
-
 async function getMessageThreadRowByPublicIdForOrg(ctx: any, organizationId: string, threadPublicId: string) {
   const row = await ctx.db
     .query('messageThreads')
@@ -1176,6 +1043,31 @@ export const getMessageThreadRowByPublicId = internalQuery({
   }
 })
 
+export const getThreadCallRoomInfoByPublicId = internalQuery({
+  args: {
+    organizationId: v.string(),
+    threadPublicId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const thread = await getMessageThreadRowByPublicIdForOrg(ctx, args.organizationId, args.threadPublicId)
+
+    if (!thread?.callRoomId) {
+      return null
+    }
+
+    const callRoom: any = await ctx.db.get(thread.callRoomId)
+
+    if (!callRoom || callRoom.organizationId !== args.organizationId) {
+      return null
+    }
+
+    return {
+      publicId: callRoom.publicId,
+      remoteRoomId: callRoom.remoteRoomId ?? null
+    }
+  }
+})
+
 export const upsertMessageThreadRow = internalMutation({
   args: {
     organizationId: v.string(),
@@ -1185,16 +1077,27 @@ export const upsertMessageThreadRow = internalMutation({
   handler: async (ctx, args) => {
     const existing = await getMessageThreadRowByPublicIdForOrg(ctx, args.organizationId, args.threadPublicId)
     const data = JSON.parse(args.dataJson)
+    const callRoom =
+      data.callRoomId && typeof data.callRoomId === 'string'
+        ? await ctx.db
+            .query('callRooms')
+            .withIndex('by_public_id', (q: any) => q.eq('publicId', data.callRoomId))
+            .unique()
+        : null
+    const payload = {
+      ...data,
+      callRoomId: callRoom?._id ?? data.callRoomId
+    }
 
     if (existing) {
-      await ctx.db.patch(existing._id, data)
+      await ctx.db.patch(existing._id, payload)
       return existing._id
     }
 
     return await ctx.db.insert('messageThreads', {
       organizationId: args.organizationId,
       publicId: args.threadPublicId,
-      ...data
+      ...payload
     })
   }
 })
@@ -1424,13 +1327,21 @@ export const upsertMessageRow = internalMutation({
           .withIndex('by_public_id', (q: any) => q.eq('publicId', data.replyToPublicId))
           .unique()
       : null
+    const call =
+      data.callId && typeof data.callId === 'string'
+        ? await ctx.db
+            .query('calls')
+            .withIndex('by_public_id', (q: any) => q.eq('publicId', data.callId))
+            .unique()
+        : null
     const payload = {
       ...data,
       organizationId: args.organizationId,
       threadId: thread._id,
       publicId: args.messagePublicId,
       senderMembershipId: senderMembership?._id,
-      replyToMessageId: replyTo?._id
+      replyToMessageId: replyTo?._id,
+      callId: call?._id ?? data.callId
     }
 
     if (existing) {
@@ -1571,6 +1482,20 @@ export const deleteMessageReactions = internalMutation({
     }
 
     return {}
+  }
+})
+
+export const promoteLegacyThreadsCompat = mutation({
+  args: {
+    slug: v.string()
+  },
+  handler: async (ctx, args) => {
+    await requireSnapshot(ctx, args.slug)
+
+    return {
+      promoted: 0,
+      total: 0
+    }
   }
 })
 
@@ -1946,24 +1871,11 @@ export const createLegacyThreadMessage = action({
     }
 
     const allMessages = new Map((await listThreadMessages(ctx, thread)).map((message) => [message.id, message]))
+    const legacyThread = await buildLegacyThread(ctx, snapshot, result.thread)
 
     return {
       message: await buildLegacyMessage(ctx, snapshot, result.message, allMessages),
-      message_thread: {
-        id: result.thread.id,
-        last_message_at: formatDate(result.thread.lastMessageAt),
-        latest_message_truncated: result.thread.latestMessageTruncated ?? null,
-        organization_slug: snapshot.organization.slug,
-        path: `/${snapshot.organization.slug}/chat/${result.thread.id}`,
-        call_room_url: null,
-        remote_call_room_id: null,
-        active_call: null,
-        viewer_can_force_notification: false,
-        type_name: 'message_thread',
-        title: (await buildLegacyThread(ctx, snapshot, result.thread)).title,
-        project_id: null,
-        unread_count: 0
-      },
+      message_thread: legacyThread,
       skip_push: true,
       push_body: null
     }
@@ -2272,7 +2184,13 @@ export const getLegacyThreadOauthApplications = action({
       throw createError('Conversation not found', 'not_found')
     }
 
-    return thread.oauthApplicationIds.map((id) => buildPlaceholderOauthApplication(id))
+    const oauthApplicationsById = await getStoredOauthApplications(ctx, snapshot.organization._id, thread.oauthApplicationIds)
+
+    return thread.oauthApplicationIds.map((id) => {
+      const oauthApplication = oauthApplicationsById.get(id)
+
+      return oauthApplication ? buildStoredOauthApplication(oauthApplication) : buildPlaceholderOauthApplication(id)
+    })
   }
 })
 

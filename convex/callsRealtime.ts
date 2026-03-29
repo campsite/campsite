@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
 
 import { api } from './_generated/api'
-import { mutation, query } from './_generated/server'
+import { internalQuery, mutation, query } from './_generated/server'
 import { buildLegacyMember, formatDate } from './legacy'
 import { discardActiveProjectPinsForSubject, getActiveProjectPinForSubject, upsertProjectPin } from './pinsBookmarks'
 import { buildWorkspaceState, generateToken } from './workspace'
@@ -121,6 +121,37 @@ async function getCallByPublicId(ctx: any, organizationId: any, callId: string) 
   return call
 }
 
+async function listCallsByCallRoomId(ctx: any, organizationId: any, callRoomId?: string | null) {
+  if (!callRoomId) {
+    return []
+  }
+
+  const rows = await ctx.db
+    .query('calls')
+    .withIndex('by_call_room_id', (q: any) => q.eq('callRoomId', callRoomId))
+    .collect()
+
+  return rows
+    .filter((call: any) => call.organizationId === organizationId)
+    .sort((left: any, right: any) => {
+      const leftStartedAt = left.startedAt ?? left.createdAt ?? 0
+      const rightStartedAt = right.startedAt ?? right.createdAt ?? 0
+      return rightStartedAt - leftStartedAt
+    })
+}
+
+async function getLatestCallByCallRoomId(
+  ctx: any,
+  organizationId: any,
+  callRoomId?: string | null,
+  options?: { activeOnly?: boolean }
+) {
+  const calls = await listCallsByCallRoomId(ctx, organizationId, callRoomId)
+  const filtered = options?.activeOnly ? calls.filter((call: any) => !call.stoppedAt) : calls
+
+  return filtered[0] ?? null
+}
+
 async function getCallByRemoteSessionId(ctx: any, remoteSessionId: string) {
   return await ctx.db
     .query('calls')
@@ -133,6 +164,187 @@ async function getCallRoomByRemoteRoomId(ctx: any, remoteRoomId: string) {
     .query('callRooms')
     .withIndex('by_remote_room_id', (q: any) => q.eq('remoteRoomId', remoteRoomId))
     .unique()
+}
+
+async function getMembershipById(ctx: any, membershipId: any) {
+  if (!membershipId) {
+    return null
+  }
+
+  return await ctx.db.get(membershipId)
+}
+
+async function getCallRecordings(ctx: any, callDbId: any) {
+  const rows = await ctx.db
+    .query('callRecordings')
+    .withIndex('by_call_id', (q: any) => q.eq('callId', callDbId))
+    .collect()
+
+  return rows
+    .filter((row: any) => !row.discardedAt)
+    .sort((left: any, right: any) => (right.startedAt ?? right.createdAt) - (left.startedAt ?? left.createdAt))
+}
+
+async function getCallPeers(ctx: any, callDbId: any) {
+  const rows = await ctx.db
+    .query('callPeers')
+    .withIndex('by_call_id', (q: any) => q.eq('callId', callDbId))
+    .collect()
+
+  return rows
+    .filter((row: any) => !row.discardedAt)
+    .sort((left: any, right: any) => (left.joinedAt ?? left.createdAt) - (right.joinedAt ?? right.createdAt))
+}
+
+async function getCallRecordingByPublicId(ctx: any, organizationId: any, publicId: string) {
+  const row = await ctx.db
+    .query('callRecordings')
+    .withIndex('by_public_id', (q: any) => q.eq('publicId', publicId))
+    .unique()
+
+  if (!row || row.organizationId !== organizationId || row.discardedAt) {
+    return null
+  }
+
+  return row
+}
+
+async function getCallRecordingByRemoteRecordingId(ctx: any, remoteRecordingId: string) {
+  return await ctx.db
+    .query('callRecordings')
+    .withIndex('by_remote_recording_id', (q: any) => q.eq('remoteRecordingId', remoteRecordingId))
+    .unique()
+}
+
+async function getCallRecordingByRemoteBeamId(ctx: any, remoteBeamId: string) {
+  return await ctx.db
+    .query('callRecordings')
+    .withIndex('by_remote_beam_id', (q: any) => q.eq('remoteBeamId', remoteBeamId))
+    .unique()
+}
+
+async function getCallRecordingByRemoteTranscriptionId(ctx: any, remoteTranscriptionId: string) {
+  return await ctx.db
+    .query('callRecordings')
+    .withIndex('by_remote_transcription_id', (q: any) => q.eq('remoteTranscriptionId', remoteTranscriptionId))
+    .unique()
+}
+
+async function getCallRecordingSpeakers(ctx: any, callRecordingId: any) {
+  return await ctx.db
+    .query('callRecordingSpeakers')
+    .withIndex('by_call_recording_id', (q: any) => q.eq('callRecordingId', callRecordingId))
+    .collect()
+}
+
+async function buildLegacyCallPeer(ctx: any, organizationId: any, peer: any) {
+  const membership =
+    (peer.organizationMembershipId ? await getMembershipById(ctx, peer.organizationMembershipId) : null) ??
+    (peer.userTokenIdentifier ? await getMembership(ctx, organizationId, peer.userTokenIdentifier) : null)
+
+  if (!membership) {
+    return null
+  }
+
+  const user = await getUserByTokenIdentifier(ctx, membership.userTokenIdentifier)
+
+  if (!user) {
+    return null
+  }
+
+  return {
+    member: buildLegacyMember(membership, user),
+    active: !peer.leftAt,
+    remote_peer_id: peer.remotePeerId
+  }
+}
+
+async function buildLegacyCallPeers(ctx: any, organizationId: any, callDbId: any) {
+  const peers = await getCallPeers(ctx, callDbId)
+  const legacyPeers = await Promise.all(peers.map((peer: any) => buildLegacyCallPeer(ctx, organizationId, peer)))
+
+  return legacyPeers.filter(Boolean)
+}
+
+function resolveFileUrl(path?: string | null) {
+  if (!path) {
+    return null
+  }
+
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('/')) {
+    return path
+  }
+
+  return null
+}
+
+function getCallRecordingTranscriptionStatus(recording: any) {
+  if (recording.transcriptionSucceededAt) {
+    return 'COMPLETED' as const
+  }
+
+  if (recording.transcriptionFailedAt) {
+    return 'FAILED' as const
+  }
+
+  if (recording.transcriptionStartedAt) {
+    return 'IN_PROGRESS' as const
+  }
+
+  return 'NOT_STARTED' as const
+}
+
+function buildLegacyCallRecording(recording: any) {
+  const fileUrl = resolveFileUrl(recording.filePath)
+
+  return {
+    id: recording.publicId,
+    url: fileUrl,
+    file_path: recording.filePath ?? null,
+    name: recording.name ?? null,
+    file_type: recording.fileType ?? null,
+    imgix_video_thumbnail_preview_url: recording.thumbnailUrl ?? null,
+    size: recording.size ?? null,
+    duration:
+      recording.duration ??
+      (recording.startedAt && recording.stoppedAt ? Math.max(0, recording.stoppedAt - recording.startedAt) : null),
+    max_width: recording.maxWidth ?? null,
+    max_height: recording.maxHeight ?? null,
+    transcription_status: getCallRecordingTranscriptionStatus(recording)
+  }
+}
+
+async function buildLegacyCallRecordingTranscription(ctx: any, recording: any) {
+  const speakerRows = await getCallRecordingSpeakers(ctx, recording._id)
+  const speakers = []
+
+  for (const speaker of speakerRows) {
+    const membership = await getMembershipById(ctx, speaker.organizationMembershipId)
+
+    if (!membership) {
+      continue
+    }
+
+    const user = await getUserByTokenIdentifier(ctx, membership.userTokenIdentifier)
+
+    if (!user) {
+      continue
+    }
+
+    speakers.push({
+      name: speaker.name,
+      call_peer: {
+        member: buildLegacyMember(membership, user),
+        active: false,
+        remote_peer_id: speaker.callPeerId ?? speaker.name
+      }
+    })
+  }
+
+  return {
+    vtt: recording.transcriptionVtt ?? null,
+    speakers
+  }
 }
 
 async function getCallFavorite(ctx: any, organizationId: any, tokenIdentifier: string, callId: string) {
@@ -185,7 +397,7 @@ function buildMiniProject(project: any) {
     accessory: project.accessory ?? null,
     private: project.private,
     archived: !!project.archivedAt,
-    message_thread_id: null
+    message_thread_id: project.messageThreadId ?? null
   }
 }
 
@@ -223,15 +435,16 @@ async function getSnapshotSources(ctx: any, context: any, callId: string) {
   return { favorite, followUps, snapshot }
 }
 
-async function buildCompatCall(
-  ctx: any,
-  context: any,
-  callId: string,
+function buildResolvedCallSnapshot(params: {
+  persistedCall?: any | null
+  snapshot?: CallSnapshot | null
+  favorite?: any | null
+  followUps: any[]
   overrides?: Partial<CallSnapshot>
-) {
-  const persistedCall = await getCallByPublicId(ctx, context.organization._id, callId)
-  const { favorite, followUps, snapshot } = await getSnapshotSources(ctx, context, callId)
-  const resolvedSnapshot = {
+}) {
+  const { persistedCall, snapshot, favorite, followUps, overrides } = params
+
+  return {
     createdAt: snapshot?.createdAt ?? persistedCall?.createdAt ?? favorite?.createdAt ?? followUps[0]?.createdAt ?? Date.now(),
     projectId: snapshot?.projectId ?? persistedCall?.projectId ?? followUps[0]?.targetProjectId ?? undefined,
     projectPermission:
@@ -245,6 +458,63 @@ async function buildCompatCall(
     isEdited: snapshot?.isEdited ?? !!(persistedCall?.title || persistedCall?.summaryHtml),
     ...overrides
   } satisfies CallSnapshot
+}
+
+async function upsertCompatCallRecord(ctx: any, context: any, callId: string, snapshot: CallSnapshot) {
+  const existing = await getCallByPublicId(ctx, context.organization._id, callId)
+  const nextStartedAt = snapshot.startedAt ?? snapshot.createdAt
+
+  if (existing) {
+    await ctx.db.patch(existing._id, {
+      title: snapshot.title ?? undefined,
+      summaryHtml: snapshot.summaryHtml ?? undefined,
+      startedAt: nextStartedAt,
+      stoppedAt: snapshot.stoppedAt ?? undefined,
+      projectId: snapshot.projectId ? (snapshot.projectId as any) : undefined,
+      projectPermission: snapshot.projectPermission ?? 'none',
+      createdAt: snapshot.createdAt,
+      updatedAt: Date.now()
+    })
+
+    return await ctx.db.get(existing._id)
+  }
+
+  const callIdRow = await ctx.db.insert('calls', {
+    organizationId: context.organization._id,
+    publicId: callId,
+    remoteSessionId: `compat:${callId}`,
+    callRoomId: undefined,
+    creatorTokenIdentifier: context.identity.tokenIdentifier,
+    title: snapshot.title ?? undefined,
+    summaryHtml: snapshot.summaryHtml ?? undefined,
+    generatedTitle: undefined,
+    recordingsDuration: undefined,
+    startedAt: nextStartedAt,
+    stoppedAt: snapshot.stoppedAt ?? undefined,
+    projectId: snapshot.projectId ? (snapshot.projectId as any) : undefined,
+    projectPermission: snapshot.projectPermission ?? 'none',
+    createdAt: snapshot.createdAt,
+    updatedAt: Date.now()
+  })
+
+  return await ctx.db.get(callIdRow)
+}
+
+async function buildCompatCall(
+  ctx: any,
+  context: any,
+  callId: string,
+  overrides?: Partial<CallSnapshot>
+) {
+  const persistedCall = await getCallByPublicId(ctx, context.organization._id, callId)
+  const { favorite, followUps, snapshot } = await getSnapshotSources(ctx, context, callId)
+  const resolvedSnapshot = buildResolvedCallSnapshot({
+    persistedCall,
+    snapshot,
+    favorite,
+    followUps,
+    overrides
+  })
   const [project, activePin] = await Promise.all([
     getProjectById(ctx, context.organization._id, resolvedSnapshot.projectId),
     resolvedSnapshot.projectId
@@ -255,6 +525,8 @@ async function buildCompatCall(
         })
       : Promise.resolve(null)
   ])
+  const recordings = persistedCall ? await getCallRecordings(ctx, persistedCall._id) : []
+  const peers = persistedCall ? await buildLegacyCallPeers(ctx, context.organization._id, persistedCall._id) : []
 
   return {
     id: callId,
@@ -272,12 +544,13 @@ async function buildCompatCall(
     active: !resolvedSnapshot.stoppedAt,
     project_permission: resolvedSnapshot.projectPermission ?? 'none',
     channel_name: `call-${callId}`,
-    peers: [],
+    peers,
     project: buildMiniProject(project),
+    recordings: recordings.map((recording: any) => buildLegacyCallRecording(recording)),
     follow_ups: await buildCallFollowUps(ctx, context.organization._id, callId, context.identity.tokenIdentifier),
     type_name: 'call',
     viewer_can_edit: true,
-    viewer_can_destroy_all_recordings: false,
+    viewer_can_destroy_all_recordings: recordings.length > 0,
     viewer_has_favorited: !!favorite,
     processing_generated_title: false,
     processing_generated_summary: false,
@@ -285,6 +558,73 @@ async function buildCompatCall(
     url: `/${context.organization.slug}/calls/${callId}`
   }
 }
+
+export const getLegacyCallCompatByCallRoomId = query({
+  args: {
+    slug: v.string(),
+    callRoomId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw createError('Organization not found', 'not_found')
+    }
+
+    const room = await ctx.db
+      .query('callRooms')
+      .withIndex('by_public_id', (q: any) => q.eq('publicId', args.callRoomId))
+      .unique()
+
+    if (!room || room.organizationId !== context.organization._id) {
+      return null
+    }
+
+    const activeCall = await getLatestCallByCallRoomId(ctx, context.organization._id, room.publicId, { activeOnly: true })
+
+    if (!activeCall) {
+      return null
+    }
+
+    return await buildCompatCall(ctx, context, activeCall.publicId)
+  }
+})
+
+export const getLegacyCallPeersByCallRoomId = internalQuery({
+  args: {
+    organizationId: v.string(),
+    callRoomId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db
+      .query('callRooms')
+      .withIndex('by_public_id', (q: any) => q.eq('publicId', args.callRoomId))
+      .unique()
+
+    if (!room || room.organizationId !== args.organizationId) {
+      return {
+        peers: [],
+        activePeers: []
+      }
+    }
+
+    const activeCall = await getLatestCallByCallRoomId(ctx, args.organizationId, room.publicId, { activeOnly: true })
+
+    if (!activeCall) {
+      return {
+        peers: [],
+        activePeers: []
+      }
+    }
+
+    const peers = await buildLegacyCallPeers(ctx, args.organizationId, activeCall._id)
+
+    return {
+      peers,
+      activePeers: peers.filter((peer: any) => peer.active)
+    }
+  }
+})
 
 async function saveSnapshot(ctx: any, user: any, slug: string, callId: string, snapshot: CallSnapshot) {
   const preferences = getPreferenceMap(user)
@@ -445,25 +785,23 @@ export const updateLegacyCallCompat = mutation({
       createdAt: Date.now()
     }
 
-    await saveSnapshot(ctx, context.user, args.slug, args.callId, {
+    const nextSnapshot = {
       ...existingSnapshot,
       title: args.title ?? existingSnapshot.title ?? null,
       summaryHtml: args.summaryHtml ?? existingSnapshot.summaryHtml ?? null,
       isEdited: true,
       projectId: existingSnapshot.projectId,
       projectPermission: existingSnapshot.projectPermission ?? 'none'
-    })
+    } satisfies CallSnapshot
+
+    await saveSnapshot(ctx, context.user, args.slug, args.callId, nextSnapshot)
+    await upsertCompatCallRecord(ctx, context, args.callId, nextSnapshot)
 
     await patchCallFollowUps(ctx, context.organization._id, args.callId, (followUp) => ({
       targetTitle: args.title ?? followUp.targetTitle
     }))
 
-    return await buildCompatCall(ctx, context, args.callId, {
-      ...existingSnapshot,
-      title: args.title ?? existingSnapshot.title ?? null,
-      summaryHtml: args.summaryHtml ?? existingSnapshot.summaryHtml ?? null,
-      isEdited: true
-    })
+    return await buildCompatCall(ctx, context, args.callId, nextSnapshot)
   }
 })
 
@@ -481,11 +819,44 @@ export const getLegacyCallCompatRecordingsPage = query({
       throw createError('Organization not found', 'not_found')
     }
 
+    const call = await getCallByPublicId(ctx, context.organization._id, args.callId)
+
+    if (!call) {
+      throw createError('Call not found', 'not_found')
+    }
+
+    const recordings = (await getCallRecordings(ctx, call._id)).map((recording: any) => buildLegacyCallRecording(recording))
+    const limit = Math.max(1, Math.min(args.limit ?? 20, 100))
+    const startIndex = args.after ? recordings.findIndex((recording: any) => recording.id === args.after) + 1 : 0
+    const page = recordings.slice(Math.max(0, startIndex), Math.max(0, startIndex) + limit)
+
     return {
-      data: [],
-      next_cursor: null,
+      data: page,
+      next_cursor: startIndex + limit < recordings.length ? page.at(-1)?.id ?? null : null,
       prev_cursor: null
     }
+  }
+})
+
+export const getLegacyCallRecordingTranscription = query({
+  args: {
+    slug: v.string(),
+    callRecordingId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw createError('Organization not found', 'not_found')
+    }
+
+    const recording = await getCallRecordingByPublicId(ctx, context.organization._id, args.callRecordingId)
+
+    if (!recording) {
+      throw createError('Recording not found', 'not_found')
+    }
+
+    return await buildLegacyCallRecordingTranscription(ctx, recording)
   }
 })
 
@@ -499,6 +870,26 @@ export const deleteLegacyCallCompatRecordings = mutation({
 
     if (!context) {
       throw createError('Organization not found', 'not_found')
+    }
+
+    const call = await getCallByPublicId(ctx, context.organization._id, args.callId)
+
+    if (call) {
+      const recordings = await getCallRecordings(ctx, call._id)
+
+      await Promise.all(
+        recordings.map((recording: any) =>
+          ctx.db.patch(recording._id, {
+            discardedAt: Date.now(),
+            updatedAt: Date.now()
+          })
+        )
+      )
+
+      await ctx.db.patch(call._id, {
+        recordingsDuration: 0,
+        updatedAt: Date.now()
+      })
     }
 
     await deleteSnapshotFields(ctx, context.user, args.slug, args.callId, (snapshot) => ({
@@ -535,11 +926,14 @@ export const updateLegacyCallCompatProjectPermission = mutation({
     }
     const previousProjectId = existingSnapshot.projectId
 
-    await saveSnapshot(ctx, context.user, args.slug, args.callId, {
+    const nextSnapshot = {
       ...existingSnapshot,
       projectId: project._id,
       projectPermission: args.permission
-    })
+    } satisfies CallSnapshot
+
+    await saveSnapshot(ctx, context.user, args.slug, args.callId, nextSnapshot)
+    await upsertCompatCallRecord(ctx, context, args.callId, nextSnapshot)
 
     await patchCallFollowUps(ctx, context.organization._id, args.callId, () => ({
       targetProjectId: project._id
@@ -556,11 +950,7 @@ export const updateLegacyCallCompatProjectPermission = mutation({
       })
     }
 
-    return await buildCompatCall(ctx, context, args.callId, {
-      ...existingSnapshot,
-      projectId: project._id,
-      projectPermission: args.permission
-    })
+    return await buildCompatCall(ctx, context, args.callId, nextSnapshot)
   }
 })
 
@@ -576,12 +966,22 @@ export const deleteLegacyCallCompatProjectPermission = mutation({
       throw createError('Organization not found', 'not_found')
     }
 
+    const nextSnapshot = {
+      ...(parseSnapshot(getPreferenceMap(context.user)[callPreferenceKey(args.slug, args.callId)]) ?? {
+        createdAt: Date.now()
+      }),
+      projectId: undefined,
+      projectPermission: 'none' as const,
+      projectPinId: undefined
+    }
+
     await deleteSnapshotFields(ctx, context.user, args.slug, args.callId, (snapshot) => ({
       ...snapshot,
       projectId: undefined,
       projectPermission: 'none',
       projectPinId: undefined
     }))
+    await upsertCompatCallRecord(ctx, context, args.callId, nextSnapshot)
 
     await patchCallFollowUps(ctx, context.organization._id, args.callId, () => ({
       targetProjectId: undefined
@@ -655,6 +1055,13 @@ export const createLegacyCallCompatFollowUp = mutation({
 
     const snapshot = parseSnapshot(getPreferenceMap(context.user)[callPreferenceKey(args.slug, args.callId)])
     const targetTitle = snapshot?.title?.trim() || 'Call'
+    const nextSnapshot = buildResolvedCallSnapshot({
+      persistedCall: await getCallByPublicId(ctx, context.organization._id, args.callId),
+      snapshot,
+      favorite: await getCallFavorite(ctx, context.organization._id, context.identity.tokenIdentifier, args.callId),
+      followUps: await getCallFollowUps(ctx, context.organization._id, args.callId)
+    })
+    await upsertCompatCallRecord(ctx, context, args.callId, nextSnapshot)
     const existing = await ctx.db
       .query('followUps')
       .withIndex('by_organization_user_and_subject', (q: any) =>
@@ -735,6 +1142,89 @@ export const createLegacyCallCompatFollowUp = mutation({
       summary_blocks: [{ text: { content: targetTitle } }],
       belongs_to_viewer: true,
       type_name: 'follow_up'
+    }
+  }
+})
+
+export const promoteLegacyCallsCompat = mutation({
+  args: {
+    slug: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw createError('Organization not found', 'not_found')
+    }
+
+    const preferenceKeys = Object.keys(getPreferenceMap(context.user)).filter((key) =>
+      key.startsWith(`${CALL_PREF_PREFIX}${args.slug}:`)
+    )
+    const [favoriteCalls, followUps, persistedCalls] = await Promise.all([
+      ctx.db
+        .query('favorites')
+        .withIndex('by_organization_and_user', (q: any) =>
+          q.eq('organizationId', context.organization._id).eq('userTokenIdentifier', context.identity.tokenIdentifier)
+        )
+        .collect(),
+      ctx.db
+        .query('followUps')
+        .withIndex('by_organization_and_user', (q: any) =>
+          q.eq('organizationId', context.organization._id).eq('userTokenIdentifier', context.identity.tokenIdentifier)
+        )
+        .collect(),
+      ctx.db
+        .query('calls')
+        .withIndex('by_organization_id', (q: any) => q.eq('organizationId', context.organization._id))
+        .collect()
+    ])
+
+    const callIds = new Set<string>()
+
+    for (const key of preferenceKeys) {
+      callIds.add(key.split(':').at(-1) as string)
+    }
+
+    for (const favorite of favoriteCalls) {
+      if (favorite.favoritableType === 'Call') {
+        callIds.add(favorite.favoritableId)
+      }
+    }
+
+    for (const followUp of followUps) {
+      if (followUp.subjectType === 'Call') {
+        callIds.add(followUp.subjectId)
+      }
+    }
+
+    for (const call of persistedCalls) {
+      callIds.add(call.publicId)
+    }
+
+    let promoted = 0
+
+    for (const callId of Array.from(callIds)) {
+      const persistedCall = await getCallByPublicId(ctx, context.organization._id, callId)
+      const { favorite, followUps: callFollowUps, snapshot } = await getSnapshotSources(ctx, context, callId)
+
+      if (!persistedCall && !snapshot && !favorite && callFollowUps.length === 0) {
+        continue
+      }
+
+      const resolvedSnapshot = buildResolvedCallSnapshot({
+        persistedCall,
+        snapshot,
+        favorite,
+        followUps: callFollowUps
+      })
+
+      await upsertCompatCallRecord(ctx, context, callId, resolvedSnapshot)
+      promoted += 1
+    }
+
+    return {
+      promoted,
+      total: callIds.size
     }
   }
 })
@@ -853,5 +1343,159 @@ export const syncLegacyCallRecordingDurationFromHmsEvent = mutation({
     })
 
     return { ok: true, callId: call.publicId }
+  }
+})
+
+export const syncLegacyCallRecordingFromHmsEvent = mutation({
+  args: {
+    remoteSessionId: v.string(),
+    remoteRecordingId: v.optional(v.string()),
+    remoteBeamId: v.optional(v.string()),
+    recordingPath: v.optional(v.string()),
+    chatRecordingPath: v.optional(v.string()),
+    duration: v.optional(v.number()),
+    startedAt: v.optional(v.number()),
+    stoppedAt: v.optional(v.number())
+  },
+  handler: async (ctx, args) => {
+    const call = await getCallByRemoteSessionId(ctx, args.remoteSessionId)
+
+    if (!call) {
+      return { ok: true, ignored: true }
+    }
+
+    const existing =
+      (args.remoteRecordingId ? await getCallRecordingByRemoteRecordingId(ctx, args.remoteRecordingId) : null) ??
+      (args.remoteBeamId ? await getCallRecordingByRemoteBeamId(ctx, args.remoteBeamId) : null)
+    const now = Date.now()
+    const payload = {
+      organizationId: call.organizationId,
+      callId: call._id,
+      remoteRecordingId: args.remoteRecordingId,
+      remoteBeamId: args.remoteBeamId,
+      filePath: args.recordingPath,
+      chatFilePath: args.chatRecordingPath,
+      duration: args.duration,
+      startedAt: args.startedAt,
+      stoppedAt: args.stoppedAt,
+      fileType: args.recordingPath?.endsWith('.mp4') ? 'video/mp4' : undefined,
+      updatedAt: now
+    }
+
+    let recordingId = existing?._id
+
+    if (existing) {
+      await ctx.db.patch(existing._id, payload)
+    } else {
+      recordingId = await ctx.db.insert('callRecordings', {
+        publicId: generateToken().slice(0, 12),
+        name: args.recordingPath?.split('/').at(-1) ?? undefined,
+        remoteTranscriptionId: undefined,
+        transcriptJsonFilePath: undefined,
+        transcriptSrtFilePath: undefined,
+        transcriptTxtFilePath: undefined,
+        transcriptionVtt: undefined,
+        thumbnailUrl: undefined,
+        size: undefined,
+        maxWidth: undefined,
+        maxHeight: undefined,
+        transcriptionStartedAt: undefined,
+        transcriptionSucceededAt: undefined,
+        transcriptionFailedAt: undefined,
+        discardedAt: undefined,
+        createdAt: now,
+        ...payload
+      })
+    }
+
+    await ctx.db.patch(call._id, {
+      recordingsDuration: Math.max(call.recordingsDuration ?? 0, args.duration ?? 0),
+      updatedAt: now
+    })
+
+    return { ok: true, callId: call.publicId, callRecordingId: recordingId }
+  }
+})
+
+export const syncLegacyCallTranscriptionStartedFromHmsEvent = mutation({
+  args: {
+    remoteRecordingId: v.optional(v.string()),
+    remoteTranscriptionId: v.string(),
+    startedAt: v.number()
+  },
+  handler: async (ctx, args) => {
+    const recording =
+      (args.remoteRecordingId ? await getCallRecordingByRemoteRecordingId(ctx, args.remoteRecordingId) : null) ??
+      (await getCallRecordingByRemoteTranscriptionId(ctx, args.remoteTranscriptionId))
+
+    if (!recording) {
+      return { ok: true, ignored: true }
+    }
+
+    await ctx.db.patch(recording._id, {
+      remoteTranscriptionId: args.remoteTranscriptionId,
+      transcriptionStartedAt: args.startedAt,
+      updatedAt: Date.now()
+    })
+
+    return { ok: true, callRecordingId: recording.publicId }
+  }
+})
+
+export const syncLegacyCallTranscriptionFromHmsEvent = mutation({
+  args: {
+    remoteRecordingId: v.optional(v.string()),
+    remoteTranscriptionId: v.optional(v.string()),
+    transcriptJsonPath: v.optional(v.string()),
+    transcriptSrtPath: v.optional(v.string()),
+    transcriptTxtPath: v.optional(v.string()),
+    transcriptionVtt: v.optional(v.string()),
+    succeededAt: v.number()
+  },
+  handler: async (ctx, args) => {
+    const recording =
+      (args.remoteTranscriptionId ? await getCallRecordingByRemoteTranscriptionId(ctx, args.remoteTranscriptionId) : null) ??
+      (args.remoteRecordingId ? await getCallRecordingByRemoteRecordingId(ctx, args.remoteRecordingId) : null)
+
+    if (!recording) {
+      return { ok: true, ignored: true }
+    }
+
+    await ctx.db.patch(recording._id, {
+      remoteTranscriptionId: args.remoteTranscriptionId ?? recording.remoteTranscriptionId,
+      transcriptJsonFilePath: args.transcriptJsonPath ?? recording.transcriptJsonFilePath,
+      transcriptSrtFilePath: args.transcriptSrtPath ?? recording.transcriptSrtFilePath,
+      transcriptTxtFilePath: args.transcriptTxtPath ?? recording.transcriptTxtFilePath,
+      transcriptionVtt: args.transcriptionVtt ?? recording.transcriptionVtt,
+      transcriptionSucceededAt: args.succeededAt,
+      updatedAt: Date.now()
+    })
+
+    return { ok: true, callRecordingId: recording.publicId }
+  }
+})
+
+export const syncLegacyCallTranscriptionFailureFromHmsEvent = mutation({
+  args: {
+    remoteRecordingId: v.optional(v.string()),
+    remoteTranscriptionId: v.string(),
+    failedAt: v.number()
+  },
+  handler: async (ctx, args) => {
+    const recording =
+      (args.remoteRecordingId ? await getCallRecordingByRemoteRecordingId(ctx, args.remoteRecordingId) : null) ??
+      (await getCallRecordingByRemoteTranscriptionId(ctx, args.remoteTranscriptionId))
+
+    if (!recording) {
+      return { ok: true, ignored: true }
+    }
+
+    await ctx.db.patch(recording._id, {
+      remoteTranscriptionId: args.remoteTranscriptionId,
+      transcriptionFailedAt: args.failedAt,
+      updatedAt: Date.now()
+    })
+
+    return { ok: true, callRecordingId: recording.publicId }
   }
 })

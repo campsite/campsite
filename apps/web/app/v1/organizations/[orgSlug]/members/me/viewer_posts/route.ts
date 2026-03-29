@@ -24,6 +24,7 @@ export async function GET(request: Request, { params }: { params: { orgSlug: str
       slug: params.orgSlug,
       q: searchParams.get('q') || undefined,
       limit: searchParams.get('limit') ? Number(searchParams.get('limit')) : undefined,
+      hide_resolved: searchParams.get('hide_resolved') === 'true',
       mode: 'viewer'
     })
   )

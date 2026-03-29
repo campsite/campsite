@@ -4,11 +4,12 @@ import { OrganizationsOrgSlugCallsCallIdProjectPermissionPutRequest } from '@cam
 
 import { useScope } from '@/contexts/scope'
 import { useQueryNormalizer } from '@/utils/normy/QueryNormalizerProvider'
-import { apiClient, getTypedQueryData } from '@/utils/queryClient'
-import { createNormalizedOptimisticUpdate } from '@/utils/queryNormalization'
+import { apiClient, getTypedQueryData, setTypedInfiniteQueriesData, setTypedQueryData } from '@/utils/queryClient'
+import { createNormalizedOptimisticUpdate, getNormalizedData } from '@/utils/queryNormalization'
 
 const getSyncProjects = apiClient.organizations.getSyncProjects()
 const getFollowUps = apiClient.organizations.getFollowUps()
+const getProjectCalls = apiClient.organizations.getProjectsCalls()
 
 interface Props extends OrganizationsOrgSlugCallsCallIdProjectPermissionPutRequest {
   callId: string
@@ -24,10 +25,40 @@ export function useUpdateCallProjectPermission() {
     mutationFn: ({ callId, ...data }: Props) =>
       apiClient.organizations.putCallsProjectPermission().request(`${scope}`, callId, data),
     onMutate: ({ callId, ...data }) => {
+      const previousCall = getNormalizedData({ queryNormalizer, type: 'call', id: callId })
       const syncProjects = getTypedQueryData(queryClient, getSyncProjects.requestKey(`${scope}`))
       const project = syncProjects?.find((p) => p.id === data.project_id)
 
-      // TODO: Update getProjectPins cache when call pins implemented.
+      if (previousCall?.project && previousCall.project.id !== data.project_id) {
+        setTypedInfiniteQueriesData(
+          queryClient,
+          getProjectCalls.requestKey({ orgSlug: `${scope}`, projectId: previousCall.project.id }),
+          (old) => {
+            return old
+              ? {
+                  ...old,
+                  pages: old.pages.map((page) => ({
+                    ...page,
+                    data: page.data.filter((call) => call.id !== previousCall.id) || []
+                  }))
+                }
+              : old
+          }
+        )
+
+        if (previousCall.project_pin_id) {
+          setTypedQueryData(
+            queryClient,
+            apiClient.organizations.getProjectsPins().requestKey(`${scope}`, previousCall.project.id),
+            (oldData) => {
+              return {
+                ...oldData,
+                data: oldData?.data.filter((pin) => pin.id !== previousCall.project_pin_id) || []
+              }
+            }
+          )
+        }
+      }
 
       return createNormalizedOptimisticUpdate({
         queryNormalizer,
@@ -35,8 +66,8 @@ export function useUpdateCallProjectPermission() {
         id: callId,
         update: {
           project_permission: data.permission,
-          project
-          // TODO: Update project_pin_id when call pins implemented.
+          project,
+          project_pin_id: null
         }
       })
     },

@@ -13,9 +13,9 @@ const SITE_URL_DEV = WEB_URL_DEV
 
 const SYNC_URL_DEV = firstDefined(process.env.NEXT_PUBLIC_SYNC_URL, 'ws://localhost:9000') as string
 
-const RAILS_API_URL_DEV = WEB_URL_DEV
+const APP_API_URL_DEV = WEB_URL_DEV
 
-const RAILS_AUTH_URL_DEV = WEB_URL_DEV
+const APP_AUTH_URL_DEV = WEB_URL_DEV
 
 export const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 export const SCOPE_COOKIE_NAME = 'scope'
@@ -42,33 +42,37 @@ export const SYNC_URL = firstDefined(process.env.NEXT_PUBLIC_SYNC_URL, IS_PRODUC
 export const DESKTOP_APP_PROTOCOL = IS_PRODUCTION ? 'campsite://' : 'campsite-dev://'
 export const LAST_CLIENT_JS_BUILD_ID_LS_KEY = 'latest-js-time'
 
-export const RAILS_API_URL = firstDefined(
+export const APP_API_URL = firstDefined(
   process.env.NEXT_PUBLIC_API_URL,
   process.env.NEXT_PUBLIC_WEB_URL,
   WEB_URL,
-  IS_PRODUCTION ? WEB_URL_PROD : RAILS_API_URL_DEV
+  IS_PRODUCTION ? WEB_URL_PROD : APP_API_URL_DEV
 ) as string
 
-export const RAILS_AUTH_URL = firstDefined(
+export const APP_AUTH_URL = firstDefined(
   process.env.NEXT_PUBLIC_AUTH_URL,
   process.env.NEXT_PUBLIC_WEB_URL,
   WEB_URL,
-  IS_PRODUCTION ? WEB_URL_PROD : RAILS_AUTH_URL_DEV
+  IS_PRODUCTION ? WEB_URL_PROD : APP_AUTH_URL_DEV
 ) as string
 
 /*
-  Not using an env variable because we use this variable in the browser, which
-  requires extra config with Next.js to send env variables to the browser.
+  This is the owned media base exposed to the browser. It may point at the app
+  host or at a dedicated media origin, but it should never require legacy Imgix.
 */
-export const IMGIX_DOMAIN = stripTrailingSlash(
+export const MEDIA_BASE_URL = stripTrailingSlash(
   firstDefined(process.env.NEXT_PUBLIC_MEDIA_BASE_URL, process.env.NEXT_PUBLIC_WEB_URL, WEB_URL) as string
 )
+export const HAS_DEDICATED_MEDIA_BASE_URL = !!process.env.NEXT_PUBLIC_MEDIA_BASE_URL
+
+// Kept as a compatibility alias while legacy-shaped media helpers are still in the repo.
+export const IMGIX_DOMAIN = MEDIA_BASE_URL
 
 export const FIGMA_PLUGIN_URL = 'https://www.figma.com/community/plugin/1108886817260186751'
 export const ZAPIER_APP_URL = 'https://zapier.com/apps/campsite/integrations'
 export const CAL_DOT_COM_APP_URL = 'https://app.cal.com/apps/campsite'
 
-export const LINEAR_CALLBACK_URL = `${RAILS_API_URL}/v1/integrations/linear/callback`
+export const LINEAR_CALLBACK_URL = `${APP_API_URL}/v1/integrations/linear/callback`
 export const LINEAR_DEV_CLIENT_ID = 'bc6d5e0c459d67c42ae462f1167736da'
 export const LINEAR_PROD_CLIENT_ID = '1dcf5d89abd0be6367a24637e100e6b8'
 export const LINEAR_CLIENT_ID = IS_PRODUCTION ? LINEAR_PROD_CLIENT_ID : LINEAR_DEV_CLIENT_ID

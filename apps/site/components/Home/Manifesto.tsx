@@ -4,6 +4,8 @@ import { useTheme } from 'next-themes'
 import Image from 'next/image'
 import Link from 'next/link'
 
+import { WEB_URL } from '@campsite/config'
+
 import {
   Avatar,
   Badge,
@@ -306,7 +308,7 @@ function PostsGraphic() {
           className='absolute left-[0.5rem] top-2 z-[2] max-w-[calc(100%-1rem)] bg-white/80 opacity-80 backdrop-blur-lg transition-all delay-[150ms] group-hover/posts:-translate-y-2.5 group-hover/posts:opacity-0 group-hover/posts:delay-100 dark:bg-gray-900/80'
           post={null}
         />
-        <Link href='https://app.campsite.com/campsite/posts/edf4uyexwd84' target='_blank'>
+        <Link href={`${WEB_URL}/campsite/posts/edf4uyexwd84`} target='_blank'>
           <CompactPost
             className='z-[3] transition-all group-hover/posts:shadow'
             post={{

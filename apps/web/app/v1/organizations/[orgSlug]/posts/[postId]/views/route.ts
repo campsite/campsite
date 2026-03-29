@@ -54,7 +54,9 @@ export async function POST(request: Request, context: Context) {
         read: !!body.read,
         skip_notifications:
           typeof body.skip_notifications === 'boolean' ? body.skip_notifications : undefined,
-        dwell_time: typeof body.dwell_time === 'number' ? body.dwell_time : undefined
+        dwell_time: typeof body.dwell_time === 'number' ? body.dwell_time : undefined,
+        anonymized_ip: request.headers.get('x-forwarded-for') ?? undefined,
+        user_agent: request.headers.get('user-agent') ?? undefined
       })
     )
   } catch (error) {

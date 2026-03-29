@@ -1,4 +1,4 @@
-import { IMGIX_DOMAIN } from '@campsite/config'
+import { MEDIA_BASE_URL } from '@campsite/config'
 
 function stripEdgeSlashes(value: string) {
   return value.replace(/^\/+/, '').replace(/\/+$/, '')
@@ -17,5 +17,5 @@ export function resolveMediaUrl(pathOrUrl: string) {
     return pathOrUrl
   }
 
-  return `${stripEdgeSlashes(IMGIX_DOMAIN)}/${stripEdgeSlashes(pathOrUrl)}`
+  return `${stripEdgeSlashes(MEDIA_BASE_URL)}/${stripEdgeSlashes(pathOrUrl)}`
 }

@@ -30,7 +30,7 @@ export async function GET(_: Request, context: Context) {
   }
 }
 
-export async function POST(_: Request, context: Context) {
+export async function POST(request: Request, context: Context) {
   const { accessToken, user } = await withAuth()
   const { orgSlug, noteId } = await context.params
 
@@ -42,7 +42,9 @@ export async function POST(_: Request, context: Context) {
     return NextResponse.json(
       await createLegacyNoteView(accessToken, {
         slug: orgSlug,
-        noteId
+        noteId,
+        anonymized_ip: request.headers.get('x-forwarded-for') ?? undefined,
+        user_agent: request.headers.get('user-agent') ?? undefined
       })
     )
   } catch (error) {

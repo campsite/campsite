@@ -63,6 +63,10 @@ export async function POST(request: Request, context: Context) {
         file_id: typeof body.file_id === 'string' || body.file_id === null ? body.file_id : undefined,
         note_highlight:
           typeof body.note_highlight === 'string' || body.note_highlight === null ? body.note_highlight : undefined,
+        parent_comment_id:
+          typeof body.parent_comment_id === 'string' || body.parent_comment_id === null
+            ? body.parent_comment_id
+            : undefined,
         timestamp: typeof body.timestamp === 'number' || body.timestamp === null ? body.timestamp : undefined,
         x: typeof body.x === 'number' || body.x === null ? body.x : undefined,
         y: typeof body.y === 'number' || body.y === null ? body.y : undefined

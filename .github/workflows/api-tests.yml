@@ -73,18 +73,10 @@ jobs:
           working-directory: api
           bundler-cache: true
 
-      # lint and push any fixes before building
+      # lint before building
       - name: Lint Ruby files
         working-directory: api
-        run: bundle exec rubocop --parallel --autocorrect
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: 🤖 linting with autofix
-          branch: ${{ github.head_ref }}
-          disable_globbing: true
-          file_pattern: >
-            api/**/*.rb api/**/*.erb api/Gemfile :!api/vendor/**/*
+        run: bundle exec rubocop --parallel
 
       - name: Setup Elasticsearch
         uses: ankane/setup-elasticsearch@v1

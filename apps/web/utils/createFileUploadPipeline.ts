@@ -231,8 +231,15 @@ export async function createFileUploadPipeline({
           orgSlug: scope as string
         }).then((path) => {
           if (path) {
+            const resolvedPreviewUrl = resolveMediaUrl(path)
+
             // send the thumbnail path to the consumer
-            onUpdate(optimisticId, { optimistic_preview_file_path: path })
+            onUpdate(optimisticId, {
+              optimistic_preview_file_path: path,
+              preview_relative_url: path,
+              preview_url: resolvedPreviewUrl,
+              preview_thumbnail_url: resolvedPreviewUrl
+            })
           }
         })
       )
@@ -243,7 +250,14 @@ export async function createFileUploadPipeline({
         if (path) {
           const resolvedUrl = resolveMediaUrl(path)
 
-          onUpdate(optimisticId, { optimistic_file_path: path, url: resolvedUrl })
+          onUpdate(optimisticId, {
+            optimistic_file_path: path,
+            relative_url: path,
+            key: path,
+            url: resolvedUrl,
+            app_url: resolvedUrl,
+            download_url: resolvedUrl
+          })
 
           // prefetch the hls video to kick off a transcription job
           if (attachment.video) {

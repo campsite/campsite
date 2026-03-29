@@ -1,11 +1,16 @@
 import { v } from 'convex/values'
 
-import { internal } from './_generated/api'
-import { action, internalMutation, internalQuery } from './_generated/server'
-import { emptyAvatarUrls, formatDate, buildLegacyMember, buildLegacyUser } from './legacy'
+import { api, internal } from './_generated/api'
+import { action, internalMutation, internalQuery, mutation } from './_generated/server'
+import { deleteSubjectPermissionByPublicId, listSubjectPermissions, upsertSubjectPermission } from './accountShell'
+import { getLegacyProjectSubscriptionState, hasLegacyFavorite } from './engagement'
+import { buildLegacyAvatarUrls, buildLegacyMediaUrl, formatDate, buildLegacyMember, buildLegacyUser } from './legacy'
 import { createSubjectAttachment } from './media'
+import { buildLegacyUnreadNotificationCounts, createNotificationRecord } from './notifications'
 import { paginateByCursor } from './pinsBookmarks'
-import { buildWorkspaceState } from './workspace'
+import { buildLegacyProjectDisplayPreferences } from './projectPreferences'
+import { getLegacyResourceMentionsFromHtml } from './resourceMentions'
+import { buildWorkspaceState, generateToken } from './workspace'
 
 type StoredPermission = {
   id: string
@@ -44,6 +49,7 @@ type StoredNoteRecord = {
   memberViews: StoredView[]
   nonMemberViewsCount: number
   noteId: string
+  originalDigestPublicId?: string | null
   permittedUsers: StoredPermission[]
   projectPinId: string | null
   projectPermission: 'none' | 'view' | 'edit'
@@ -89,7 +95,7 @@ type AccessibleNote = {
 }
 
 type NoteCommentsBundle = {
-  buildCommentTree: (comment: any) => any
+  buildCommentTree: (comment: any) => Promise<any>
   comments: any[]
   context: AuthorizedContext
   membershipsByTokenIdentifier: Map<string, any>
@@ -102,6 +108,7 @@ type NoteCommentsBundle = {
 
 const NOTE_MARKER = 'campsite://note'
 const NOTE_RECORD_CONTENT_TYPE = 'application/vnd.campsite.note+json'
+const SYNC_GRANT_TTL_MS = 60 * 60 * 1000
 
 function createError(code: string, message: string) {
   return new Error(`${code}:${message}`)
@@ -160,6 +167,7 @@ function defaultStoredNoteRecord(noteId: string): StoredNoteRecord {
     noteId,
     descriptionState: null,
     descriptionSchemaVersion: 1,
+    originalDigestPublicId: null,
     projectPermission: 'none',
     permittedUsers: [],
     memberViews: [],
@@ -181,6 +189,7 @@ function normalizeStoredNoteRecord(value: unknown, noteId: string): StoredNoteRe
     descriptionState: typeof record.descriptionState === 'string' ? record.descriptionState : null,
     descriptionSchemaVersion:
       typeof record.descriptionSchemaVersion === 'number' ? record.descriptionSchemaVersion : 1,
+    originalDigestPublicId: typeof record.originalDigestPublicId === 'string' ? record.originalDigestPublicId : null,
     projectPermission:
       record.projectPermission === 'view' || record.projectPermission === 'edit'
         ? record.projectPermission
@@ -274,10 +283,12 @@ function buildLegacyUserFromMaps(usersByTokenIdentifier: Map<string, any>, token
 }
 
 function buildPublicOrganization(organization: any) {
+  const avatarUrl = buildLegacyMediaUrl(organization.avatarPath ?? organization.avatar_url)
+
   return {
     id: organization._id,
-    avatar_url: '',
-    avatar_urls: emptyAvatarUrls,
+    avatar_url: avatarUrl || '',
+    avatar_urls: buildLegacyAvatarUrls(avatarUrl),
     name: organization.name,
     slug: organization.slug,
     viewer_is_admin: false,
@@ -285,15 +296,58 @@ function buildPublicOrganization(organization: any) {
   }
 }
 
-function buildProjectForNote(params: {
+async function buildProjectForNote(ctx: any, params: {
   organization: any
   project: any
   projectMemberships: any[]
   notePosts: any[]
+  viewerMembership?: any
   viewerIsAdmin: boolean
   viewerIsMember: boolean
 }) {
-  const { organization, project, projectMemberships, notePosts, viewerIsAdmin, viewerIsMember } = params
+  const { organization, project, projectMemberships, notePosts, viewerMembership, viewerIsAdmin, viewerIsMember } = params
+  const [viewerDisplayPreferences, unreadForViewer, subscriptionState, viewerHasFavorited] = await Promise.all([
+    viewerMembership
+      ? ctx.runQuery(internal.projectPreferences.getProjectDisplayPreferenceRecordInternal, {
+          projectId: project._id,
+          organizationMembershipId: viewerMembership._id
+        })
+      : Promise.resolve(null),
+    viewerMembership && viewerMembership.userTokenIdentifier
+      ? ctx.runQuery(internal.projectViews.getProjectUnreadForViewerInternal, {
+          organizationId: organization._id,
+          projectId: project._id,
+          organizationMembershipId: viewerMembership._id,
+          viewerTokenIdentifier: viewerMembership.userTokenIdentifier,
+          messageThreadId: project.messageThreadId
+        })
+      : Promise.resolve(false),
+    viewerMembership?.userTokenIdentifier
+      ? getLegacyProjectSubscriptionState(ctx, {
+          organizationId: organization._id,
+          tokenIdentifier: viewerMembership.userTokenIdentifier,
+          projectId: project._id
+        })
+      : Promise.resolve({
+          viewer_has_subscribed: false,
+          viewer_subscription: 'none'
+        }),
+    viewerMembership?.userTokenIdentifier
+      ? hasLegacyFavorite(ctx, {
+          organizationId: organization._id,
+          tokenIdentifier: viewerMembership.userTokenIdentifier,
+          favoritableType: 'Project',
+          favoritableId: project._id
+        })
+      : Promise.resolve(false)
+  ])
+  const projectCallRoom = project.messageThreadId
+    ? await ctx.runQuery(internal.threads.getThreadCallRoomInfoByPublicId, {
+        organizationId: organization._id,
+        threadPublicId: project.messageThreadId
+      })
+    : null
+  const projectMembershipCounts = getProjectMembershipCounts(projectMemberships)
 
   return {
     id: project._id,
@@ -305,7 +359,7 @@ function buildProjectForNote(params: {
     last_activity_at: new Date(project.lastActivityAt).toISOString(),
     slack_channel_id: project.slackChannelId ?? null,
     posts_count: notePosts.length,
-    cover_photo_url: project.coverPhotoPath ?? null,
+    cover_photo_url: buildLegacyMediaUrl(project.coverPhotoPath) ?? null,
     url: `/${organization.slug}/projects/${project._id}`,
     accessory: project.accessory ?? null,
     private: project.private,
@@ -313,30 +367,25 @@ function buildProjectForNote(params: {
     is_general: project.isGeneral,
     is_default: project.isDefault,
     contributors_count: new Set(notePosts.map((note) => note.authorTokenIdentifier)).size,
-    members_and_guests_count: projectMemberships.length,
-    members_count: projectMemberships.length,
-    guests_count: 0,
-    call_room_url: null,
-    message_thread_id: null,
+    members_and_guests_count: projectMembershipCounts.membersAndGuestsCount,
+    members_count: projectMembershipCounts.membersCount,
+    guests_count: projectMembershipCounts.guestsCount,
+    call_room_url: projectCallRoom ? `/${organization.slug}/calls/join/${projectCallRoom.publicId}` : null,
+    message_thread_id: project.messageThreadId ?? null,
     organization_id: organization._id,
-    viewer_has_favorited: false,
+    viewer_has_favorited: viewerHasFavorited,
     viewer_can_archive: viewerIsAdmin && !project.isGeneral,
     viewer_can_destroy: viewerIsAdmin && !project.isGeneral,
     viewer_can_unarchive: viewerIsAdmin,
     viewer_can_update: viewerIsAdmin,
-    viewer_has_subscribed: false,
-    viewer_subscription: 'none',
+    viewer_has_subscribed: subscriptionState.viewer_has_subscribed,
+    viewer_subscription: subscriptionState.viewer_subscription,
     viewer_is_member: viewerIsMember,
-    unread_for_viewer: false,
+    unread_for_viewer: unreadForViewer,
     slack_channel: null,
     type_name: 'project',
-    viewer_display_preferences: null,
-    display_preferences: {
-      display_reactions: true,
-      display_attachments: true,
-      display_comments: true,
-      display_resolved: true
-    }
+    viewer_display_preferences: viewerDisplayPreferences ? buildLegacyProjectDisplayPreferences(viewerDisplayPreferences) : null,
+    display_preferences: buildLegacyProjectDisplayPreferences(project)
   }
 }
 
@@ -356,6 +405,34 @@ function buildAttachmentFlags(fileType: string) {
   }
 }
 
+function buildAttachmentImageUrls(attachment: any, flags: ReturnType<typeof buildAttachmentFlags>) {
+  if (!flags.image && !flags.gif) {
+    return null
+  }
+
+  const originalUrl = buildLegacyMediaUrl(attachment.filePath)
+  const previewUrl = buildLegacyMediaUrl(attachment.previewFilePath || attachment.filePath)
+
+  return {
+    original_url: originalUrl,
+    thumbnail_url: previewUrl,
+    feed_url: previewUrl,
+    email_url: originalUrl,
+    slack_url: previewUrl,
+    large_url: originalUrl
+  }
+}
+
+function getProjectMembershipCounts(projectMemberships: any[]) {
+  const guestsCount = projectMemberships.filter((membership: any) => membership.role === 'guest').length
+
+  return {
+    guestsCount,
+    membersAndGuestsCount: projectMemberships.length,
+    membersCount: projectMemberships.length - guestsCount
+  }
+}
+
 function buildLegacyAttachment(
   attachment: any,
   params: {
@@ -366,18 +443,21 @@ function buildLegacyAttachment(
   }
 ) {
   const url = attachment.previewFilePath || attachment.filePath
+  const originalUrl = buildLegacyMediaUrl(attachment.filePath)
+  const previewUrl = buildLegacyMediaUrl(attachment.previewFilePath || attachment.filePath)
   const flags = buildAttachmentFlags(attachment.fileType)
   const id = attachment.publicId ?? attachment.id
+  const imageUrls = buildAttachmentImageUrls(attachment, flags)
 
   return {
     id,
     file_type: attachment.fileType,
-    url,
-    app_url: url,
-    download_url: url,
-    preview_url: attachment.previewFilePath ?? null,
-    preview_thumbnail_url: attachment.previewFilePath ?? null,
-    image_urls: null,
+    url: buildLegacyMediaUrl(url),
+    app_url: originalUrl,
+    download_url: originalUrl,
+    preview_url: previewUrl,
+    preview_thumbnail_url: previewUrl,
+    image_urls: imageUrls,
     ...flags,
     duration: attachment.duration ?? 0,
     width: attachment.width ?? 0,
@@ -387,7 +467,7 @@ function buildLegacyAttachment(
     size: attachment.size ?? null,
     remote_figma_url: null,
     no_video_track: attachment.noVideoTrack ?? false,
-    gallery_id: null,
+    gallery_id: attachment.galleryId ?? null,
     type_name: 'attachment',
     subject_id: params.subjectId,
     is_subject_comment: params.isSubjectComment,
@@ -466,7 +546,8 @@ function buildLegacyFollowUps(
 function buildTimelineEvents(
   events: StoredTimelineEvent[],
   usersByTokenIdentifier: Map<string, any>,
-  membershipsByTokenIdentifier: Map<string, any>
+  membershipsByTokenIdentifier: Map<string, any>,
+  projectMessageThreadIds: Map<string, string | null> = new Map()
 ) {
   return [...events]
     .sort((left, right) => right.createdAt - left.createdAt)
@@ -484,7 +565,8 @@ function buildTimelineEvents(
               accessory: null,
               private: !!event.subjectUpdatedFromProjectPrivate,
               archived: false,
-              message_thread_id: null
+              message_thread_id:
+                projectMessageThreadIds.get(event.subjectUpdatedFromProjectId) ?? null
             }
           : null,
       subject_updated_to_project:
@@ -495,7 +577,8 @@ function buildTimelineEvents(
               accessory: null,
               private: !!event.subjectUpdatedToProjectPrivate,
               archived: false,
-              message_thread_id: null
+              message_thread_id:
+                projectMessageThreadIds.get(event.subjectUpdatedToProjectId) ?? null
             }
           : null,
       comment_reference_subject_type: null,
@@ -538,12 +621,13 @@ function emptyNotificationCounts() {
 }
 
 function canViewNote(post: any, record: StoredNoteRecord, params: {
+  permissions?: StoredPermission[]
   project: any | null
   projectMemberships: any[]
   viewerMembership: any
   viewerTokenIdentifier?: string | null
 }) {
-  const { project, projectMemberships, viewerMembership, viewerTokenIdentifier } = params
+  const { permissions = record.permittedUsers, project, projectMemberships, viewerMembership, viewerTokenIdentifier } = params
 
   if (!viewerMembership || !viewerTokenIdentifier) {
     return false
@@ -554,7 +638,7 @@ function canViewNote(post: any, record: StoredNoteRecord, params: {
   }
 
   if (
-    record.permittedUsers.some(
+    permissions.some(
       (permission) =>
         permission.userTokenIdentifier === viewerTokenIdentifier &&
         (permission.action === 'view' || permission.action === 'edit')
@@ -571,12 +655,13 @@ function canViewNote(post: any, record: StoredNoteRecord, params: {
 }
 
 function canEditNote(post: any, record: StoredNoteRecord, params: {
+  permissions?: StoredPermission[]
   project: any | null
   projectMemberships: any[]
   viewerMembership: any
   viewerTokenIdentifier?: string | null
 }) {
-  const { project, projectMemberships, viewerMembership, viewerTokenIdentifier } = params
+  const { permissions = record.permittedUsers, project, projectMemberships, viewerMembership, viewerTokenIdentifier } = params
 
   if (!viewerMembership || !viewerTokenIdentifier) {
     return false
@@ -587,7 +672,7 @@ function canEditNote(post: any, record: StoredNoteRecord, params: {
   }
 
   if (
-    record.permittedUsers.some(
+    permissions.some(
       (permission) => permission.userTokenIdentifier === viewerTokenIdentifier && permission.action === 'edit'
     )
   ) {
@@ -641,8 +726,11 @@ function pickThumbnailBaseUrl(orgSlug: string, post: any) {
   return buildThumbnailBasePath(orgSlug, post._id, post.title, post.descriptionHtml)
 }
 
-function buildPermissionList(record: StoredNoteRecord, usersByTokenIdentifier: Map<string, any>) {
-  return record.permittedUsers
+function buildPermissionList(
+  permissions: Array<{ id: string; userTokenIdentifier: string; action: 'view' | 'edit' }>,
+  usersByTokenIdentifier: Map<string, any>
+) {
+  return permissions
     .map((permission) => {
       const user = buildLegacyUserFromMaps(usersByTokenIdentifier, permission.userTokenIdentifier)
 
@@ -657,6 +745,23 @@ function buildPermissionList(record: StoredNoteRecord, usersByTokenIdentifier: M
       }
     })
     .filter(Boolean)
+}
+
+async function getStoredNotePermissionRows(ctx: any, noteId: string) {
+  const rows = await listSubjectPermissions(ctx, 'Note', noteId)
+
+  return rows
+    .filter((row: any) => row.userTokenIdentifier)
+    .map((row: any) => ({
+      id: row.publicId ?? row._id,
+      userTokenIdentifier: row.userTokenIdentifier,
+      action: row.permission as 'view' | 'edit'
+    }))
+}
+
+async function getEffectiveNotePermissions(ctx: any, noteId: string, record: StoredNoteRecord) {
+  const permissions = await getStoredNotePermissionRows(ctx, noteId)
+  return permissions.length > 0 ? permissions : record.permittedUsers
 }
 
 function buildNoteViews(
@@ -694,6 +799,87 @@ function buildStoredViewsFromRows(rows: any[]): StoredView[] {
   }))
 }
 
+async function listDedicatedNoteViews(ctx: any, noteId: string) {
+  return await ctx.db.query('noteViews').withIndex('by_note_id', (query: any) => query.eq('noteId', noteId)).collect()
+}
+
+async function upsertDedicatedNoteView(
+  ctx: any,
+  args: {
+    organizationId: any
+    noteId: string
+    organizationMembershipId: any
+    userTokenIdentifier: string
+  }
+) {
+  const existing = await ctx.db
+    .query('noteViews')
+    .withIndex('by_note_and_membership', (query: any) =>
+      query.eq('noteId', args.noteId).eq('organizationMembershipId', args.organizationMembershipId)
+    )
+    .unique()
+  const now = Date.now()
+
+  if (existing) {
+    await ctx.db.patch(existing._id, {
+      userTokenIdentifier: args.userTokenIdentifier,
+      updatedAt: now
+    })
+    return await ctx.db.get(existing._id)
+  }
+
+  const rowId = await ctx.db.insert('noteViews', {
+    organizationId: args.organizationId,
+    publicId: createRecordId('note_view'),
+    noteId: args.noteId,
+    organizationMembershipId: args.organizationMembershipId,
+    userTokenIdentifier: args.userTokenIdentifier,
+    createdAt: now,
+    updatedAt: now
+  })
+
+  return await ctx.db.get(rowId)
+}
+
+async function recordNonMemberNoteView(
+  ctx: any,
+  args: {
+    organizationId: any
+    noteId: string
+    userTokenIdentifier?: string | null
+    anonymizedIp: string
+    userAgent?: string | null
+  }
+) {
+  const existing = await ctx.db
+    .query('nonMemberNoteViews')
+    .withIndex('by_note_and_ip_agent', (query: any) =>
+      query.eq('noteId', args.noteId).eq('anonymizedIp', args.anonymizedIp).eq('userAgent', args.userAgent ?? undefined)
+    )
+    .unique()
+  const now = Date.now()
+
+  if (existing) {
+    await ctx.db.patch(existing._id, {
+      userTokenIdentifier: args.userTokenIdentifier ?? existing.userTokenIdentifier,
+      updatedAt: now
+    })
+    return await ctx.db.get(existing._id)
+  }
+
+  const rowId = await ctx.db.insert('nonMemberNoteViews', {
+    organizationId: args.organizationId,
+    noteId: args.noteId,
+    userTokenIdentifier: args.userTokenIdentifier ?? undefined,
+    anonymizedIp: args.anonymizedIp,
+    userAgent: args.userAgent ?? undefined,
+    createdAt: now,
+    updatedAt: now
+  })
+
+  return await ctx.db.get(rowId)
+}
+
 function mergeStoredNoteRecordWithRow(record: StoredNoteRecord, row: any | null): StoredNoteRecord {
   if (!row) {
     return record
@@ -708,7 +894,8 @@ function mergeStoredNoteRecordWithRow(record: StoredNoteRecord, row: any | null)
   }
 }
 
-function buildNoteFromSnapshot(params: {
+async function buildNoteFromSnapshot(params: {
+  ctx: any
   comments: any[]
   favorites: any[]
   followUps: any[]
@@ -718,12 +905,14 @@ function buildNoteFromSnapshot(params: {
   projectPinId: string | null
   project: any | null
   projectMemberships: any[]
+  permissions?: StoredPermission[]
   record: StoredNoteRecord
   usersByTokenIdentifier: Map<string, any>
   viewerMembership: any
   viewerTokenIdentifier?: string | null
 }) {
   const {
+    ctx,
     comments,
     favorites,
     followUps,
@@ -733,19 +922,23 @@ function buildNoteFromSnapshot(params: {
     projectPinId,
     project,
     projectMemberships,
+    permissions,
     record,
     usersByTokenIdentifier,
     viewerMembership,
     viewerTokenIdentifier
   } = params
+  const effectivePermissions = permissions ?? record.permittedUsers
 
   const viewerCanEdit = canEditNote(post, record, {
+    permissions: effectivePermissions,
     project,
     projectMemberships,
     viewerMembership,
     viewerTokenIdentifier
   })
   const viewerCanView = canViewNote(post, record, {
+    permissions: effectivePermissions,
     project,
     projectMemberships,
     viewerMembership,
@@ -759,6 +952,7 @@ function buildNoteFromSnapshot(params: {
   )
   const projectNotePosts = project ? [post] : []
   const author = buildLegacyMemberFromMaps(usersByTokenIdentifier, membershipsByTokenIdentifier, post.authorTokenIdentifier)
+  const resolvedCommentsCount = comments.filter((comment: any) => !!comment.resolvedAt).length
 
   if (!author) {
     throw createError('not_found', 'Note author not found')
@@ -771,7 +965,7 @@ function buildNoteFromSnapshot(params: {
     last_activity_at: new Date(post.lastActivityAt).toISOString(),
     content_updated_at: new Date(post.updatedAt).toISOString(),
     comments_count: comments.length,
-    resolved_comments_count: 0,
+    resolved_comments_count: resolvedCommentsCount,
     channel_name: `note-${post._id}`,
     presence_channel_name: `presence-note-${post._id}`,
     description_thumbnail_base_url: pickThumbnailBaseUrl(organization.slug, post),
@@ -781,11 +975,12 @@ function buildNoteFromSnapshot(params: {
     description_state: record.descriptionState,
     project:
       project && record.projectPermission !== 'none'
-        ? buildProjectForNote({
+        ? await buildProjectForNote(ctx, {
             organization,
             project,
             projectMemberships,
             notePosts: projectNotePosts,
+            viewerMembership,
             viewerIsAdmin: viewerMembership?.role === 'admin',
             viewerIsMember: canAccessProject(project, projectMemberships, viewerMembership, viewerTokenIdentifier)
           })
@@ -802,9 +997,13 @@ function buildNoteFromSnapshot(params: {
     viewer_can_delete: post.authorTokenIdentifier === viewerTokenIdentifier || viewerMembership?.role === 'admin',
     viewer_has_favorited: viewerHasFavorited,
     latest_commenters: buildLatestCommenters(comments, usersByTokenIdentifier, membershipsByTokenIdentifier),
-    permitted_users: buildPermissionList(record, usersByTokenIdentifier),
+    permitted_users: buildPermissionList(effectivePermissions, usersByTokenIdentifier),
     project_pin_id: project && record.projectPermission !== 'none' ? projectPinId : null,
-    resource_mentions: []
+    resource_mentions: await getLegacyResourceMentionsFromHtml(ctx, {
+      organizationId: organization._id,
+      organizationSlug: organization.slug,
+      html: post.descriptionHtml
+    })
   }
 }
 
@@ -914,10 +1113,60 @@ async function ensureNoteRowInDb(ctx: any, params: {
     throw createError('not_found', 'Note author membership not found')
   }
 
+  if (params.record.originalDigestPublicId) {
+    let digest = await ctx.db
+      .query('postDigests')
+      .withIndex('by_public_id', (query: any) => query.eq('publicId', params.record.originalDigestPublicId!))
+      .unique()
+
+    if (!digest) {
+      const digestId = await ctx.db.insert('postDigests', {
+        organizationId: params.organizationId,
+        publicId: params.record.originalDigestPublicId,
+        creatorTokenIdentifier: params.post.authorTokenIdentifier,
+        title: params.post.title || 'Migrated digest',
+        description: stripHtml(params.post.descriptionHtml) || undefined,
+        publishedAt: params.post.createdAt,
+        discardedAt: undefined,
+        basic: false,
+        createdAt: params.post.createdAt,
+        updatedAt: params.post.updatedAt
+      })
+
+      digest = await ctx.db.get(digestId)
+    }
+
+    if (digest) {
+      const existingDigestNote = await ctx.db
+        .query('postDigestNotes')
+        .withIndex('by_post_and_post_digest', (query: any) =>
+          query.eq('postId', params.post._id as any).eq('postDigestId', digest._id)
+        )
+        .unique()
+
+      if (!existingDigestNote) {
+        await ctx.db.insert('postDigestNotes', {
+          organizationId: params.organizationId,
+          publicId: createRecordId('digest_note'),
+          organizationMembershipId: authorMembership._id,
+          postId: params.post._id as any,
+          postDigestId: digest._id,
+          title: params.post.title || 'Migrated digest note',
+          content: stripHtml(params.post.descriptionHtml) || undefined,
+          contentHtml: params.post.descriptionHtml || undefined,
+          discardedAt: undefined,
+          createdAt: params.post.createdAt,
+          updatedAt: params.post.updatedAt
+        })
+      }
+    }
+  }
+
   const noteRowId = await ctx.db.insert('notes', {
     organizationId: params.organizationId,
     organizationMembershipId: authorMembership._id,
     publicId: params.noteId,
+    originalDigestPublicId: params.record.originalDigestPublicId ?? undefined,
     title: params.post.title || undefined,
     descriptionHtml: params.post.descriptionHtml || undefined,
     descriptionState: params.record.descriptionState ?? undefined,
@@ -1092,8 +1341,8 @@ async function buildNotes(ctx: any, params: {
     pinRecords.map((entry) => [entry.subjectId, entry.pinId ?? null])
   )
 
-  return params.records
-    .map((record) => {
+  return (await Promise.all(
+    params.records.map(async (record) => {
       const post = postsById.get(record.noteId)
 
       if (!post) {
@@ -1101,12 +1350,14 @@ async function buildNotes(ctx: any, params: {
       }
 
       const mergedRecord = mergeStoredNoteRecordWithRow(record, noteRowsByPublicId.get(record.noteId) ?? null)
+      const permissions = await getEffectiveNotePermissions(ctx, record.noteId, mergedRecord)
 
       const project = post.projectId ? projectsById.get(post.projectId) ?? null : null
       const projectMemberships = project ? projectMembershipsByProjectId.get(project._id) ?? [] : []
 
       if (
         !canViewNote(post, mergedRecord, {
+          permissions,
           project,
           projectMemberships,
           viewerMembership: params.viewerMembership,
@@ -1116,10 +1367,12 @@ async function buildNotes(ctx: any, params: {
         return null
       }
 
-      return buildNoteFromSnapshot({
+      return await buildNoteFromSnapshot({
+        ctx,
         organization: params.organization,
         post,
         projectPinId: pinIdsByNoteId.get(post._id) ?? null,
+        permissions,
         record: mergedRecord,
         project,
         projectMemberships,
@@ -1132,11 +1385,10 @@ async function buildNotes(ctx: any, params: {
         viewerTokenIdentifier: params.viewerTokenIdentifier
       })
     })
-    .filter(Boolean)
+  )).filter(Boolean)
 }
 
-async function getAccessibleNote(ctx: any, slug: string, noteId: string): Promise<AccessibleNote> {
-  const context: AuthorizedContext = await getAuthorizedContext(ctx, slug)
+async function getAccessibleNoteForContext(ctx: any, context: AuthorizedContext, noteId: string): Promise<AccessibleNote> {
   const stored: StoredNoteRecordEntry | null = await getStoredNoteRecord(ctx, context.organization._id, noteId)
 
   if (!stored) {
@@ -1172,6 +1424,47 @@ async function getAccessibleNote(ctx: any, slug: string, noteId: string): Promis
   }
 
   return { context, note, record: stored.record }
+}
+
+async function getAccessibleNote(ctx: any, slug: string, noteId: string): Promise<AccessibleNote> {
+  const context: AuthorizedContext = await getAuthorizedContext(ctx, slug)
+  return await getAccessibleNoteForContext(ctx, context, noteId)
+}
+
+async function getAuthorizedContextForSyncGrant(
+  ctx: any,
+  args: { grantId: string; slug: string; noteId: string }
+): Promise<AuthorizedContext> {
+  const [organization, grant] = await Promise.all([
+    ctx.runQuery(internal.notes.getOrganizationBySlugInternal, { slug: args.slug }),
+    ctx.db
+      .query('syncGrants')
+      .withIndex('by_public_id', (query: any) => query.eq('publicId', args.grantId))
+      .unique()
+  ])
+
+  if (
+    !organization ||
+    !grant ||
+    grant.organizationId !== organization._id ||
+    grant.noteId !== args.noteId ||
+    grant.resourceType !== 'Note' ||
+    grant.expiresAt <= Date.now()
+  ) {
+    throw createError('unauthorized', 'Invalid sync grant')
+  }
+
+  const membership = await queryOrganizationMembershipByTokenIdentifier(ctx, organization._id, grant.userTokenIdentifier)
+
+  if (!membership || membership.discardedAt) {
+    throw createError('unauthorized', 'Invalid sync grant')
+  }
+
+  return {
+    organization,
+    viewerMembership: membership,
+    viewerTokenIdentifier: grant.userTokenIdentifier
+  }
 }
 
 async function getNoteCommentsBundle(ctx: any, slug: string, noteId: string): Promise<NoteCommentsBundle> {
@@ -1233,7 +1526,7 @@ async function getNoteCommentsBundle(ctx: any, slug: string, noteId: string): Pr
     reactionsByCommentId.set(reaction.subjectId, existing)
   }
 
-  const buildCommentTree = (comment: any): any => {
+  const buildCommentTree = async (comment: any): Promise<any> => {
     const member = buildLegacyMemberFromMaps(
       usersByTokenIdentifier,
       membershipsByTokenIdentifier,
@@ -1244,10 +1537,28 @@ async function getNoteCommentsBundle(ctx: any, slug: string, noteId: string): Pr
       return null
     }
 
-    const replies = (commentsByParentId.get(comment._id) ?? [])
-      .sort((left, right) => left.createdAt - right.createdAt)
-      .map(buildCommentTree)
-      .filter(Boolean)
+    const replies = (
+      await Promise.all((commentsByParentId.get(comment._id) ?? []).sort((left, right) => left.createdAt - right.createdAt).map(buildCommentTree))
+    ).filter(Boolean)
+    const resolvedBy = buildLegacyMemberFromMaps(
+      usersByTokenIdentifier,
+      membershipsByTokenIdentifier,
+      comment.resolvedByMembershipId
+        ? membersSnapshot.memberships.find((membership: any) => membership._id === comment.resolvedByMembershipId)
+            ?.userTokenIdentifier ?? null
+        : null
+    )
+    const timelineEvents = await ctx.runQuery(internal.pinsBookmarks.getSubjectTimelineEventsInternal, {
+      subjectType: 'Comment',
+      subjectId: comment._id
+    })
+    const commentPreviewUrl = buildLegacyMediaUrl(
+      (comment.attachmentId ? noteAttachmentsById.get(comment.attachmentId)?.previewFilePath : null) ??
+        (comment.attachmentId ? noteAttachmentsById.get(comment.attachmentId)?.filePath : null) ??
+        comment.attachments[0]?.previewFilePath ??
+        comment.attachments[0]?.filePath ??
+        null
+    )
 
     return {
       id: comment._id,
@@ -1257,8 +1568,8 @@ async function getNoteCommentsBundle(ctx: any, slug: string, noteId: string): Pr
       y: comment.y ?? null,
       body_html: comment.bodyHtml,
       note_highlight: comment.noteHighlight ?? null,
-      resolved_at: null,
-      resolved_by: null,
+      resolved_at: formatDate(comment.resolvedAt),
+      resolved_by: resolvedBy,
       type_name: 'comment',
       subject_type: 'note',
       subject_id: note.id,
@@ -1266,11 +1577,8 @@ async function getNoteCommentsBundle(ctx: any, slug: string, noteId: string): Pr
       viewer_can_resolve: !comment.parentCommentId,
       viewer_can_create_issue: false,
       attachment_id: comment.attachmentId ?? null,
-      canvas_preview_url: null,
-      attachment_thumbnail_url:
-        (comment.attachmentId ? noteAttachmentsById.get(comment.attachmentId)?.previewFilePath : null) ??
-        comment.attachments[0]?.previewFilePath ??
-        null,
+      canvas_preview_url: commentPreviewUrl,
+      attachment_thumbnail_url: commentPreviewUrl,
       viewer_is_author: comment.authorTokenIdentifier === context.viewerTokenIdentifier,
       viewer_can_edit: comment.authorTokenIdentifier === context.viewerTokenIdentifier,
       viewer_can_follow_up: true,
@@ -1301,8 +1609,12 @@ async function getNoteCommentsBundle(ctx: any, slug: string, noteId: string): Pr
       parent_id: comment.parentCommentId ?? null,
       is_optimistic: false,
       optimistic_id: null,
-      timeline_events: [],
-      resource_mentions: []
+      timeline_events: timelineEvents,
+      resource_mentions: await getLegacyResourceMentionsFromHtml(ctx, {
+        organizationId: context.organization._id,
+        organizationSlug: context.organization.slug,
+        html: comment.bodyHtml
+      })
     }
   }
 
@@ -1324,6 +1636,40 @@ function appendTimelineEvent(record: StoredNoteRecord, event: StoredTimelineEven
     ...record,
     timelineEvents: [...record.timelineEvents, event]
   }
+}
+
+async function ensureNoteSubscription(ctx: any, organizationId: any, tokenIdentifier: string, noteId: string) {
+  const existing = await ctx.db
+    .query('subscriptions')
+    .withIndex('by_organization_user_and_subject', (query: any) =>
+      query
+        .eq('organizationId', organizationId)
+        .eq('userTokenIdentifier', tokenIdentifier)
+        .eq('subscribableType', 'Note')
+        .eq('subscribableId', noteId)
+    )
+    .unique()
+
+  if (existing) {
+    return existing
+  }
+
+  const id = await ctx.db.insert('subscriptions', {
+    organizationId,
+    userTokenIdentifier: tokenIdentifier,
+    subscribableType: 'Note',
+    subscribableId: noteId,
+    createdAt: Date.now()
+  })
+
+  return await ctx.db.get(id)
+}
+
+async function listNoteSubscriptions(ctx: any, noteId: string) {
+  return await ctx.db
+    .query('subscriptions')
+    .withIndex('by_subject', (query: any) => query.eq('subscribableType', 'Note').eq('subscribableId', noteId))
+    .collect()
 }
 
 export const listStorageFilesByOwnerInternal = internalQuery({
@@ -1513,7 +1859,7 @@ export const getOrganizationBySlugInternal = internalQuery({
     return await ctx.db
       .query('organizations')
       .withIndex('by_slug', (query) => query.eq('slug', args.slug))
-      .unique()
+    .unique()
   }
 })
 
@@ -1663,6 +2009,7 @@ export const createNoteContainerPostInternal = internalMutation({
       draft: true,
       links: [],
       attachments: [],
+      version: 1,
       createdAt: now,
       updatedAt: now,
       lastActivityAt: now
@@ -1858,13 +2205,21 @@ export const createNoteCommentInternal = internalMutation({
       throw createError('not_found', 'Note not found')
     }
 
+    const parentComment: any = args.parent_comment_id
+      ? await ctx.db.get(args.parent_comment_id as any)
+      : null
+
+    if (parentComment && parentComment.postId !== post._id) {
+      throw createError('unprocessable', 'Reply target does not belong to this note')
+    }
+
     const now = Date.now()
     const commentId = await ctx.db.insert('comments', {
       organizationId: membershipEntry.organization._id,
       postId: post._id,
       authorTokenIdentifier: state.identity.tokenIdentifier,
       bodyHtml: args.body_html || '<p></p>',
-      parentCommentId: args.parent_comment_id ? (args.parent_comment_id as any) : undefined,
+      parentCommentId: parentComment?._id,
       attachmentId: args.file_id || args.attachment_ids?.[0] || undefined,
       timestamp: args.timestamp ?? undefined,
       x: args.x ?? undefined,
@@ -1888,6 +2243,79 @@ export const createNoteCommentInternal = internalMutation({
     await ctx.db.patch(post._id, {
       lastActivityAt: now
     })
+
+    await ensureNoteSubscription(ctx, membershipEntry.organization._id, state.identity.tokenIdentifier, post._id)
+
+    const targetTitle = post.title || stripHtml(post.descriptionHtml) || 'Note'
+    const bodyPreview = stripHtml(args.body_html) || 'Comment'
+    const noteSubscriptions = await listNoteSubscriptions(ctx, post._id)
+
+    await createNotificationRecord(ctx, {
+      organizationId: membershipEntry.organization._id,
+      recipientTokenIdentifier: post.authorTokenIdentifier,
+      actorTokenIdentifier: state.identity.tokenIdentifier,
+      reason: 'author',
+      inboxKey: `note:${post._id}:comment:${commentId}`,
+      subjectType: 'Comment',
+      subjectId: commentId,
+      targetType: 'Note',
+      targetId: post._id,
+      targetTitle,
+      targetProjectId: post.projectId,
+      bodyPreviewPrefix: parentComment ? 'Replied to' : 'Commented on',
+      bodyPreview,
+      replyToBodyPreview: parentComment ? stripHtml(parentComment.bodyHtml) : undefined
+    })
+
+    if (parentComment && parentComment.authorTokenIdentifier !== post.authorTokenIdentifier) {
+      await createNotificationRecord(ctx, {
+        organizationId: membershipEntry.organization._id,
+        recipientTokenIdentifier: parentComment.authorTokenIdentifier,
+        actorTokenIdentifier: state.identity.tokenIdentifier,
+        reason: 'author',
+        inboxKey: `note-comment:${parentComment._id}:reply:${commentId}`,
+        subjectType: 'Comment',
+        subjectId: commentId,
+        targetType: 'Note',
+        targetId: post._id,
+        targetTitle,
+        targetProjectId: post.projectId,
+        subtargetType: 'Comment',
+        subtargetId: parentComment._id,
+        bodyPreviewPrefix: 'Replied to',
+        bodyPreview,
+        replyToBodyPreview: stripHtml(parentComment.bodyHtml)
+      })
+    }
+
+    for (const subscription of noteSubscriptions) {
+      if (
+        subscription.userTokenIdentifier === state.identity.tokenIdentifier ||
+        subscription.userTokenIdentifier === post.authorTokenIdentifier ||
+        subscription.userTokenIdentifier === parentComment?.authorTokenIdentifier
+      ) {
+        continue
+      }
+
+      await createNotificationRecord(ctx, {
+        organizationId: membershipEntry.organization._id,
+        recipientTokenIdentifier: subscription.userTokenIdentifier,
+        actorTokenIdentifier: state.identity.tokenIdentifier,
+        reason: 'parent_subscription',
+        inboxKey: `note:${post._id}:comment:${commentId}:subscriber`,
+        subjectType: 'Comment',
+        subjectId: commentId,
+        targetType: 'Note',
+        targetId: post._id,
+        targetTitle,
+        targetProjectId: post.projectId,
+        subtargetType: parentComment ? 'Comment' : undefined,
+        subtargetId: parentComment?._id,
+        bodyPreviewPrefix: parentComment ? 'Replied to' : 'Commented on',
+        bodyPreview,
+        replyToBodyPreview: parentComment ? stripHtml(parentComment.bodyHtml) : undefined
+      })
+    }
 
     return commentId
   }
@@ -2162,7 +2590,7 @@ export const getLegacyNoteCommentsPage = action({
       .slice(0, Math.max(1, Math.min(args.limit ?? 200, 200)))
 
     return {
-      data: topLevel.map(bundle.buildCommentTree).filter(Boolean),
+      data: (await Promise.all(topLevel.map(bundle.buildCommentTree))).filter(Boolean),
       next_cursor: null,
       prev_cursor: null,
       total_count: bundle.comments.length
@@ -2212,7 +2640,7 @@ export const createLegacyNoteComment = action({
       throw createError('unprocessable', 'Comment could not be created')
     }
 
-    const newComment = bundle.buildCommentTree(created)
+    const newComment = await bundle.buildCommentTree(created)
     const noteAttachment = created.attachmentId ? bundle.noteAttachmentsById.get(created.attachmentId) : null
     const attachment: any =
       created.attachmentId && noteAttachment
@@ -2258,7 +2686,7 @@ export const getLegacyNoteAttachmentCommentsPage = action({
       .slice(0, Math.max(1, Math.min(args.limit ?? 200, 200)))
 
     return {
-      data: comments.map(bundle.buildCommentTree).filter(Boolean),
+      data: (await Promise.all(comments.map(bundle.buildCommentTree))).filter(Boolean),
       next_cursor: null,
       prev_cursor: null,
       total_count: bundle.comments.filter((comment: any) => comment.attachmentId === args.attachmentId).length
@@ -2318,7 +2746,8 @@ export const getLegacyNotePermissions = action({
     const membersSnapshot = await getOrganizationMembersSnapshot(ctx, context.organization._id)
     const { usersByTokenIdentifier } = buildMemberMaps(membersSnapshot.users, membersSnapshot.memberships)
 
-    return buildPermissionList(record, usersByTokenIdentifier)
+    const permissions = await getStoredNotePermissionRows(ctx, args.noteId)
+    return buildPermissionList(permissions.length > 0 ? permissions : record.permittedUsers, usersByTokenIdentifier)
   }
 })
 
@@ -2348,7 +2777,7 @@ export const createLegacyNotePermissions = action({
         action: args.permission
       }))
 
-    const record = await upsertStoredNoteRecord(ctx, context.organization._id, args.noteId, (current) => ({
+    await upsertStoredNoteRecord(ctx, context.organization._id, args.noteId, (current) => ({
       ...current,
       permittedUsers: [
         ...current.permittedUsers.filter(
@@ -2358,11 +2787,18 @@ export const createLegacyNotePermissions = action({
       ]
     }))
 
+    for (const permission of newPermissions) {
+      await upsertSubjectPermission(ctx, {
+        publicId: permission.id,
+        subjectType: 'Note',
+        subjectId: args.noteId,
+        userTokenIdentifier: permission.userTokenIdentifier,
+        permission: permission.action
+      })
+    }
+
     return buildPermissionList(
-      {
-        ...record,
-        permittedUsers: newPermissions
-      },
+      newPermissions,
       usersByTokenIdentifier
     )
   }
@@ -2396,13 +2832,15 @@ export const updateLegacyNotePermission = action({
       throw createError('not_found', 'Permission not found')
     }
 
-    return buildPermissionList(
-      {
-        ...record,
-        permittedUsers: [permission]
-      },
-      usersByTokenIdentifier
-    )[0]
+    await upsertSubjectPermission(ctx, {
+      publicId: args.permissionId,
+      subjectType: 'Note',
+      subjectId: args.noteId,
+      userTokenIdentifier: permission.userTokenIdentifier,
+      permission: args.permission
+    })
+
+    return buildPermissionList([permission], usersByTokenIdentifier)[0]
   }
 })
 
@@ -2423,6 +2861,7 @@ export const deleteLegacyNotePermission = action({
       ...current,
       permittedUsers: current.permittedUsers.filter((permission) => permission.id !== args.permissionId)
     }))
+    await deleteSubjectPermissionByPublicId(ctx, args.permissionId)
 
     return {}
   }
@@ -2616,6 +3055,53 @@ export const getLegacyNoteSyncState = action({
   }
 })
 
+export const createLegacyNoteSyncGrant = mutation({
+  args: {
+    slug: v.string(),
+    noteId: v.string(),
+    resourceType: v.literal('Note')
+  },
+  handler: async (ctx, args) => {
+    const { context } = await getAccessibleNote(ctx, args.slug, args.noteId)
+    const now = Date.now()
+    const expiresAt = now + SYNC_GRANT_TTL_MS
+    const grantId = `sync_${generateToken()}`
+
+    await ctx.db.insert('syncGrants', {
+      organizationId: context.organization._id,
+      publicId: grantId,
+      noteId: args.noteId,
+      resourceType: args.resourceType,
+      userTokenIdentifier: context.viewerTokenIdentifier,
+      expiresAt,
+      createdAt: now
+    })
+
+    return { grantId, expiresAt }
+  }
+})
+
+export const getLegacyNoteSyncStateByGrant = action({
+  args: {
+    grantId: v.string(),
+    slug: v.string(),
+    noteId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getAuthorizedContextForSyncGrant(ctx, args)
+    const { note, record } = await getAccessibleNoteForContext(ctx, context, args.noteId)
+    const noteRow = await getNoteRowByPublicId(ctx, args.noteId)
+    const mergedRecord = mergeStoredNoteRecordWithRow(record, noteRow)
+
+    return {
+      id: note.id,
+      description_schema_version: mergedRecord.descriptionSchemaVersion,
+      description_state: mergedRecord.descriptionState,
+      description_html: note.description_html
+    }
+  }
+})
+
 export const updateLegacyNoteSyncState = action({
   args: {
     slug: v.string(),
@@ -2656,6 +3142,110 @@ export const updateLegacyNoteSyncState = action({
   }
 })
 
+export const updateLegacyNoteSyncStateByGrant = action({
+  args: {
+    grantId: v.string(),
+    slug: v.string(),
+    noteId: v.string(),
+    description_html: v.string(),
+    description_schema_version: v.number(),
+    description_state: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getAuthorizedContextForSyncGrant(ctx, args)
+    const { note, record } = await getAccessibleNoteForContext(ctx, context, args.noteId)
+
+    if (!note.viewer_can_edit) {
+      throw createError('forbidden', 'Not allowed to edit this note')
+    }
+
+    if (args.description_schema_version < record.descriptionSchemaVersion) {
+      throw createError('unprocessable', 'description_schema_version cannot be older than the stored document')
+    }
+
+    await ctx.runMutation(internal.notes.updateNoteContainerPostInternal, {
+      slug: args.slug,
+      noteId: args.noteId,
+      description_html: args.description_html
+    })
+    await upsertStoredNoteRecord(ctx, context.organization._id, args.noteId, (current) => ({
+      ...current,
+      descriptionState: args.description_state,
+      descriptionSchemaVersion: args.description_schema_version
+    }))
+    await patchNoteRow(ctx, args.noteId, {
+      descriptionHtml: args.description_html,
+      descriptionState: args.description_state,
+      descriptionSchemaVersion: args.description_schema_version,
+      contentUpdatedAt: Date.now()
+    })
+
+    return {}
+  }
+})
+
+export const promoteLegacyNotesCompat = mutation({
+  args: {
+    slug: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getAuthorizedContext(ctx, args.slug)
+    const files = await getStoredNoteFiles(ctx, context.organization._id)
+
+    if (files.length === 0) {
+      return {
+        promoted: 0,
+        total: 0
+      }
+    }
+
+    const noteIds = files.map((file) => file.name)
+    const snapshot = await getNoteSnapshot(ctx, {
+      organizationId: context.organization._id,
+      noteIds,
+      viewerTokenIdentifier: context.viewerTokenIdentifier
+    })
+
+    let promoted = 0
+
+    for (const noteId of noteIds) {
+      const post = snapshot.posts.find((entry: any) => entry._id === noteId)
+
+      if (!post) {
+        continue
+      }
+
+      const stored = await getStoredNoteRecord(ctx, context.organization._id, noteId)
+
+      if (!stored) {
+        continue
+      }
+
+      await ensureNoteRow(ctx, {
+        organizationId: context.organization._id,
+        noteId,
+        post,
+        record: stored.record
+      })
+      await patchNoteRow(ctx, noteId, {
+        descriptionHtml: post.descriptionHtml || '<p></p>',
+        descriptionState: stored.record.descriptionState ?? undefined,
+        descriptionSchemaVersion: stored.record.descriptionSchemaVersion,
+        nonMemberViewsCount: stored.record.nonMemberViewsCount,
+        projectId: post.projectId ?? null,
+        projectPermission: stored.record.projectPermission,
+        contentUpdatedAt: post.updatedAt
+      })
+      promoted += 1
+    }
+
+    return {
+      promoted,
+      total: noteIds.length
+    }
+  }
+})
+
 export const getLegacyNoteTimelineEventsPage = action({
   args: {
     slug: v.string(),
@@ -2666,16 +3256,23 @@ export const getLegacyNoteTimelineEventsPage = action({
   handler: async (ctx, args) => {
     const { context, record } = await getAccessibleNote(ctx, args.slug, args.noteId)
     const membersSnapshot = await getOrganizationMembersSnapshot(ctx, context.organization._id)
+    const projects = await ctx.runQuery(api.onboarding.getLegacySyncProjects, {
+      slug: args.slug
+    })
     const { usersByTokenIdentifier, membershipsByTokenIdentifier } = buildMemberMaps(
       membersSnapshot.users,
       membersSnapshot.memberships
+    )
+    const projectMessageThreadIds = new Map<string, string | null>(
+      projects.map((project: any) => [project.id, project.message_thread_id ?? null] as const)
     )
     const storedTimelineEvents = buildTimelineEvents(
       record.timelineEvents.filter(
         (event) => event.action !== 'subject_pinned' && event.action !== 'subject_unpinned'
       ),
       usersByTokenIdentifier,
-      membershipsByTokenIdentifier
+      membershipsByTokenIdentifier,
+      projectMessageThreadIds
     )
     const sharedTimelineEvents: any[] = await ctx.runQuery(internal.pinsBookmarks.getSubjectTimelineEventsInternal, {
       subjectType: 'Note',
@@ -2696,17 +3293,24 @@ export const getLegacyNoteViews = action({
   },
   handler: async (ctx, args): Promise<ReturnType<typeof buildNoteViews>> => {
     const { context, record } = await getAccessibleNote(ctx, args.slug, args.noteId)
-    const subjectViewRows = await ctx.runQuery(internal.media.listSubjectViewsInternal, {
-      subjectType: 'Note',
-      subjectId: args.noteId
-    })
+    const [dedicatedViewRows, subjectViewRows] = await Promise.all([
+      listDedicatedNoteViews(ctx, args.noteId),
+      ctx.runQuery(internal.media.listSubjectViewsInternal, {
+        subjectType: 'Note',
+        subjectId: args.noteId
+      })
+    ])
     const membersSnapshot = await getOrganizationMembersSnapshot(ctx, context.organization._id)
     const { usersByTokenIdentifier, membershipsByTokenIdentifier } = buildMemberMaps(
       membersSnapshot.users,
       membersSnapshot.memberships
     )
     const memberViews =
-      subjectViewRows.length > 0 ? buildStoredViewsFromRows(subjectViewRows) : [...record.memberViews]
+      dedicatedViewRows.length > 0
+        ? buildStoredViewsFromRows(dedicatedViewRows)
+        : subjectViewRows.length > 0
+          ? buildStoredViewsFromRows(subjectViewRows)
+          : [...record.memberViews]
 
     return buildNoteViews(
       memberViews,
@@ -2720,7 +3324,9 @@ export const getLegacyNoteViews = action({
 export const createLegacyNoteView = action({
   args: {
     slug: v.string(),
-    noteId: v.string()
+    noteId: v.string(),
+    anonymized_ip: v.optional(v.string()),
+    user_agent: v.optional(v.string())
   },
   handler: async (
     ctx,
@@ -2772,6 +3378,14 @@ export const createLegacyNoteView = action({
         nonMemberViewsCount: current.nonMemberViewsCount + 1
       }))
       const noteRow = await getNoteRowByPublicId(ctx, args.noteId)
+      if (args.anonymized_ip) {
+        await recordNonMemberNoteView(ctx, {
+          organizationId: organization._id,
+          noteId: args.noteId,
+          anonymizedIp: args.anonymized_ip,
+          userAgent: args.user_agent ?? null
+        })
+      }
       await patchNoteRow(ctx, args.noteId, {
         nonMemberViewsCount: (noteRow?.nonMemberViewsCount ?? stored.record.nonMemberViewsCount) + 1
       })
@@ -2796,6 +3410,15 @@ export const createLegacyNoteView = action({
         nonMemberViewsCount: current.nonMemberViewsCount + 1
       }))
       const noteRow = await getNoteRowByPublicId(ctx, args.noteId)
+      if (args.anonymized_ip) {
+        await recordNonMemberNoteView(ctx, {
+          organizationId: organization._id,
+          noteId: args.noteId,
+          userTokenIdentifier: identity.tokenIdentifier,
+          anonymizedIp: args.anonymized_ip,
+          userAgent: args.user_agent ?? null
+        })
+      }
       await patchNoteRow(ctx, args.noteId, {
         nonMemberViewsCount: (noteRow?.nonMemberViewsCount ?? stored.record.nonMemberViewsCount) + 1
       })
@@ -2828,30 +3451,49 @@ export const createLegacyNoteView = action({
         ...current.memberViews.filter((view) => view.userTokenIdentifier !== context.viewerTokenIdentifier)
       ]
     }))
-    await ctx.runMutation(internal.media.upsertSubjectViewInternal, {
-      organizationId: organization._id,
-      subjectType: 'Note',
-      subjectId: args.noteId,
-      userTokenIdentifier: context.viewerTokenIdentifier
-    })
+    await Promise.all([
+      upsertDedicatedNoteView(ctx, {
+        organizationId: organization._id,
+        noteId: args.noteId,
+        organizationMembershipId: context.viewerMembership._id,
+        userTokenIdentifier: context.viewerTokenIdentifier
+      }),
+      ctx.runMutation(internal.media.upsertSubjectViewInternal, {
+        organizationId: organization._id,
+        subjectType: 'Note',
+        subjectId: args.noteId,
+        userTokenIdentifier: context.viewerTokenIdentifier
+      })
+    ])
     const membersSnapshot = await getOrganizationMembersSnapshot(ctx, organization._id)
     const { usersByTokenIdentifier, membershipsByTokenIdentifier } = buildMemberMaps(
       membersSnapshot.users,
       membersSnapshot.memberships
     )
-    const subjectViewRows = await ctx.runQuery(internal.media.listSubjectViewsInternal, {
-      subjectType: 'Note',
-      subjectId: args.noteId
-    })
+    const [dedicatedViewRows, subjectViewRows] = await Promise.all([
+      listDedicatedNoteViews(ctx, args.noteId),
+      ctx.runQuery(internal.media.listSubjectViewsInternal, {
+        subjectType: 'Note',
+        subjectId: args.noteId
+      })
+    ])
 
     return {
       views: buildNoteViews(
-        subjectViewRows.length > 0 ? buildStoredViewsFromRows(subjectViewRows) : updatedRecord.memberViews,
+        dedicatedViewRows.length > 0
+          ? buildStoredViewsFromRows(dedicatedViewRows)
+          : subjectViewRows.length > 0
+            ? buildStoredViewsFromRows(subjectViewRows)
+            : updatedRecord.memberViews,
         usersByTokenIdentifier,
         membershipsByTokenIdentifier,
         context.viewerTokenIdentifier
       ),
-      notification_counts: emptyNotificationCounts()
+      notification_counts:
+        (await buildLegacyUnreadNotificationCounts(ctx, {
+          tokenIdentifier: context.viewerTokenIdentifier
+        })) ??
+        emptyNotificationCounts()
     }
   }
 })

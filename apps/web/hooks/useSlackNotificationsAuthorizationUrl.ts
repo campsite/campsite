@@ -1,4 +1,4 @@
-import { RAILS_API_URL, SLACK_NOTIFICATION_SCOPES } from '@campsite/config'
+import { APP_API_URL, SLACK_NOTIFICATION_SCOPES } from '@campsite/config'
 import { PublicOrganization } from '@campsite/types'
 
 import { useIntegrationAuthUrl } from './useIntegrationAuthUrl'
@@ -11,7 +11,7 @@ export const useSlackNotificationsAuthorizationUrl = ({
   organization: PublicOrganization
   teamId?: string | null
 }) => {
-  const redirectUri = `${RAILS_API_URL}/v1/organizations/${organization.slug}/integrations/slack/notifications_callback`
+  const redirectUri = `${APP_API_URL}/v1/organizations/${organization.slug}/integrations/slack/notifications_callback`
   const auth_url = useSlackAuthorizationUrl({ scopes: SLACK_NOTIFICATION_SCOPES, redirectUri, teamId })
 
   return useIntegrationAuthUrl({ auth_url })

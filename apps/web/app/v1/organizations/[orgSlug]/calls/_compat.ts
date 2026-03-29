@@ -5,6 +5,7 @@ export function getCallsCompatClient(accessToken: string) {
   const client = getConvexServerClient(accessToken)
 
   return {
+    promoteCompatCalls: (data: { slug: string }) => client.mutation(api.callsRealtime.promoteLegacyCallsCompat, data),
     getCallsPage: (data: { slug: string; filter?: string; after?: string; limit?: number; q?: string }) =>
       client.query(api.callsRealtime.getLegacyCallsCompatPage, data),
     getCallById: (data: { slug: string; callId: string }) => client.query(api.callsRealtime.getLegacyCallCompatById, data),
@@ -12,6 +13,8 @@ export function getCallsCompatClient(accessToken: string) {
       client.mutation(api.callsRealtime.updateLegacyCallCompat, data),
     getRecordingsPage: (data: { slug: string; callId: string; after?: string; limit?: number }) =>
       client.query(api.callsRealtime.getLegacyCallCompatRecordingsPage, data),
+    getRecordingTranscription: (data: { slug: string; callRecordingId: string }) =>
+      client.query(api.callsRealtime.getLegacyCallRecordingTranscription, data),
     deleteAllRecordings: (data: { slug: string; callId: string }) =>
       client.mutation(api.callsRealtime.deleteLegacyCallCompatRecordings, data),
     createPin: (data: { slug: string; callId: string }) => client.mutation(api.callsRealtime.createLegacyCallCompatPin, data),

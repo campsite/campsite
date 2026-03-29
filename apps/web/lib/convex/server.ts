@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { ConvexHttpClient } from 'convex/browser'
 
 import { api } from '@/convex/_generated/api'
@@ -151,6 +152,8 @@ export async function getLegacyPostsPage(
     slug: string
     q?: string
     limit?: number
+    projectId?: string
+    hide_resolved?: boolean
     mode: 'all' | 'for_me' | 'viewer'
     order?: {
       by: 'last_activity_at' | 'published_at'
@@ -198,6 +201,14 @@ export async function createLegacyPost(
     unfurled_link?: string | null
     parent_id?: string | null
     links: { name: string; url: string }[]
+    poll?: {
+      description: string
+      options: {
+        description: string
+      }[]
+    }
+    feedback_request_member_ids?: string[]
+    tags?: string[]
     status?: 'none' | 'feedback_requested'
     draft?: boolean
     attachments?: {
@@ -227,11 +238,119 @@ export async function updateLegacyPost(
     project_id?: string | null
     unfurled_link?: string | null
     status?: 'none' | 'feedback_requested'
+    feedback_request_member_ids?: string[]
+    tags?: string[]
   }
 ) {
   const client = getConvexServerClient(accessToken)
 
   return await client.mutation(api.content.updateLegacyPost, data)
+}
+
+export async function createLegacyPostPoll(
+  accessToken: string,
+  data: {
+    slug: string
+    postId: string
+    description: string
+    options: {
+      description: string
+    }[]
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.content.createLegacyPostPoll, data)
+}
+
+export async function updateLegacyPostPoll(
+  accessToken: string,
+  data: {
+    slug: string
+    postId: string
+    description: string
+    options: {
+      id?: string
+      description: string
+    }[]
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.content.updateLegacyPostPoll, data)
+}
+
+export async function deleteLegacyPostPoll(accessToken: string, data: { slug: string; postId: string }) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.content.deleteLegacyPostPoll, data)
+}
+
+export async function voteLegacyPostPollOption(
+  accessToken: string,
+  data: {
+    slug: string
+    postId: string
+    optionId: string
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.content.voteLegacyPostPollOption, data)
+}
+
+export async function getLegacyPollOptionVotersPage(
+  accessToken: string,
+  data: {
+    slug: string
+    postId: string
+    pollOptionId: string
+    after?: string
+    limit?: number
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.query(api.content.getLegacyPollOptionVotersPage, data)
+}
+
+export async function createLegacyPostFeedbackRequest(
+  accessToken: string,
+  data: {
+    slug: string
+    postId: string
+    memberId: string
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.content.createLegacyPostFeedbackRequest, data)
+}
+
+export async function deleteLegacyPostFeedbackRequest(
+  accessToken: string,
+  data: {
+    slug: string
+    postId: string
+    id: string
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.content.deleteLegacyPostFeedbackRequest, data)
+}
+
+export async function dismissLegacyPostFeedbackRequest(
+  accessToken: string,
+  data: {
+    slug: string
+    postId: string
+    feedbackRequestId?: string
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.content.dismissLegacyPostFeedbackRequest, data)
 }
 
 export async function deleteLegacyPost(accessToken: string, data: { slug: string; postId: string }) {
@@ -267,6 +386,45 @@ export async function getLegacyPostVersions(accessToken: string, data: { slug: s
   return await client.query(api.content.getLegacyPostVersions, data)
 }
 
+export async function getLegacyGeneratedPostResolution(
+  accessToken: string,
+  data: { slug: string; postId: string; commentId?: string }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.query(api.content.getLegacyGeneratedPostResolution, data)
+}
+
+export async function getLegacyGeneratedPostTldr(accessToken: string, data: { slug: string; postId: string }) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.query(api.content.getLegacyGeneratedPostTldr, data)
+}
+
+export async function updateLegacyPostVisibility(
+  accessToken: string,
+  data: { slug: string; postId: string; visibility: 'default' | 'public' }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.content.updateLegacyPostVisibility, data)
+}
+
+export async function resolveLegacyPost(
+  accessToken: string,
+  data: { slug: string; postId: string; resolve_html?: string | null; comment_id?: string | null }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.content.resolveLegacyPost, data)
+}
+
+export async function unresolveLegacyPost(accessToken: string, data: { slug: string; postId: string }) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.content.unresolveLegacyPost, data)
+}
+
 export async function getLegacyPostSeoInfo(accessToken: string, data: { slug: string; postId: string }) {
   const client = getConvexServerClient(accessToken)
 
@@ -290,6 +448,8 @@ export async function createLegacyPostView(
     read: boolean
     skip_notifications?: boolean
     dwell_time?: number
+    anonymized_ip?: string
+    user_agent?: string
   }
 ) {
   const client = getConvexServerClient(accessToken)
@@ -301,6 +461,18 @@ export async function getLegacyComment(accessToken: string, data: { slug: string
   const client = getConvexServerClient(accessToken)
 
   return await client.query(api.content.getLegacyCommentById, data)
+}
+
+export async function resolveLegacyComment(accessToken: string, data: { slug: string; commentId: string }) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.content.resolveLegacyComment, data)
+}
+
+export async function unresolveLegacyComment(accessToken: string, data: { slug: string; commentId: string }) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.content.unresolveLegacyComment, data)
 }
 
 export async function createLegacyPostComment(

@@ -1,6 +1,6 @@
 import { test as setup } from '@playwright/test'
 
-import { ORG_PATH } from './consts'
+import { APP_URL, ORG_PATH } from './consts'
 
 const authFile = 'playwright/.auth/user.json'
 
@@ -12,6 +12,6 @@ setup('authenticate', async ({ page }) => {
   await page.getByLabel('Email').fill('ranger.rick@demo.campsite.com')
   await page.getByLabel('Password').fill('CampsiteDesign!')
   await page.getByRole('button', { name: 'Sign in' }).click()
-  await page.waitForURL('http://app.campsite.test:3000/frontier-forest')
+  await page.waitForURL(`${APP_URL}${ORG_PATH}`)
   await page.context().storageState({ path: authFile })
 })

@@ -1,6 +1,14 @@
 import { v } from 'convex/values'
 
 import { mutation, query } from './_generated/server'
+import {
+  buildLegacyMembershipStatusFromRow,
+  clearOrganizationMembershipStatus,
+  getLatestMembershipStatusRow,
+  getUserPreferencesMap,
+  upsertOrganizationMembershipStatus,
+  upsertUserPreference
+} from './accountShell'
 import { buildLegacyMember, buildLegacyUser, formatDate } from './legacy'
 import { buildWorkspaceState } from './workspace'
 
@@ -22,9 +30,14 @@ const statusExpirationValues = [
   v.literal('this_week'),
   v.literal('custom')
 ] as const
+const RECENT_STATUSES_PREFERENCE_PREFIX = 'recent_statuses:'
 
 function createError(message: string, code: string) {
   return new Error(`${code}:${message}`)
+}
+
+function getRecentStatusesPreferenceKey(slug: string) {
+  return `${RECENT_STATUSES_PREFERENCE_PREFIX}${slug}`
 }
 
 async function getOrganizationContext(ctx: any, slug: string) {
@@ -90,7 +103,7 @@ function buildMiniProject(project: any) {
     accessory: project.accessory ?? null,
     private: project.private,
     archived: !!project.archivedAt,
-    message_thread_id: null
+    message_thread_id: project.messageThreadId ?? null
   }
 }
 
@@ -218,6 +231,60 @@ async function getOrganizationNotificationsForRecipient(ctx: any, organizationId
     .collect()
 }
 
+export async function buildLegacyUnreadNotificationCounts(
+  ctx: any,
+  params?: {
+    memberships?: any[]
+    tokenIdentifier?: string
+  }
+) {
+  const state = await buildWorkspaceState(ctx)
+  const memberships = params?.memberships ?? state.memberships
+  const tokenIdentifier = params?.tokenIdentifier ?? state.identity.tokenIdentifier
+
+  const threadMemberships = await ctx.db
+    .query('messageThreadMemberships')
+    .withIndex('by_user_token_identifier', (q: any) => q.eq('userTokenIdentifier', tokenIdentifier))
+    .collect()
+  const unreadMessageCountByOrganization = new Map<string, number>()
+
+  for (const membership of threadMemberships) {
+    if (!membership.organizationId || !membership.unreadCount) {
+      continue
+    }
+
+    unreadMessageCountByOrganization.set(
+      membership.organizationId,
+      (unreadMessageCountByOrganization.get(membership.organizationId) ?? 0) + membership.unreadCount
+    )
+  }
+
+  const counts = {
+    inbox: {} as Record<string, number>,
+    messages: {} as Record<string, number>,
+    activity: {} as Record<string, number>,
+    home_inbox: {} as Record<string, number>
+  }
+
+  for (const entry of memberships) {
+    if (!entry.organization || entry.membership.discardedAt) {
+      continue
+    }
+
+    const notifications = await getOrganizationNotificationsForRecipient(ctx, entry.organization._id, tokenIdentifier)
+    const activeNotifications = notifications.filter((notification: any) => !notification.archivedAt)
+    const unreadNotifications = activeNotifications.filter((notification: any) => !notification.readAt)
+    const slug = entry.organization.slug
+
+    counts.inbox[slug] = unreadNotifications.length
+    counts.home_inbox[slug] = unreadNotifications.filter((notification: any) => notification.isInbox).length
+    counts.activity[slug] = unreadNotifications.filter((notification: any) => !notification.isInbox).length
+    counts.messages[slug] = unreadMessageCountByOrganization.get(entry.organization._id) ?? 0
+  }
+
+  return counts
+}
+
 function getActiveStatusPauseExpiresAt(membership: any) {
   if (!membership?.statusPauseNotifications || !membership?.statusExpiresAt) {
     return null
@@ -316,7 +383,14 @@ function shouldIncludeNotification(
   return true
 }
 
-function resolveMembershipStatus(membership: any) {
+async function resolveMembershipStatus(ctx: any, membership: any) {
+  const latest = await getLatestMembershipStatusRow(ctx, membership)
+  const fromRow = buildLegacyMembershipStatusFromRow(latest)
+
+  if (fromRow) {
+    return fromRow
+  }
+
   if (!membership.statusEmoji && !membership.statusMessage) {
     return null
   }
@@ -335,6 +409,59 @@ function resolveMembershipStatus(membership: any) {
     pause_notifications: membership.statusPauseNotifications ?? false,
     expires_in: expirationSetting
   }
+}
+
+function parseRecentStatuses(preferences: Record<string, string> | undefined, slug: string) {
+  const raw = preferences?.[getRecentStatusesPreferenceKey(slug)]
+
+  if (!raw) {
+    return []
+  }
+
+  try {
+    const parsed = JSON.parse(raw)
+
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+
+    return parsed.filter((entry) => entry && typeof entry === 'object')
+  } catch {
+    return []
+  }
+}
+
+function dedupeStatuses(statuses: any[]) {
+  const seen = new Set<string>()
+
+  return statuses.filter((status) => {
+    const key = JSON.stringify([
+      status?.emoji ?? '',
+      status?.message ?? '',
+      status?.expiration_setting ?? 'custom',
+      status?.pause_notifications ?? false
+    ])
+
+    if (seen.has(key)) {
+      return false
+    }
+
+    seen.add(key)
+    return true
+  })
+}
+
+async function storeRecentStatus(ctx: any, tokenIdentifier: string, slug: string, status: any) {
+  const user = await getUserByTokenIdentifier(ctx, tokenIdentifier)
+
+  if (!user || !status) {
+    return
+  }
+
+  const preferences = await getUserPreferencesMap(ctx, user)
+  const existing = parseRecentStatuses(preferences, slug)
+  const recent = dedupeStatuses([status, ...existing]).slice(0, 8)
+  await upsertUserPreference(ctx, user, getRecentStatusesPreferenceKey(slug), JSON.stringify(recent))
 }
 
 export async function createNotificationRecord(
@@ -379,9 +506,10 @@ export async function createNotificationRecord(
     bodyPreviewPrefixFallback?: string
     bodyPreview?: string
     isInbox?: boolean
+    allowSelf?: boolean
   }
 ) {
-  if (params.actorTokenIdentifier === params.recipientTokenIdentifier) {
+  if (!params.allowSelf && params.actorTokenIdentifier === params.recipientTokenIdentifier) {
     return null
   }
 
@@ -465,36 +593,7 @@ export async function createNotificationRecord(
 export const getLegacyUnreadNotificationCounts = query({
   args: {},
   handler: async (ctx) => {
-    const { identity, memberships } = await buildWorkspaceState(ctx)
-
-    const counts = {
-      inbox: {} as Record<string, number>,
-      messages: {} as Record<string, number>,
-      activity: {} as Record<string, number>,
-      home_inbox: {} as Record<string, number>
-    }
-
-    for (const entry of memberships) {
-      if (!entry.organization || entry.membership.discardedAt) {
-        continue
-      }
-
-      const notifications = await getOrganizationNotificationsForRecipient(
-        ctx,
-        entry.organization._id,
-        identity.tokenIdentifier
-      )
-      const activeNotifications = notifications.filter((notification: any) => !notification.archivedAt)
-      const unreadNotifications = activeNotifications.filter((notification: any) => !notification.readAt)
-      const slug = entry.organization.slug
-
-      counts.inbox[slug] = unreadNotifications.length
-      counts.home_inbox[slug] = unreadNotifications.filter((notification: any) => notification.isInbox).length
-      counts.activity[slug] = unreadNotifications.filter((notification: any) => !notification.isInbox).length
-      counts.messages[slug] = 0
-    }
-
-    return counts
+    return await buildLegacyUnreadNotificationCounts(ctx)
   }
 })
 
@@ -734,9 +833,13 @@ export const getLegacyViewerStatuses = query({
       return []
     }
 
-    const status = resolveMembershipStatus(context.viewerMembership)
+    const [status, user] = await Promise.all([
+      resolveMembershipStatus(ctx, context.viewerMembership),
+      getUserByTokenIdentifier(ctx, context.identity.tokenIdentifier)
+    ])
+    const recent = user ? parseRecentStatuses(await getUserPreferencesMap(ctx, user), args.slug) : []
 
-    return status ? [status] : []
+    return dedupeStatuses([...(status ? [status] : []), ...recent])
   }
 })
 
@@ -758,12 +861,12 @@ export const upsertLegacyViewerStatus = mutation({
 
     const previousStatusPauseExpiresAt = getActiveStatusPauseExpiresAt(context.viewerMembership)
 
-    await ctx.db.patch(context.viewerMembership._id, {
-      statusEmoji: args.emoji || undefined,
-      statusMessage: args.message || undefined,
-      statusExpirationSetting: args.expirationSetting,
-      statusExpiresAt: args.expiresAt || undefined,
-      statusPauseNotifications: args.pauseNotifications
+    await upsertOrganizationMembershipStatus(ctx, context.viewerMembership, {
+      emoji: args.emoji,
+      message: args.message,
+      expirationSetting: args.expirationSetting,
+      expiresAt: args.expiresAt,
+      pauseNotifications: args.pauseNotifications
     })
 
     await syncUserNotificationPauseFromStatuses(
@@ -778,11 +881,13 @@ export const upsertLegacyViewerStatus = mutation({
       throw createError('Status could not be created', 'unprocessable')
     }
 
-    const status = resolveMembershipStatus(updatedMembership)
+    const status = await resolveMembershipStatus(ctx, updatedMembership)
 
     if (!status) {
       throw createError('Status could not be created', 'unprocessable')
     }
+
+    await storeRecentStatus(ctx, context.identity.tokenIdentifier, args.slug, status)
 
     return status
   }
@@ -801,13 +906,7 @@ export const deleteLegacyViewerStatus = mutation({
 
     const previousStatusPauseExpiresAt = getActiveStatusPauseExpiresAt(context.viewerMembership)
 
-    await ctx.db.patch(context.viewerMembership._id, {
-      statusEmoji: undefined,
-      statusMessage: undefined,
-      statusExpirationSetting: undefined,
-      statusExpiresAt: undefined,
-      statusPauseNotifications: undefined
-    })
+    await clearOrganizationMembershipStatus(ctx, context.viewerMembership)
 
     await syncUserNotificationPauseFromStatuses(
       ctx,

@@ -54,7 +54,11 @@ export async function PUT(request: Request, { params }: { params: { orgSlug: str
       project_id: typeof body.project_id === 'string' ? body.project_id : body.project_id === null ? null : undefined,
       unfurled_link:
         typeof body.unfurled_link === 'string' ? body.unfurled_link : body.unfurled_link === null ? null : undefined,
-      status: body.status === 'feedback_requested' ? 'feedback_requested' : body.status === 'none' ? 'none' : undefined
+      status: body.status === 'feedback_requested' ? 'feedback_requested' : body.status === 'none' ? 'none' : undefined,
+      feedback_request_member_ids: Array.isArray(body.feedback_request_member_ids)
+        ? body.feedback_request_member_ids.filter((memberId: any) => typeof memberId === 'string')
+        : undefined,
+      tags: Array.isArray(body.tags) ? body.tags.filter((tag: any) => typeof tag === 'string') : undefined
     })
 
     return NextResponse.json(post)

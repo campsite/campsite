@@ -1,6 +1,15 @@
 import { v } from 'convex/values'
 
 import { mutation, query } from './_generated/server'
+import {
+  buildLegacyOrganizationSettings,
+  ensureDefaultOrganizationSettings,
+  getOrganizationSettingsMap,
+  getUserPreferencesMap,
+  recordFriendlySlug,
+  seedUserPreferences,
+  upsertUserPreference
+} from './accountShell'
 import { buildLegacyAvatarUrls, buildLegacyMediaUrl, formatDate, isNotificationsPaused } from './legacy'
 
 type ViewerIdentity = {
@@ -79,7 +88,7 @@ export function generateToken() {
   return `${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`
 }
 
-function buildLegacyPreferences(preferences?: Record<string, string>) {
+export function buildLegacyPreferences(preferences?: Record<string, string>) {
   if (!preferences) {
     return defaultPreferences
   }
@@ -228,6 +237,7 @@ export async function ensureOrganizationScaffold(ctx: any, organization: any, cr
       const projectId = await ctx.db.insert('projects', {
         organizationId: organization._id,
         creatorTokenIdentifier,
+        inviteToken: generateToken(),
         name: defaultProject.name,
         description: defaultProject.description,
         accessory: undefined,
@@ -292,11 +302,12 @@ export async function buildWorkspaceState(ctx: any) {
 }
 
 export function buildLegacyOrganization(params: {
+  settings?: Record<string, string>
   memberships: Array<{ membership: any; organization: any | null }>
   organization: any
   membership: any
 }) {
-  const { memberships, organization, membership } = params
+  const { memberships, organization, membership, settings } = params
   const avatarUrl = buildLegacyMediaUrl(organization.avatarPath ?? organization.avatar_url)
 
   return {
@@ -317,9 +328,7 @@ export function buildLegacyOrganization(params: {
     paid: false,
     plan_name: 'Starter',
     presence_channel_name: `presence-org-${organization.slug}`,
-    settings: {
-      enforce_two_factor_authentication: false
-    },
+    settings: buildLegacyOrganizationSettings(settings ?? {}),
     show_upgrade_banner: false,
     slug: organization.slug,
     trial_active: false,
@@ -330,7 +339,7 @@ export function buildLegacyOrganization(params: {
     viewer_can_create_invitation: true,
     viewer_can_create_note: true,
     viewer_can_create_project: true,
-    viewer_can_create_tag: false,
+    viewer_can_create_tag: membership.role === 'admin',
     viewer_can_leave: membership.role !== 'admin',
     viewer_can_manage_integrations: false,
     viewer_can_post: true,
@@ -385,11 +394,26 @@ export const ensureViewerWorkspace = mutation({
 
     if (existingUser) {
       await ctx.db.patch(existingUser._id, userFields)
+      await seedUserPreferences(ctx, { ...existingUser, ...userFields }, defaultPreferences)
+      await recordFriendlySlug(ctx, {
+        slug: userFields.username,
+        sluggableType: 'User',
+        sluggableId: existingUser.publicId ?? existingUser._id
+      })
     } else {
+      const userPublicId = generateToken().slice(0, 12)
       userId = await ctx.db.insert('users', {
         ...userFields,
         createdAt: now,
+        publicId: userPublicId,
+        updatedAt: now,
         tokenIdentifier: profile.tokenIdentifier
+      })
+      await seedUserPreferences(ctx, { _id: userId, ...userFields }, defaultPreferences)
+      await recordFriendlySlug(ctx, {
+        slug: userFields.username,
+        sluggableType: 'User',
+        sluggableId: userPublicId
       })
     }
 
@@ -407,18 +431,23 @@ export const ensureViewerWorkspace = mutation({
       }
 
       await ensureOrganizationScaffold(ctx, organization, identity.tokenIdentifier)
+      await ensureDefaultOrganizationSettings(ctx, organization._id)
 
       return {
         organization,
+        tokenIdentifier: identity.tokenIdentifier,
         user: await ctx.db.get(userId!)
       }
     }
 
     const baseSlug = fallbackWorkspaceSlug(identity)
     const slug = await ensureUniqueSlug(ctx, baseSlug)
+    const organizationPublicId = generateToken().slice(0, 12)
     const organizationId = await ctx.db.insert('organizations', {
       avatarPath: undefined,
       createdAt: now,
+      publicId: organizationPublicId,
+      updatedAt: now,
       emailDomain: undefined,
       inviteToken: generateToken(),
       name: `${displayName}'s workspace`,
@@ -430,13 +459,21 @@ export const ensureViewerWorkspace = mutation({
       source: undefined,
       why: undefined
     })
+    await ensureDefaultOrganizationSettings(ctx, organizationId)
+    await recordFriendlySlug(ctx, {
+      slug,
+      sluggableType: 'Organization',
+      sluggableId: organizationPublicId
+    })
 
     await ctx.db.insert('organizationMemberships', {
       createdAt: now,
+      updatedAt: now,
       discardedAt: undefined,
       lastSeenAt: now,
       lastViewedPostsAt: new Date(now).toISOString(),
       organizationId,
+      publicId: generateToken().slice(0, 12),
       role: 'admin',
       userTokenIdentifier: identity.tokenIdentifier
     })
@@ -451,6 +488,7 @@ export const ensureViewerWorkspace = mutation({
 
     return {
       organization,
+      tokenIdentifier: identity.tokenIdentifier,
       user: await ctx.db.get(userId!)
     }
   }
@@ -460,6 +498,7 @@ export const getLegacyCurrentUser = query({
   args: {},
   handler: async (ctx) => {
     const { identity, user } = await buildWorkspaceState(ctx)
+    const preferences = await getUserPreferencesMap(ctx, user, defaultPreferences)
     const avatarUrl = buildLegacyMediaUrl(user.avatarPath ?? user.avatar_url)
     const coverPhotoUrl = buildLegacyMediaUrl(user.coverPhotoPath ?? user.cover_photo_url)
 
@@ -481,10 +520,10 @@ export const getLegacyCurrentUser = query({
       notifications_paused: isNotificationsPaused(user),
       on_call: false,
       onboarded_at: new Date(user.createdAt).toISOString(),
-      preferences: buildLegacyPreferences(user.preferences),
+      preferences: buildLegacyPreferences(preferences),
       staff: false,
       system: false,
-      timezone: getViewerTimezone(user.preferences),
+      timezone: getViewerTimezone(preferences),
       two_factor_enabled: false,
       unconfirmed_email: null,
       username: user.username
@@ -521,16 +560,32 @@ export const getLegacyOrganizationBySlug = query({
   },
   handler: async (ctx, args) => {
     const { memberships } = await buildWorkspaceState(ctx)
-    const match = memberships.find((entry) => entry.organization?.slug === args.slug)
+    let match = memberships.find((entry) => entry.organization?.slug === args.slug)
+
+    if (!match?.organization) {
+      const slugRows = await ctx.db
+        .query('friendlyIdSlugs')
+        .withIndex('by_slug', (q: any) => q.eq('slug', args.slug))
+        .collect()
+      const organizationSlug = slugRows.find((row: any) => row.sluggableType === 'Organization')
+
+      if (organizationSlug) {
+        match =
+          memberships.find((entry) => entry.organization?._id === organizationSlug.sluggableId) ?? null
+      }
+    }
 
     if (!match?.organization) {
       return null
     }
 
+    const settings = await getOrganizationSettingsMap(ctx, match.organization._id)
+
     return buildLegacyOrganization({
       memberships,
       membership: match.membership,
-      organization: match.organization
+      organization: match.organization,
+      settings
     })
   }
 })
@@ -573,7 +628,15 @@ export const updateViewerProfile = mutation({
     }
 
     if (Object.keys(updates).length > 0) {
-      await ctx.db.patch(user._id, updates)
+      await ctx.db.patch(user._id, { ...updates, updatedAt: Date.now() })
+
+      if (updates.username) {
+        await recordFriendlySlug(ctx, {
+          slug: updates.username,
+          sluggableType: 'User',
+          sluggableId: user.publicId ?? user._id
+        })
+      }
     }
 
     return await ctx.db.get(user._id)
@@ -587,14 +650,7 @@ export const updateViewerPreference = mutation({
   },
   handler: async (ctx, args) => {
     const { user } = await buildWorkspaceState(ctx)
-
-    await ctx.db.patch(user._id, {
-      preferences: {
-        ...defaultPreferences,
-        ...user.preferences,
-        [args.preference]: args.value
-      }
-    })
+    await upsertUserPreference(ctx, user, args.preference, args.value, defaultPreferences)
 
     return {
       preference: args.preference
@@ -629,10 +685,13 @@ export const createOrganization = mutation({
       throw new Error('Organization slug is already taken')
     }
 
+    const organizationPublicId = generateToken().slice(0, 12)
     const organizationId = await ctx.db.insert('organizations', {
       avatarPath: args.avatarPath,
       billingEmail: undefined,
       createdAt: Date.now(),
+      publicId: organizationPublicId,
+      updatedAt: Date.now(),
       emailDomain: undefined,
       inviteToken: generateToken(),
       name: args.name,
@@ -645,6 +704,12 @@ export const createOrganization = mutation({
       slug: desiredSlug,
       source: args.source,
       why: args.why
+    })
+    await ensureDefaultOrganizationSettings(ctx, organizationId)
+    await recordFriendlySlug(ctx, {
+      slug: desiredSlug,
+      sluggableType: 'Organization',
+      sluggableId: organizationPublicId
     })
 
     const existingMembership = await ctx.db
@@ -659,10 +724,12 @@ export const createOrganization = mutation({
     if (!existingMembership) {
       membershipId = await ctx.db.insert('organizationMemberships', {
         createdAt: Date.now(),
+        updatedAt: Date.now(),
         discardedAt: undefined,
         lastSeenAt: Date.now(),
         lastViewedPostsAt: new Date().toISOString(),
         organizationId,
+        publicId: generateToken().slice(0, 12),
         role: 'admin',
         userTokenIdentifier: identity.tokenIdentifier
       })
@@ -687,7 +754,8 @@ export const createOrganization = mutation({
         }
       ],
       membership,
-      organization
+      organization,
+      settings: await getOrganizationSettingsMap(ctx, organization._id)
     })
   }
 })

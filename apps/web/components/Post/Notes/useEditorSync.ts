@@ -5,12 +5,8 @@ import * as Y from 'yjs'
 
 import { SYNC_URL } from '@campsite/config'
 import { NOTE_SCHEMA_VERSION } from '@campsite/editor'
-import { ApiError } from '@campsite/types'
-
 import { useScope } from '@/contexts/scope'
 import { useCurrentUserIsLoggedIn } from '@/hooks/useCurrentUserIsLoggedIn'
-import { apiErrorToast } from '@/utils/apiErrorToast'
-import { apiClient } from '@/utils/queryClient'
 
 export type EditorSyncState = 'connecting' | 'connected' | 'disconnected'
 type EditorSyncError = 'error' | 'invalid-schema'
@@ -48,15 +44,27 @@ export function useEditorSync({ resourceId, resourceType, initialState }: Props)
       document,
       url: SYNC_URL,
       name: resourceId,
-      token: () =>
-        apiClient.users
-          .postMeSyncToken()
-          .request()
-          .then((res) => res.token)
-          .catch((error: ApiError) => {
-            apiErrorToast(error)
-            return ''
+      token: async () => {
+        const response = await fetch('/v1/users/me/sync-token', {
+          body: JSON.stringify({
+            orgSlug: scope,
+            resourceId,
+            resourceType
           }),
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          method: 'POST'
+        })
+
+        if (!response.ok) {
+          return ''
+        }
+
+        const payload = (await response.json()) as { token?: string }
+
+        return payload.token || ''
+      },
       connect: isLoggedIn,
       parameters: {
         schemaVersion: NOTE_SCHEMA_VERSION,

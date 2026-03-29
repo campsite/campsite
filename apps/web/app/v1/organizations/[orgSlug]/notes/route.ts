@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { createLegacyNote, getLegacyNotesPage } from '@/lib/convex/notes'
+import { createLegacyNote, getLegacyNotesPage, promoteLegacyNotesCompat } from '@/lib/convex/notes'
 import { routeErrorResponse } from '@/lib/routeErrors'
 import { getRouteAccess, routeUnauthorizedResponse } from '@/lib/routeSession'
 
@@ -42,6 +42,8 @@ export async function GET(request: Request, context: Context) {
   const searchParams = new URL(request.url).searchParams
 
   try {
+    await promoteLegacyNotesCompat(auth.accessToken, { slug: orgSlug })
+
     return NextResponse.json(
       await getLegacyNotesPage(auth.accessToken, {
         slug: orgSlug,

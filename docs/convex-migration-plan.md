@@ -17,7 +17,7 @@ This plan is not just a Convex plan. It covers the full stack required to remove
 - Elasticsearch/Searchkick
 - legacy sync/realtime service assumptions
 
-For the table-level schema gap audit, see [docs/schema-gap-audit.md](/Users/declancowen/Documents/GitHub/Campsite/docs/schema-gap-audit.md). For the remaining domain checklist, see [docs/remaining-migration-checklist.md](/Users/declancowen/Documents/GitHub/Campsite/docs/remaining-migration-checklist.md).
+For the table-level schema gap audit, see [docs/schema-gap-audit.md](/Users/declancowen/Documents/GitHub/Campsite/docs/schema-gap-audit.md). For the remaining domain checklist, see [docs/remaining-migration-checklist.md](/Users/declancowen/Documents/GitHub/Campsite/docs/remaining-migration-checklist.md). For the explicit all-`94`-tables replication inventory, see [docs/legacy-table-replication-plan.md](/Users/declancowen/Documents/GitHub/Campsite/docs/legacy-table-replication-plan.md).
 
 ## Objective
 
@@ -27,12 +27,23 @@ The migration is only complete when:
 
 - the live web app no longer depends on `api.campsite.com`, `auth.campsite.com`, `sync.campsite.com`, legacy S3, legacy Imgix, Elasticsearch, or Rails jobs for normal product use
 - core product CRUD and side effects run through same-host Vercel routes plus Convex
-- every legacy domain is either:
-  - migrated
-  - explicitly replaced by a new provider-backed flow
-  - or explicitly deferred/removed
+- all `94` legacy Rails tables are explicitly accounted for
+- no table is treated as implicitly merged/dropped unless the user later makes that de-scope decision explicitly
 
 ## Current Status Snapshot
+
+### Recent progress
+
+- Note comment create/reply flows now stay on the same-host note stack with:
+  - reply-target persistence on the note comment route
+  - note-author and parent-comment author notifications
+  - note-subscriber notification fan-out
+  - durable shared note-comment timeline-event loading
+- Generic comment resolution notifications now target `Note` when the resolved comment belongs to a note container instead of always targeting `Post`.
+- Thread message-create responses now return the real current membership unread state from Convex-backed thread memberships instead of hardcoded `unread_count: 0` / `manually_marked_unread: false`.
+- Slice 1 foundation moved forward: first-class `organizationMembershipStatuses`, `organizationInvitationProjects`, `organizationSettings`, `permissions`, `preferences`, `userPreferences`, `emailBounces`, and `friendlyIdSlugs` tables now exist, and current user/status/invitation flows now dual-write through the new shell tables instead of relying only on flattened compatibility fields.
+- Slice 1 shell/runtime is now complete: the owned stack now has first-class storage and active runtime paths for user preferences, org settings, membership statuses, invitation-project joins, notification schedules, scheduled notifications, inbox routes, product logs, push subscriptions, note permissions, and organization slug-history lookup.
+- Slice 2 content/workflow/media/engagement is now complete: first-class `customReactions`, `noteViews`, `postViews`, `nonMemberNoteViews`, `nonMemberPostViews`, `openGraphLinks`, `postDigests`, `postDigestBasicPosts`, `postDigestNotes`, `postHierarchies`, `postLinkPreviews`, and `postLinks` now exist, and the same-host content routes read/write those tables instead of only flattened compatibility fields.
 
 ### Done or mostly done
 
@@ -52,21 +63,21 @@ The migration is only complete when:
   - calls / call rooms
   - bookmarks / pins
   - push subscriptions / product logs
+  - exports / feedback / audit / ops tables
 - Pusher and 100ms are now configured as Vercel-side integrations instead of Rails-side ones
 
 ### In progress
 
 - full domain-model parity
 - full business-logic parity
-- dedicated first-class persistence for every major domain
 - background side effects that used to live in Rails callbacks/jobs
 - cutover from compatibility storage to shared Convex tables in several domains
 
 ### Not done
 
-- full schema parity with the legacy Rails backend
-- full data migration/backfill from legacy persisted data
-- full cutover/decommission of every legacy service dependency
+- cutover validation across the full owned stack
+- full decommission of every legacy service dependency
+- historical backfill only if legacy data must be preserved
 
 ## Target Architecture By Layer
 
@@ -75,7 +86,7 @@ The migration is only complete when:
 | Web hosting | Rails + Vercel split | `apps/web` on Vercel | Mostly done |
 | Auth | Rails/Auth endpoints | WorkOS + Vercel auth routes + Convex session bridge | Mostly done |
 | API surface | Rails controllers under `/v1` | Same-host Vercel compatibility routes | Partial |
-| Persistence | PlanetScale/MySQL | Convex tables + functions | Partial |
+| Persistence | PlanetScale/MySQL | Convex tables + functions | Mostly done |
 | File storage | S3 | Convex storage + same-host upload routes | Partial |
 | Image/media transforms | Imgix + legacy media helpers | Direct media URLs or owned transform layer | Partial |
 | Search | Searchkick / Elasticsearch | Convex-backed search routes | Partial |
@@ -103,6 +114,7 @@ The migration is only complete when:
    - migrated to first-class Convex/Vercel ownership
    - intentionally replaced by a provider-backed flow
    - explicitly deferred and disabled, never silently broken
+6. For a greenfield deployment, prefer deleting backfill work instead of carrying fake migration complexity.
 
 ## Workstreams
 
@@ -151,29 +163,25 @@ Completion criteria:
 
 Status: `in progress`
 
+Recent progress in this workstream now includes:
+
+- real unread DM/thread counts flowing from `messageThreadMemberships` into the global unread-count shell
+- message-reaction notifications for message authors on the migrated stack
+- durable post-comment resolve/unresolve timeline events
+
 ### 3. Shared Convex data-model parity
 
 Replace compatibility-only storage with first-class Convex tables for every core domain that still lacks it.
 
 Highest-priority schema families:
 
-1. threads / messages
-2. attachments / views
-3. note-side parity tables
-4. call recording / speaker / summary tables
-5. post workflow tables:
-   - polls
-   - feedback requests
-   - digests
-   - post hierarchy / tagging
-6. settings / preferences / membership-status shell
-7. OAuth application persistence if those surfaces remain enabled
+1. backfill, cutover validation, and decommission tables/work
 
 Completion criteria:
 
 - core product domains persist in first-class Convex tables instead of compatibility blobs or flattened placeholders
 
-Status: `in progress`
+Status: `done for first-class schema replication`
 
 ### 4. Core business-logic parity
 
@@ -184,6 +192,8 @@ Includes:
 - notification fan-out
 - follow-up scheduling
 - subscription side effects
+- poll / feedback-request / resolution side effects
+- post visibility updates and generated-content fallbacks
 - membership cleanup
 - project/member counters
 - read/unread bookkeeping
@@ -215,7 +225,7 @@ Completion criteria:
 
 - uploads work without Rails, S3, or Imgix assumptions in the active runtime path
 
-Status: `partial`
+Status: `in progress`
 
 ### 6. Search, sync, realtime, and push parity
 
@@ -246,6 +256,7 @@ Includes:
 - call detail/list
 - 100ms webhook/token ownership
 - recordings lifecycle parity
+- transcript ingestion and speaker mapping
 
 Completion criteria:
 
@@ -293,62 +304,16 @@ Status: `not started`
 
 This is the order to follow from here. Each step depends on the previous foundation existing.
 
-1. First-class thread/message schema
-   - add dedicated Convex tables for:
-     - threads
-     - thread memberships
-     - thread membership updates
-     - messages
-     - message notifications
-   - stop treating thread/message persistence as blob data in the `files` table
-2. Thread/message cutover
-   - migrate `convex/threads.ts` from compatibility blob storage onto those tables
-   - wire unread/read/membership updates to the dedicated tables
-   - add project-to-thread linkage where chat projects still need it
-3. Attachments and view tracking
-   - first-class attachment/view tables and counters
-   - note/post/project view models
-4. Note and call cutover
-   - migrate note and call compatibility storage fully onto shared dedicated tables
-   - move pins/timeline side effects onto the shared persistence
-5. Post workflow parity
-   - polls
-   - feedback requests
-   - digests
-   - hierarchy/tagging
-   - richer timeline/version behavior
-6. Status/settings/preferences shell
-   - membership statuses
-   - organization settings
-   - user preferences
-   - permission shell flattening or first-class replacement
-7. Search/sync/realtime hardening
-   - finish owned sync strategy
-   - complete search parity
-   - verify Pusher/web push production ownership
-8. Data migration/backfill
+1. Data migration/backfill
    - import existing legacy data into the final Convex model
-9. Cutover and decommission
+2. Cutover validation
+   - validate newly first-class collaboration, media, and external-platform domains against real data
+3. Legacy decommission
    - turn off remaining legacy dependencies
 
-## First Implementation Slice
+## Current Phase
 
-The first slice to execute from this plan is:
-
-- create first-class thread/message tables in `convex/schema.ts`
-
-Why first:
-
-- threads/messages are still one of the clearest compatibility-only domains
-- they currently persist JSON blobs through the `files` table instead of dedicated schema
-- several product surfaces depend on them:
-  - chat
-  - unread counts
-  - favorites
-  - project chat
-  - calls linked to threads
-
-This turns the next step from “invent storage in route handlers” into “cut over one domain onto an actual shared data model.”
+Slices 1-5 are now represented in first-class Convex storage with owned same-host routes. The remaining execution focus is backfill, cutover validation, and legacy decommission.
 
 ## Definition Of Done
 
@@ -363,3 +328,4 @@ The migration is done only when all of the following are true:
 - search, sync, realtime, push, and 100ms flows are either owned or explicitly removed
 - required historical data is backfilled or intentionally deprecated
 - Rails/PlanetScale/S3/Imgix/Elasticsearch are no longer required for normal product operation
+- all `94` legacy Rails tables are explicitly replicated or consciously de-scoped by user decision, as tracked in [docs/legacy-table-replication-plan.md](/Users/declancowen/Documents/GitHub/Campsite/docs/legacy-table-replication-plan.md)

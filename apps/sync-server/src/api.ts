@@ -1,13 +1,17 @@
 import { Api } from '@campsite/types'
 
-let baseUrl = 'http://api.campsite.test:3001'
+function getBaseUrl() {
+  const configured =
+    process.env.NEXT_PUBLIC_WEB_URL ||
+    process.env.WEB_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://localhost:3000'
 
-if (process.env.NODE_ENV === 'production') {
-  baseUrl = 'http://campsite-api.internal:8080'
+  return configured.replace(/\/$/, '')
 }
 
 export const api = new Api({
-  baseUrl,
+  baseUrl: getBaseUrl(),
   baseApiParams: {
     headers: { 'Content-Type': 'application/json' },
     format: 'json'

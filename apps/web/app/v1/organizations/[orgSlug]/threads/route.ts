@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { createLegacyThread, getLegacyThreads } from '@/lib/convex/threads'
+import { createLegacyThread, getLegacyThreads, promoteLegacyThreadsCompat } from '@/lib/convex/threads'
 import { routeErrorResponse } from '@/lib/routeErrors'
 import { getRouteAccess, routeUnauthorizedResponse } from '@/lib/routeSession'
 
@@ -17,6 +17,8 @@ export async function GET(_: Request, context: Context) {
   }
 
   try {
+    await promoteLegacyThreadsCompat(auth.accessToken, { slug: orgSlug })
+
     return NextResponse.json(await getLegacyThreads(auth.accessToken, { slug: orgSlug }))
   } catch (error) {
     return routeErrorResponse(error)

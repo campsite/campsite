@@ -274,15 +274,15 @@ These files are the main references we will need to replace as we move more of t
   - `WEB_URL_PROD`
   - `SITE_URL_PROD`
   - `SYNC_URL_PROD`
-  - same-host `RAILS_API_URL`
-  - same-host `RAILS_AUTH_URL`
+  - same-host `APP_API_URL`
+  - same-host `APP_AUTH_URL`
 
 ### Old Rails API client
 
 - [apps/web/utils/queryClient.ts](/Users/declancowen/Documents/GitHub/Campsite/apps/web/utils/queryClient.ts)
   Uses:
-  - `RAILS_API_URL`
-  - `RAILS_AUTH_URL`
+  - `APP_API_URL`
+  - `APP_AUTH_URL`
   - generated API client rooted at the same-host compatibility API via config
 
 - [packages/types/generated.ts](/Users/declancowen/Documents/GitHub/Campsite/packages/types/generated.ts)
@@ -300,10 +300,10 @@ These files are the main references we will need to replace as we move more of t
 ### Old real-time and push integrations
 
 - [apps/web/contexts/pusher.tsx](/Users/declancowen/Documents/GitHub/Campsite/apps/web/contexts/pusher.tsx)
-  Uses `RAILS_API_URL` for Pusher auth.
+  Uses `APP_API_URL` for Pusher auth.
 
 - [apps/web/contexts/WebPush.tsx](/Users/declancowen/Documents/GitHub/Campsite/apps/web/contexts/WebPush.tsx)
-  Uses `RAILS_API_URL` through the service worker.
+  Uses `APP_API_URL` through the service worker.
 
 - [apps/web/public/service_worker.js](/Users/declancowen/Documents/GitHub/Campsite/apps/web/public/service_worker.js)
   Posts to old Rails endpoints for product logs and push subscriptions.
@@ -315,7 +315,7 @@ These files are the main references we will need to replace as we move more of t
 - [apps/web/hooks/useSlackNotificationsAuthorizationUrl.ts](/Users/declancowen/Documents/GitHub/Campsite/apps/web/hooks/useSlackNotificationsAuthorizationUrl.ts)
 - [apps/web/hooks/useSlackBroadcastsAuthorizationUrl.ts](/Users/declancowen/Documents/GitHub/Campsite/apps/web/hooks/useSlackBroadcastsAuthorizationUrl.ts)
 
-These still build callback URLs via `RAILS_API_URL` / `RAILS_AUTH_URL`, which are now configured to prefer the same-host Vercel app.
+These still build callback URLs via `APP_API_URL` / `APP_AUTH_URL`, which are now configured to prefer the same-host Vercel app.
 
 ### CSP, preconnect, and metadata
 

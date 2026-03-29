@@ -1,7 +1,15 @@
 import { v } from 'convex/values'
 
 import { mutation, query } from './_generated/server'
-import { buildLegacyMember, buildLegacyUser, emptyAvatarUrls, formatDate, isNotificationsPaused } from './legacy'
+import { ensureDefaultOrganizationSettings, getOrganizationSettingsMap, recordFriendlySlug } from './accountShell'
+import {
+  buildLegacyAvatarUrls,
+  buildLegacyMediaUrl,
+  buildLegacyMember,
+  buildLegacyUser,
+  formatDate,
+  isNotificationsPaused
+} from './legacy'
 import {
   buildLegacyOrganization,
   ensureOrganizationScaffold,
@@ -98,6 +106,8 @@ async function requireAdminMembership(ctx: any, slug: string) {
 }
 
 function buildSyncOrganizationMember(membership: any, user: any) {
+  const avatarUrl = buildLegacyMediaUrl(user?.avatarPath ?? user?.avatar_url)
+
   return {
     id: membership._id,
     role: membership.role,
@@ -105,8 +115,8 @@ function buildSyncOrganizationMember(membership: any, user: any) {
     last_seen_at: formatDate(membership.lastSeenAt ?? user?.lastSeenAt),
     user: {
       id: user._id,
-      avatar_url: '',
-      avatar_urls: emptyAvatarUrls,
+      avatar_url: avatarUrl || '',
+      avatar_urls: buildLegacyAvatarUrls(avatarUrl),
       display_name: user.displayName,
       username: user.username,
       email: user.email || '',
@@ -243,7 +253,15 @@ export const updateLegacyOrganization = mutation({
     }
 
     if (Object.keys(updates).length > 0) {
-      await ctx.db.patch(organization._id, updates)
+      await ctx.db.patch(organization._id, { ...updates, updatedAt: Date.now() })
+
+      if (updates.slug) {
+        await recordFriendlySlug(ctx, {
+          slug: updates.slug,
+          sluggableType: 'Organization',
+          sluggableId: organization.publicId ?? organization._id
+        })
+      }
     }
 
     const updatedOrganization = await ctx.db.get(organization._id)
@@ -253,10 +271,13 @@ export const updateLegacyOrganization = mutation({
       throw createError('Organization not found', 'not_found')
     }
 
+    await ensureDefaultOrganizationSettings(ctx, updatedOrganization._id)
+
     return buildLegacyOrganization({
       memberships,
       membership: updatedMembership,
-      organization: updatedOrganization
+      organization: updatedOrganization,
+      settings: await getOrganizationSettingsMap(ctx, updatedOrganization._id)
     })
   }
 })
@@ -267,12 +288,46 @@ export const deleteLegacyOrganization = mutation({
   },
   handler: async (ctx, args) => {
     const { organization } = await requireAdminMembership(ctx, args.slug)
+    const invitationRows = await ctx.db
+      .query('organizationInvitations')
+      .withIndex('by_organization_id', (q: any) => q.eq('organizationId', organization._id))
+      .collect()
+    const membershipRows = await ctx.db
+      .query('organizationMemberships')
+      .withIndex('by_organization_id', (q: any) => q.eq('organizationId', organization._id))
+      .collect()
 
     await deleteOrgScopedRows(ctx, 'comments', 'by_organization_id', organization._id)
     await deleteOrgScopedRows(ctx, 'posts', 'by_organization_id', organization._id)
+    await deleteOrgScopedRows(ctx, 'projectDisplayPreferences', 'by_organization_id', organization._id)
+    await deleteOrgScopedRows(ctx, 'projectViews', 'by_organization_id', organization._id)
     await deleteOrgScopedRows(ctx, 'projectMemberships', 'by_organization_id', organization._id)
     await deleteOrgScopedRows(ctx, 'projects', 'by_organization_id', organization._id)
+    await deleteOrgScopedRows(ctx, 'organizationSettings', 'by_organization_id', organization._id)
     await deleteOrgScopedRows(ctx, 'organizationMembershipRequests', 'by_organization_id', organization._id)
+
+    for (const invitation of invitationRows) {
+      const invitationProjects = await ctx.db
+        .query('organizationInvitationProjects')
+        .withIndex('by_organization_invitation_id', (q: any) => q.eq('organizationInvitationId', invitation._id))
+        .collect()
+
+      for (const row of invitationProjects) {
+        await ctx.db.delete(row._id)
+      }
+    }
+
+    for (const membership of membershipRows) {
+      const statuses = await ctx.db
+        .query('organizationMembershipStatuses')
+        .withIndex('by_organization_membership_id', (q: any) => q.eq('organizationMembershipId', membership._id))
+        .collect()
+
+      for (const row of statuses) {
+        await ctx.db.delete(row._id)
+      }
+    }
+
     await deleteOrgScopedRows(ctx, 'organizationInvitations', 'by_organization_id', organization._id)
     await deleteOrgScopedRows(ctx, 'organizationMemberships', 'by_organization_id', organization._id)
     await deleteOrgScopedRows(ctx, 'tags', 'by_organization_id', organization._id)

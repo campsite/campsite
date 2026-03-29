@@ -5,6 +5,7 @@ This is the single list of remaining backend-migration work for the Campsite-to-
 For the sequenced full-stack execution plan, see [docs/convex-migration-plan.md](/Users/declancowen/Documents/GitHub/Campsite/docs/convex-migration-plan.md).
 
 For the table-level schema comparison between legacy Rails and current Convex, see [docs/schema-gap-audit.md](/Users/declancowen/Documents/GitHub/Campsite/docs/schema-gap-audit.md).
+For the explicit all-`94`-tables replication inventory, see [docs/legacy-table-replication-plan.md](/Users/declancowen/Documents/GitHub/Campsite/docs/legacy-table-replication-plan.md).
 
 Rules:
 
@@ -22,184 +23,94 @@ Ship a working Campsite-compatible app on:
 - `WorkOS` for auth
 - `Convex` for database, file storage, and backend logic
 
-## Coordinator checkpoint
+## Current checkpoint
 
-Shared Agent 0 groundwork is now in place for the downstream pins/bookmarks pass:
+The migration now has shared Convex foundations for:
 
-- Convex schema foundations now exist for:
-  - `projectBookmarks`
-  - `projectPins`
-  - `timelineEvents`
-  - dedicated `notes`
-  - dedicated `calls`
-- The same-host auth/API config now defaults to the Vercel app host instead of legacy `api.campsite.com` / `auth.campsite.com` fallbacks.
+- `projectBookmarks`
+- `projectPins`
+- `timelineEvents`
+- dedicated `notes`
+- dedicated `calls`
+- dedicated `callPeers`
+- dedicated `callRecordings`
+- dedicated `callRecordingChatLinks`
+- dedicated `callRecordingSpeakers`
+- dedicated `callRecordingSummarySections`
+- shared `attachments`
+- shared `subjectViews`
+- shared `organizationMembershipStatuses`
+- shared `organizationInvitationProjects`
+- shared `organizationSettings`
+- shared `permissions`
+- shared `preferences`
+- shared `userPreferences`
+- dedicated `projectDisplayPreferences`
+- dedicated `oauthApplications`
+- dedicated `oauthAccessTokens`
+- dedicated `oauthAccessGrants`
+- dedicated `polls`
+- dedicated `pollOptions`
+- dedicated `pollVotes`
+- dedicated `postFeedbackRequests`
+- dedicated `postTaggings`
 
-What still remains after this checkpoint:
+And the same-host auth/API config now defaults to the Vercel app host instead of legacy `api.campsite.com` / `auth.campsite.com` fallbacks.
 
-- implement the actual project bookmark and project pin routes against those shared tables
-- wire note/call/post pin flows onto the shared `projectPins` persistence instead of the current compatibility-only pin ids
-- run the legacy-endpoint QA sweep after that implementation pass
+Recent completed slices now also cover:
+
+- project memberships
+- project invitation URL reset/accept flows
+- public guest-token project reads
+- project data-export creation
+- first-class oauth application/token/grant persistence
+- same-host call-recording and transcription routes
+- first-class call recording / speaker / summary schema foundations
+- first-class post poll / vote / feedback-request schema foundations
+- first-class post tagging persistence
+- same-host post poll, poll voter, feedback-request, tag, and sync-tag routes
+- Slice 1 shell/runtime completion:
+  - first-class membership-status, invitation-project, org-settings, permissions, preferences, user-preferences, email-bounce, and friendly-slug tables
+  - user/org shell flows now read/write those tables
+  - note permissions now read the shared permissions table during access/serialization instead of only embedded compatibility state
+  - old organization slugs now resolve through friendly slug history
+- Slice 2 content/workflow/media/engagement completion:
+  - first-class `customReactions`, `noteViews`, `postViews`, `nonMemberNoteViews`, `nonMemberPostViews`, `openGraphLinks`, `postDigests`, `postDigestBasicPosts`, `postDigestNotes`, `postHierarchies`, `postLinkPreviews`, and `postLinks`
+  - same-host post/note view routes now dual-write those dedicated view tables
+  - same-host `/v1/open_graph_links` now resolves through owned Convex storage
+  - custom reactions now read/write first-class Convex rows instead of only compat blobs
+  - digest migration now resolves through first-class digest tables as well as migrated notes
+  - post create/update/delete now sync dedicated hierarchy/link/preview rows
+  - post and SEO serializers now read dedicated link/open-graph/view rows instead of only flattened compat fields
+- Slice 3 collaboration/runtime completion:
+  - first-class project/thread/message/call/call-room/bookmark/pin tables now back the same-host runtime
+- Slice 4 external/platform completion:
+  - first-class integration/oauth/webhook/platform tables now back the same-host routes for Slack, Linear, Figma, Zapier, and related auth/callback flows
+- Slice 5 operational table replication completion:
+  - first-class `console1984*`, `dataExports`, `dataExportResources`, `events`, `feedbacks`, `flipper*`, and `llmResponses`
+  - same-host org/member/project export creation routes now exist on the owned stack
+  - same-host feedback submission now persists first-class feedback rows instead of missing the route entirely
 
 ## Remaining checklist
 
-### 1. User and organization media
+### 1. Cutover validation
 
-- User avatar upload and persistence
-- User cover photo upload and persistence
-- Organization avatar upload and persistence
-- Project cover photo upload and persistence
-- Route old presigned upload flows to Convex-backed same-host endpoints
-- Make legacy serializers return the uploaded image URLs instead of empty strings
+- If this deployment is greenfield, skip historical backfill entirely
+- If legacy production data still matters, backfill it into the first-class Convex tables created across Slices 1-5
+- Run end-to-end validation on the first-class collaboration, media, and platform domains
+- Cut remaining compatibility bridges over to the first-class tables where dual-read paths still exist
 
-### 2. Post, note, thread, and message media
+### 2. Final decommission
 
-- Post attachment upload parity
-- Comment attachment upload parity
-- Note attachment upload parity
-- Thread/message attachment upload parity
-- Feedback screenshot upload parity
-- OAuth application avatar upload parity if that settings surface stays enabled
-- Attachment preview URL handling
-- Attachment metadata persistence:
-  - file type
-  - name
-  - size
-  - width
-  - height
-  - duration
+- Run the final legacy-endpoint sweep against the deployed app
+- Deploy the final owned-stack build
+- Decommission the unused legacy backend/services once smoke testing is clean
+- Remove legacy env vars and provider assumptions that are no longer intentionally owned
 
-### 3. Notifications and member status logic
-
-- Member status create/update/clear parity
-- Notification pause coupling with member status
-- Inbox read/unread/archive parity
-- Notification counters parity
-- Scheduled notification parity
-- Latest-status/member-status shell parity
-- Notification-side effects tied to comments, mentions, reactions, follow-ups, and subscriptions
-
-### 4. Subscriptions
-
-- Post subscriptions
-- Project subscriptions
-- Note subscriptions
-- Auto-subscribe author/commenter parity
-- Parent-subscriber notification parity
-- “for me” and viewer feed behavior tied to subscriptions
-
-### 5. Reactions
-
-- Post reactions parity
-- Comment reactions parity
-- Message reactions parity
-- Grouped reaction response parity
-- Reaction notification side effects
-- Custom reaction parity where still needed in the app surface
-
-### 6. Favorites
-
-- Project favorites parity
-- Post favorites parity
-- Note favorites parity
-- Thread favorites parity
-- Call favorites parity
-- Favorite ordering/reorder parity
-
-### 7. Follow-ups
-
-- Post follow-ups
-- Comment follow-ups
-- Note follow-ups
-- Call follow-ups
-- Follow-up list/update/delete parity
-- Follow-up notification side effects
-
-### 8. Posts remaining parity
-
-- Visibility flows
-- Resolution/unresolution flows
-- Pins:
-  - create/list/delete project pins against shared `projectPins`
-  - migrate compatibility-only pin ids for posts/notes/calls onto shared persistence
-- Poll behavior still expected by the UI
-- Timeline event parity
-- Version-tree/root/version behavior beyond the current simplified model
-- Project contributor count side effects
-
-### 9. Comments remaining parity
-
-- Resolve/unresolve parity
-- Reply-count/resolution-count side effects
-- Feedback-request reply state
-- Timeline and notification side effects tied to comments
-
-### 10. Notes
-
-- Notes list/read/create/update/delete
-- Note permissions
-- Note project permissions
-- Note comments
-- Note views
-- Note timeline events
-- Note public/shared view behavior as needed by the existing app
-- Note sync-state compatibility where required by the editor flow
-- Migrate compatibility note storage onto shared dedicated `notes` persistence
-
-### 11. Threads and messages
-
-- Threads list/read/create/update/delete
-- DM bootstrap
-- Thread membership flows
-- Thread read/unread flows
-- Thread message list/create/update/delete
-- Thread oauth-application attachment points if that surface remains enabled
-- Thread notification behavior
-
-### 12. Search
-
-- Replace Searchkick/Elasticsearch-backed search with Convex-backed search
-- Keep existing search endpoint shapes where the UI already depends on them
-- Support the existing Campsite search surfaces at minimum for:
-  - posts
-  - projects
-  - people
-  - notes/messages where used in the UI
-
-### 13. Background side effects
-
-- Replace Rails callbacks and jobs that no longer run once Rails is out of the request path
-- Recreate key side effects in Convex/Vercel:
-  - notification fan-out
-  - follow-up scheduling
-  - membership cleanup
-  - subscription cleanup
-  - project/member counters
-  - stale/update broadcasts or their replacement behavior
-  - search indexing/update behavior
-
-### 14. Realtime, push, and app-shell dependencies
-
-- Remaining Pusher-dependent flows that still expect Rails auth
-- Web push/product-log endpoints still tied to the old backend
-- Any same-host service-worker endpoints still missing
-- Remaining live-update assumptions in the logged-in shell
-
-### 15. Calls / voice core / 100ms
-
-- Call room bootstrap parity
-- Call list/detail parity
-- Recording list/delete parity
-- Call invitations parity
-- 100ms-related request paths and tokens still expected by the UI
-- Any call-related favorites/follow-ups/subscriptions still missing
-- Migrate compatibility call storage onto shared dedicated `calls` persistence
+For the concrete shutdown list, see [docs/decommission-checklist.md](/Users/declancowen/Documents/GitHub/Campsite/docs/decommission-checklist.md).
 
 ## Explicitly deferred for now
 
-- Slack integration parity
-- Linear integration parity
-- Figma integration parity
-- Zapier/integration marketplace parity
 - Billing/trial/commercial plan parity
 
 ## Definition of done

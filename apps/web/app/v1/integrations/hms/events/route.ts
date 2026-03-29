@@ -74,11 +74,93 @@ export async function POST(request: Request) {
       case 'beam.recording.success': {
         const remoteSessionId = typeof payload.data.session_id === 'string' ? payload.data.session_id : null
         const duration = typeof payload.data.duration === 'number' ? payload.data.duration : null
+        const remoteRecordingId = typeof payload.data.recording_id === 'string' ? payload.data.recording_id : undefined
+        const remoteBeamId = typeof payload.data.beam_id === 'string' ? payload.data.beam_id : undefined
+        const recordingPath = typeof payload.data.recording_path === 'string' ? payload.data.recording_path : undefined
+        const chatRecordingPath =
+          typeof payload.data.chat_recording_path === 'string' ? payload.data.chat_recording_path : undefined
+        const startedAt = parseTimestamp(payload.data.started_at) ?? undefined
+        const stoppedAt = parseTimestamp(payload.data.stopped_at) ?? undefined
+
+        if (remoteSessionId) {
+          await client.mutation(api.callsRealtime.syncLegacyCallRecordingFromHmsEvent, {
+            remoteSessionId,
+            remoteRecordingId,
+            remoteBeamId,
+            recordingPath,
+            chatRecordingPath,
+            duration: duration ?? undefined,
+            startedAt,
+            stoppedAt
+          })
+        }
 
         if (remoteSessionId && duration !== null) {
           await client.mutation(api.callsRealtime.syncLegacyCallRecordingDurationFromHmsEvent, {
             remoteSessionId,
             duration
+          })
+        }
+
+        break
+      }
+      case 'transcription.started.success': {
+        const remoteRecordingId = typeof payload.data.recording_id === 'string' ? payload.data.recording_id : undefined
+        const remoteTranscriptionId =
+          typeof payload.data.transcription_id === 'string' ? payload.data.transcription_id : null
+        const startedAt = parseTimestamp(payload.data.started_at) ?? Date.now()
+
+        if (remoteTranscriptionId) {
+          await client.mutation(api.callsRealtime.syncLegacyCallTranscriptionStartedFromHmsEvent, {
+            remoteRecordingId,
+            remoteTranscriptionId,
+            startedAt
+          })
+        }
+
+        break
+      }
+      case 'transcription.success': {
+        const remoteRecordingId = typeof payload.data.recording_id === 'string' ? payload.data.recording_id : undefined
+        const remoteTranscriptionId =
+          typeof payload.data.transcription_id === 'string' ? payload.data.transcription_id : undefined
+        const transcriptJsonPath =
+          typeof payload.data.transcript_json_path === 'string' ? payload.data.transcript_json_path : undefined
+        const transcriptSrtPath =
+          typeof payload.data.transcript_srt_path === 'string' ? payload.data.transcript_srt_path : undefined
+        const transcriptTxtPath =
+          typeof payload.data.transcript_txt_path === 'string' ? payload.data.transcript_txt_path : undefined
+        const transcriptionVtt =
+          typeof payload.data.transcription_vtt === 'string'
+            ? payload.data.transcription_vtt
+            : typeof payload.data.vtt === 'string'
+              ? payload.data.vtt
+              : undefined
+        const succeededAt = parseTimestamp(payload.data.succeeded_at) ?? Date.now()
+
+        await client.mutation(api.callsRealtime.syncLegacyCallTranscriptionFromHmsEvent, {
+          remoteRecordingId,
+          remoteTranscriptionId,
+          transcriptJsonPath,
+          transcriptSrtPath,
+          transcriptTxtPath,
+          transcriptionVtt,
+          succeededAt
+        })
+
+        break
+      }
+      case 'transcription.failure': {
+        const remoteRecordingId = typeof payload.data.recording_id === 'string' ? payload.data.recording_id : undefined
+        const remoteTranscriptionId =
+          typeof payload.data.transcription_id === 'string' ? payload.data.transcription_id : null
+        const failedAt = parseTimestamp(payload.data.failed_at) ?? Date.now()
+
+        if (remoteTranscriptionId) {
+          await client.mutation(api.callsRealtime.syncLegacyCallTranscriptionFailureFromHmsEvent, {
+            remoteRecordingId,
+            remoteTranscriptionId,
+            failedAt
           })
         }
 

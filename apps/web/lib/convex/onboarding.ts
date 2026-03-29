@@ -168,6 +168,68 @@ export async function updateLegacyProject(
   return await client.mutation(api.onboarding.updateLegacyProject, data)
 }
 
+export async function updateLegacyProjectDisplayPreferences(
+  accessToken: string,
+  data: {
+    slug: string
+    projectId: string
+    display_reactions: boolean
+    display_attachments: boolean
+    display_comments: boolean
+    display_resolved: boolean
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.onboarding.updateLegacyProjectDisplayPreferences, data)
+}
+
+export async function updateLegacyProjectViewerDisplayPreferences(
+  accessToken: string,
+  data: {
+    slug: string
+    projectId: string
+    display_reactions: boolean
+    display_attachments: boolean
+    display_comments: boolean
+    display_resolved: boolean
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.onboarding.updateLegacyProjectViewerDisplayPreferences, data)
+}
+
+export async function deleteLegacyProjectViewerDisplayPreferences(
+  accessToken: string,
+  data: {
+    slug: string
+    projectId: string
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.onboarding.deleteLegacyProjectViewerDisplayPreferences, data)
+}
+
+export async function markLegacyProjectRead(accessToken: string, data: { slug: string; projectId: string }) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.onboarding.markLegacyProjectRead, data)
+}
+
+export async function markLegacyProjectUnread(accessToken: string, data: { slug: string; projectId: string }) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.onboarding.markLegacyProjectUnread, data)
+}
+
+export async function createLegacyProjectView(accessToken: string, data: { slug: string; projectId: string }) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.onboarding.createLegacyProjectView, data)
+}
+
 export async function deleteLegacyProject(accessToken: string, data: { slug: string; projectId: string }) {
   const client = getConvexServerClient(accessToken)
 
@@ -190,6 +252,118 @@ export async function getLegacyProjectMemberships(accessToken: string, data: { s
   const client = getConvexServerClient(accessToken)
 
   return await client.query(api.onboarding.getLegacyProjectMemberships, data)
+}
+
+export async function getLegacyProjectMembersPage(
+  accessToken: string,
+  data: {
+    slug: string
+    projectId: string
+    after?: string
+    limit?: number
+    organization_membership_id?: string
+    roles?: ('admin' | 'member' | 'viewer' | 'guest')[]
+    exclude_roles?: ('admin' | 'member' | 'viewer' | 'guest')[]
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.query(api.onboarding.getLegacyProjectMembersPage, data)
+}
+
+export async function getLegacyProjectAddableMembersPage(
+  accessToken: string,
+  data: {
+    slug: string
+    projectId: string
+    after?: string
+    limit?: number
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.query(api.onboarding.getLegacyProjectAddableMembersPage, data)
+}
+
+export async function createLegacyProjectMembership(
+  accessToken: string,
+  data: {
+    slug: string
+    projectId: string
+    userId: string
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.onboarding.createLegacyProjectMembership, data)
+}
+
+export async function deleteLegacyProjectMembership(
+  accessToken: string,
+  data: {
+    slug: string
+    projectId: string
+    userId: string
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.onboarding.deleteLegacyProjectMembership, data)
+}
+
+export async function getLegacyProjectInvitationUrl(
+  accessToken: string,
+  data: {
+    slug: string
+    projectId: string
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.query(api.onboarding.getLegacyProjectInvitationUrl, data)
+}
+
+export async function resetLegacyProjectInvitationUrl(
+  accessToken: string,
+  data: {
+    slug: string
+    projectId: string
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.onboarding.resetLegacyProjectInvitationUrl, data)
+}
+
+export async function acceptLegacyProjectInvitationUrl(
+  accessToken: string,
+  data: {
+    slug: string
+    projectId: string
+    token: string
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.onboarding.acceptLegacyProjectInvitationUrl, data)
+}
+
+export async function createLegacyProjectDataExport(
+  accessToken: string,
+  data: {
+    slug: string
+    projectId: string
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.onboarding.createLegacyProjectDataExport, data)
+}
+
+export async function getLegacyPublicProjectByToken(accessToken: string | null | undefined, data: { token: string }) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.query(api.onboarding.getLegacyPublicProjectByToken, data)
 }
 
 export async function getLegacySyncProjects(accessToken: string, data: { slug: string }) {

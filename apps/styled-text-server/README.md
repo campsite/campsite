@@ -12,7 +12,7 @@ pnpm turbo run dev --filter=@campsite/styled-text-server
 
 ## Authentication
 
-This service uses bearer authentication. The consumer must provide the token stored in the API's `AUTHTOKEN` environment variable in an `Authorization` header like this:
+In production, configure `AUTHTOKEN` and require callers to send it as a bearer token. In local development the token is optional; if `AUTHTOKEN` is unset, the service accepts requests without auth.
 
 ```
 Authorization: Bearer <token>

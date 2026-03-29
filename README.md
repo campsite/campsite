@@ -4,91 +4,73 @@ This is an open source version of the [Campsite](https://www.campsite.com/) app.
 
 ## Local dev setup
 
-To get started, run this command from the workspace root:
+The supported stack is now:
+
+- `apps/web` on Vercel-style Next.js routes
+- `convex/` for persistence, storage, and backend logic
+- `WorkOS` for auth
+- `Pusher` for realtime
+- `100ms` for calls
+- optional sidecars:
+  - `apps/sync-server`
+  - `apps/styled-text-server`
+
+The legacy Rails/PlanetScale/S3/Imgix stack is still in the repo for reference, but it is no longer the primary path.
+
+### Getting started
+
+1. Install dependencies from the workspace root:
 
 ```bash
-script/setup
+pnpm install
 ```
 
-Campsite requires setting up several services before you can run the basic version locally.
-
-### S3 (critical)
-
-S3 is needed to upload avatars and attachments. We recommend separate buckets for dev and production. For example, we use `campsite-media` and `campsite-media-dev` buckets.
-
-You should setup a IAM user with [these suggested policies](aws-policies.md) (make sure to use your buckets in the policy).
-
-Set your credentials for the API:
+2. Link the web app to Vercel and pull envs:
 
 ```bash
-cd api
-script/credentials development
+cd apps/web
+npx vercel link
+npx vercel env pull
 ```
 
-Configure these under the `aws` key.
+3. Make sure your required envs are present:
 
-We also recommend uploading the contents of the `default_avatars` directory under `static/avatars` in each S3 bucket. [Read more here](default_avatars/readme.md).
+- `NEXT_PUBLIC_WEB_URL`
+- `NEXT_PUBLIC_CONVEX_URL`
+- `NEXT_PUBLIC_WORKOS_CLIENT_ID`
+- `NEXT_PUBLIC_WORKOS_REDIRECT_URI`
+- `WORKOS_API_KEY`
+- `WORKOS_CLIENT_ID`
+- `WORKOS_COOKIE_PASSWORD`
+- `WORKOS_REDIRECT_URI`
+- `SYNC_TOKEN_SECRET`
+- `HMS_APP_ACCESS_KEY`
+- `HMS_APP_SECRET`
+- `HMS_WEBHOOK_PASSCODE`
+- `HMS_VIEWER_ROLE`
 
-### Pusher (critical)
+Optional but commonly needed:
 
-[Pusher](https://pusher.com/) is used to send realtime updates and events. After creating your account, configure this under the `pusher` key in your credentials.
+- `NEXT_PUBLIC_PUSHER_KEY`
+- `NEXT_PUBLIC_PUSHER_APP_CLUSTER`
+- `PUSHER_SECRET`
+- `NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY`
 
-### Imgix (critical)
+4. Start the migrated dev stack from the workspace root:
 
-[Imgix](https://www.imgix.com/) is the CDN powering Campsite. On AWS IAM, you will need to create an imgix user + policy ([see recommended policy](aws-policies.md)).
-
-Then, add S3 as an [Imgix source](https://docs.imgix.com/en-US/getting-started/setup/creating-sources/amazon-s3). If you setup dev and prod S3 buckets, you will need a separate Imgix source for each.
-
-Lastly, create an API Key for Imgix in your account dropdown.
-
-Fill in all of these values in the credentials files:
-
-- `imgix.url` - The S3 sourced image domain. Should look like https://campsite-dev.imgix.net
-- `imgix.source_id` - The Imgix source ID (top of the source page or in the URL)
-- `imgix.api_key` - The API key you created
-- `imgix_video.url` - Same URL as `imgix.url` but with `.video` as the TLD (e.g. https://campsite-dev.imgix.video)
-
-> [!NOTE]
-> While here you can also setup [Imgix Web Folders](https://docs.imgix.com/en-US/getting-started/setup/creating-sources/web-folder) and put the URL in `imgix_folder.url`. This is used to cache doc thumbnails, but isn't necessary on local dev. The web folder is needed to host doc thumbnails in prod.
-
-### 100ms
-
-[100ms](https://www.100ms.live/) powers Campsite's video conferencing features. After creating an account, set these values under the `hms` credentials key.
-
-> [!NOTE]
-> Video calls with webhooks will only work when using a secure tunnel such as ngrok.
-
-### OpenAI
-
-We use the OpenAI API to generate summaries for calls and posts. You need both an API key and your organization ID (not the name, found in OpenAI platform settings). Add these under the `openai` credentials key.
-
-### Others
-
-There are many other services we use to power Campsite features. Create accounts and set up credentials as needed:
-
-- `aws_ecs` - run data exports on AWS Elastic Container Service
-- `cal_dot_com` - the Campsite [Cal.com](https://cal.com/) app
-- `figma` - render frames via the [Figma REST API](https://www.figma.com/developers/api)
-- `linear` - the Campsite Linear app (see [API docs](https://developers.linear.app/docs))
-- `omniauth_google` - Google OAuth
-- `plain` - customer feedback (likely not needed)
-- `postmark` - sending emails via the [Postmark API](https://postmarkapp.com/developer)
-- `sentry` - bug reports, just need the DSN
-- `slack` - Campsite Slack app
-- `vercel.revalidate_static_cache` - generate your own key to safely revalidate cached docs (ISR)
-- `webpush_vapid` - VAPID keys necessary to send web push notifications ([docs](https://github.com/pushpad/web-push#generating-vapid-keys))
-- `zapier` - The Campsite Zapier app
-- `tenor` - GIF search ([docs](https://tenor.com/gifapi))
-
-## Running Campsite in development
-
-We use [Overmind](https://github.com/DarthSim/overmind) to run all of the services needed to develop Campsite locally. To get started, run `script/setup` to install tmux and Overmind. Then run:
-
-```shell
+```bash
 script/dev
 ```
 
-Our [Procfile](https://github.com/campsite/campsite/blob/main/Procfile) defines the services Overmind runs. Use `overmind connect` to view the logs of a specific service (e.g. `overmind connect sync-server`).
+This uses the default [Procfile](/Users/declancowen/Documents/GitHub/Campsite/Procfile), which starts the migrated services only.
+
+If you need the old Rails-era stack for archaeology or legacy debugging, run:
+
+```bash
+script/dev --legacy
+```
+
+That uses [Procfile.legacy](/Users/declancowen/Documents/GitHub/Campsite/Procfile.legacy).
 
 ## Running the web app
 
@@ -132,7 +114,7 @@ cd apps/web && npx vercel env pull
 npx vercel dev
 ```
 
-5. Open the app at `http://app.campsite.test:3000` — you will be redirected to the auth page with user credentials pre-filled.
+7. Open the app at `http://localhost:3000`.
 
 ## Running the marketing site
 
@@ -186,20 +168,18 @@ To find an app or package name, navigate to the `package.json` for each `app/` o
   <img width="927" alt="Screen Shot 2023-01-11 at 15 20 46@2x" src="https://user-images.githubusercontent.com/1923260/211939117-f9a2a6cf-99c2-4220-b732-b109c5c859e9.png">
 </details>
 
-## Running the API locally
+## Legacy API
 
-Are you looking to setup and run the API locally? Checkout the [API README](api/README.md)
-
-✨
-
-## API secrets
-
-Running `script/setup` will generate [Rails custom credential files](https://edgeguides.rubyonrails.org/security.html#custom-credentials) for development and production environments. From the API directory, run `VISUAL="code --wait" bin/rails credentials:edit --environment development` to edit development credentials, or run `VISUAL="code --wait" bin/rails credentials:edit --environment development` to edit production credentials.
-
-When you deploy Campsite, `config/credentials/production.yml.enc` must be present on your production server, and you must set the `RAILS_MASTER_KEY` environment variable equal to the contents of `config/credentials/production.key`. If you deploy from a git repository, you can remove `config/credentials/production.yml.enc` from `.gitignore` and commit the file. Do not remove `config/credentials/production.key` from `.gitignore`, instead share this with your team in a safe place outside of the repository, such as in a password vault.
+If you explicitly need the archived Rails API, see [api/README.md](/Users/declancowen/Documents/GitHub/Campsite/api/README.md). Treat that as legacy-only documentation, not the default deployment path for this repo.
 
 ## Calls in development
 
-To use calls in development, you'll need to treat the `http://app.campsite.test:3000` origin as secure. In a Chromium-based browser, you can do that at chrome://flags/#unsafely-treat-insecure-origin-as-secure.
+To use calls in development, treat `http://localhost:3000` as secure in Chromium-based browsers via `chrome://flags/#unsafely-treat-insecure-origin-as-secure`.
 
-For any call features that require webhooks (like getting chat bubbles in message threads when calls start), you should [use ngrok](https://github.com/campsite/campsite/tree/main/api#using-ngrok-for-publicly-accessible-https-development-urls). You can enable webhooks in the [developer tab of the 100ms dashboard](https://dashboard.100ms.live/developer). The webhook URL should be set to `https://api-dev.campsite.com/v1/integrations/hms/events`, and there should be a webhook header with the name `X-Passcode` and a value that comes from running `Rails.application.credentials.hms.webhook_passcode` in a development Rails console. Be sure that you configure webhooks in the "Development" workspace and disable them when you're done working in ngrok (webhooks in the "Production" workspace should always be enabled and the configuration shouldn't change).
+For webhook-driven call features, point 100ms at your current web host, for example:
+
+```text
+https://<your-web-host>/v1/integrations/hms/events
+```
+
+Configure the `X-Passcode` header to match `HMS_WEBHOOK_PASSCODE`.

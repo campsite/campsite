@@ -20,12 +20,14 @@ export async function GET(request: Request, { params }: { params: { orgSlug: str
   const searchParams = new URL(request.url).searchParams
   const q = searchParams.get('q') || undefined
   const limit = searchParams.get('limit')
+  const hideResolved = searchParams.get('hide_resolved')
 
   return NextResponse.json(
     await getLegacyPostsPage(accessToken, {
       slug: params.orgSlug,
       q,
       limit: limit ? Number(limit) : undefined,
+      hide_resolved: hideResolved === 'true',
       mode: 'all'
     })
   )
@@ -57,6 +59,21 @@ export async function POST(request: Request, { params }: { params: { orgSlug: st
       unfurled_link: typeof body.unfurled_link === 'string' ? body.unfurled_link : null,
       parent_id: typeof body.parent_id === 'string' ? body.parent_id : null,
       links: Array.isArray(body.links) ? body.links : [],
+      poll:
+        body.poll &&
+        typeof body.poll.description === 'string' &&
+        Array.isArray(body.poll.options)
+          ? {
+              description: body.poll.description,
+              options: body.poll.options
+                .filter((option: any) => option && typeof option.description === 'string')
+                .map((option: any) => ({ description: option.description }))
+            }
+          : undefined,
+      feedback_request_member_ids: Array.isArray(body.feedback_request_member_ids)
+        ? body.feedback_request_member_ids.filter((memberId: any) => typeof memberId === 'string')
+        : undefined,
+      tags: Array.isArray(body.tags) ? body.tags.filter((tag: any) => typeof tag === 'string') : undefined,
       status: body.status === 'feedback_requested' ? 'feedback_requested' : undefined,
       draft: Boolean(body.draft),
       attachments: Array.isArray(body.attachments) ? body.attachments : undefined

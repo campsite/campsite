@@ -3,9 +3,29 @@ import { createHmac, timingSafeEqual } from 'crypto'
 const ONE_HOUR_IN_SECONDS = 60 * 60
 
 interface SyncTokenPayload {
-  accessToken: string
   exp: number
+  grantId: string
   iat: number
+  noteId: string
+  orgSlug: string
+  resourceType: 'Note'
+  type: 'editor-sync'
+}
+
+interface CreateEditorSyncTokenArgs {
+  grantId: string
+  noteId: string
+  orgSlug: string
+  resourceType: 'Note'
+}
+
+interface VerifiedEditorSyncToken {
+  exp: number
+  grantId: string
+  iat: number
+  noteId: string
+  orgSlug: string
+  resourceType: 'Note'
   type: 'editor-sync'
 }
 
@@ -32,7 +52,7 @@ export function isEditorSyncConfigured() {
   return !!getSyncTokenSecret()
 }
 
-export function createEditorSyncToken(accessToken: string) {
+export function createEditorSyncToken({ grantId, noteId, orgSlug, resourceType }: CreateEditorSyncTokenArgs) {
   const secret = getSyncTokenSecret()
 
   if (!secret) {
@@ -40,11 +60,15 @@ export function createEditorSyncToken(accessToken: string) {
   }
 
   const issuedAt = Math.floor(Date.now() / 1000)
+
   const payload = encodePayload({
-    accessToken,
     exp: issuedAt + ONE_HOUR_IN_SECONDS,
+    grantId,
     iat: issuedAt,
-    type: 'editor-sync'
+    noteId,
+    orgSlug,
+    resourceType,
+    type: 'editor-sync',
   })
 
   return `${payload}.${signPayload(payload, secret)}`
@@ -70,7 +94,15 @@ export function verifyEditorSyncToken(token: string) {
   try {
     const payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8')) as Partial<SyncTokenPayload>
 
-    if (payload.type !== 'editor-sync' || typeof payload.accessToken !== 'string' || typeof payload.exp !== 'number') {
+    if (
+      payload.type !== 'editor-sync' ||
+      typeof payload.exp !== 'number' ||
+      typeof payload.grantId !== 'string' ||
+      typeof payload.iat !== 'number' ||
+      typeof payload.orgSlug !== 'string' ||
+      typeof payload.noteId !== 'string' ||
+      payload.resourceType !== 'Note'
+    ) {
       return null
     }
 
@@ -78,7 +110,15 @@ export function verifyEditorSyncToken(token: string) {
       return null
     }
 
-    return payload.accessToken
+    return {
+      exp: payload.exp,
+      grantId: payload.grantId,
+      iat: payload.iat,
+      noteId: payload.noteId,
+      orgSlug: payload.orgSlug,
+      resourceType: payload.resourceType,
+      type: payload.type
+    } satisfies VerifiedEditorSyncToken
   } catch {
     return null
   }

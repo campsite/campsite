@@ -1,10 +1,8 @@
 import { v } from 'convex/values'
 
 import { mutation, query } from './_generated/server'
-import { buildLegacyAvatarUrls, buildLegacyMember, emptyAvatarUrls } from './legacy'
+import { buildLegacyAvatarUrls, buildLegacyMediaUrl, buildLegacyMember, emptyAvatarUrls } from './legacy'
 import { buildWorkspaceState, generateToken } from './workspace'
-
-const COMPAT_MARKER = 'compat:collaboration:v1'
 const OAUTH_APP_WEBHOOK_EVENTS = ['post.created', 'comment.created', 'app.mentioned', 'message.created', 'message.dm'] as const
 
 const packCatalog = {
@@ -76,8 +74,22 @@ type CompatCustomReaction = {
   file_url: string
   file_type: string
   created_at: string
-  pack?: keyof typeof packCatalog
+  pack?: string
   creator: any
+}
+
+type CustomReactionRow = {
+  _id: any
+  organizationId: any
+  publicId: string
+  name: string
+  filePath: string
+  fileType: string
+  pack?: string
+  creatorTokenIdentifier: string
+  discardedAt?: number
+  createdAt: number
+  updatedAt: number
 }
 
 type CompatOauthWebhook = {
@@ -110,14 +122,6 @@ function createError(
   code: 'forbidden' | 'not_found' | 'unprocessable' | 'unauthorized' = 'unprocessable'
 ): never {
   throw new Error(`${code}:${message}`)
-}
-
-function buildOrgScopedKey(kind: string, organizationId: string) {
-  return `compat:${kind}:${organizationId}`
-}
-
-function buildNoteSyncKey(organizationId: string, noteId: string) {
-  return `compat:note-sync:${organizationId}:${noteId}`
 }
 
 async function getUserByTokenIdentifier(ctx: any, tokenIdentifier: string) {
@@ -153,46 +157,6 @@ function assertCanManageCompatResources(context: OrganizationContext): asserts c
 
   if (context.viewerMembership.role === 'viewer' || context.viewerMembership.role === 'guest') {
     createError('You do not have permission to manage this resource', 'forbidden')
-  }
-}
-
-function parseCompatPayload<T>(row: any, kind: string): T | null {
-  if (row.timeZone !== `${COMPAT_MARKER}:${kind}`) {
-    return null
-  }
-
-  try {
-    return JSON.parse(row.deliveryTime) as T
-  } catch {
-    return null
-  }
-}
-
-async function listCompatRows<T>(ctx: any, key: string, kind: string) {
-  const rows = await ctx.db
-    .query('scheduledNotifications')
-    .withIndex('by_user_token_identifier', (q: any) => q.eq('userTokenIdentifier', key))
-    .collect()
-
-  return rows
-    .map((row: any) => {
-      const payload = parseCompatPayload<T>(row, kind)
-
-      if (!payload) {
-        return null
-      }
-
-      return { row, payload }
-    })
-    .filter(Boolean) as Array<{ row: any; payload: T }>
-}
-
-function buildCompatRowFields(kind: string, id: string, label: string, payload: unknown) {
-  return {
-    name: label,
-    timeZone: `${COMPAT_MARKER}:${kind}`,
-    deliveryDay: id,
-    deliveryTime: JSON.stringify(payload)
   }
 }
 
@@ -364,6 +328,160 @@ async function deleteStoredReactionsForCustomReaction(ctx: any, customReactionId
   }
 }
 
+function buildCustomReactionPayload(row: CustomReactionRow, creator: any): CompatCustomReaction {
+  return {
+    id: row.publicId,
+    name: row.name,
+    file_url: buildLegacyMediaUrl(row.filePath) ?? row.filePath,
+    file_type: row.fileType,
+    created_at: new Date(row.createdAt).toISOString(),
+    pack: row.pack,
+    creator
+  }
+}
+
+async function listStoredCustomReactions(ctx: any, organizationId: any) {
+  return (
+    await ctx.db
+      .query('customReactions')
+      .withIndex('by_organization_id', (q: any) => q.eq('organizationId', organizationId))
+      .collect()
+  ).filter((row: any) => !row.discardedAt)
+}
+
+async function listStoredWebhookRowsForApp(ctx: any, oauthApplicationId: any) {
+  const rows = await ctx.db
+    .query('webhooks')
+    .withIndex('by_oauth_application_id', (q: any) => q.eq('oauthApplicationId', oauthApplicationId))
+    .collect()
+
+  return rows.filter((row: any) => !row.discardedAt)
+}
+
+async function syncStoredWebhookRows(ctx: any, organizationId: any, oauthApplicationId: any, webhooks: any[]) {
+  const existingRows = await ctx.db
+    .query('webhooks')
+    .withIndex('by_oauth_application_id', (q: any) => q.eq('oauthApplicationId', oauthApplicationId))
+    .collect()
+  const now = Date.now()
+  const nextIds = new Set(webhooks.map((webhook: any) => webhook.id))
+
+  for (const row of existingRows) {
+    if (!nextIds.has(row.publicId)) {
+      await ctx.db.patch(row._id, {
+        discardedAt: now,
+        updatedAt: now
+      })
+    }
+  }
+
+  for (const webhook of webhooks) {
+    const existing = existingRows.find((row: any) => row.publicId === webhook.id)
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        organizationId,
+        provider: 'oauth_application',
+        url: webhook.url,
+        secret: webhook.secret,
+        state: webhook.state,
+        eventTypes: webhook.eventTypes ?? [],
+        discardedAt: undefined,
+        updatedAt: now
+      })
+      continue
+    }
+
+    await ctx.db.insert('webhooks', {
+      organizationId,
+      oauthApplicationId,
+      publicId: webhook.id,
+      provider: 'oauth_application',
+      url: webhook.url,
+      secret: webhook.secret,
+      state: webhook.state,
+      eventTypes: webhook.eventTypes ?? [],
+      discardedAt: undefined,
+      createdAt: now,
+      updatedAt: now
+    })
+  }
+}
+
+function buildCompatOauthApplicationFromRow(row: any, webhookRows?: any[]): CompatOauthApplication {
+  const sourceWebhooks =
+    webhookRows && webhookRows.length > 0
+      ? webhookRows.map((webhook: any) => ({
+          id: webhook.publicId,
+          url: webhook.url,
+          state: webhook.state,
+          secret: webhook.secret,
+          eventTypes: webhook.eventTypes ?? []
+        }))
+      : row.webhooks ?? []
+
+  return {
+    id: row.publicId,
+    name: row.name,
+    redirect_uri: row.redirectUri ?? null,
+    avatar_path: row.avatarPath ?? null,
+    client_id: row.uid,
+    client_secret: row.secret,
+    last_copied_secret_at: row.lastCopiedSecretAt ? new Date(row.lastCopiedSecretAt).toISOString() : null,
+    webhooks: sourceWebhooks.map((webhook: any) => ({
+      id: webhook.id,
+      url: webhook.url,
+      state: 'enabled' as const,
+      secret: webhook.secret,
+      event_types: webhook.eventTypes ?? []
+    })),
+    project_ids: row.projectIds ?? [],
+    thread_ids: row.threadIds ?? [],
+    created_at: new Date(row.createdAt).toISOString()
+  }
+}
+
+async function hydrateCompatOauthApplicationFromRow(ctx: any, row: any) {
+  return buildCompatOauthApplicationFromRow(row, await listStoredWebhookRowsForApp(ctx, row._id))
+}
+
+async function getStoredOauthApplicationRow(ctx: any, organizationId: any, publicId: string) {
+  const row = await ctx.db
+    .query('oauthApplications')
+    .withIndex('by_public_id', (q: any) => q.eq('publicId', publicId))
+    .unique()
+
+  if (!row || row.organizationId !== organizationId || row.discardedAt) {
+    return null
+  }
+
+  return row
+}
+
+async function listStoredOauthApplicationRows(ctx: any, organizationId: any) {
+  const rows = await ctx.db
+    .query('oauthApplications')
+    .withIndex('by_organization_id', (q: any) => q.eq('organizationId', organizationId))
+    .collect()
+
+  return rows.filter((row: any) => !row.discardedAt)
+}
+
+async function listLegacyOauthApplications(ctx: any, organizationId: any) {
+  const storedRows = await listStoredOauthApplicationRows(ctx, organizationId)
+  return sortNewestFirst(await Promise.all(storedRows.map((row: any) => hydrateCompatOauthApplicationFromRow(ctx, row))))
+}
+
+async function getLegacyOauthApplication(ctx: any, organizationId: any, publicId: string) {
+  const stored = await getStoredOauthApplicationRow(ctx, organizationId, publicId)
+
+  if (stored) {
+    return await hydrateCompatOauthApplicationFromRow(ctx, stored)
+  }
+
+  return null
+}
+
 export const getLegacyCustomReactionsPage = query({
   args: {
     slug: v.string(),
@@ -374,9 +492,13 @@ export const getLegacyCustomReactionsPage = query({
     const context = await getOrganizationContext(ctx, args.slug)
     assertOrganizationMember(context)
 
-    const key = buildOrgScopedKey('custom-reactions', context.organization._id)
-    const rows = await listCompatRows<CompatCustomReaction>(ctx, key, 'custom-reaction')
-    const page = paginateById(sortNewestFirst(rows.map(({ payload }) => payload)), args.limit, args.after)
+    const storedRows = await listStoredCustomReactions(ctx, context.organization._id)
+    const payloads = await Promise.all(
+      storedRows.map(async (row: any) =>
+        buildCustomReactionPayload(row, await createCreatorSnapshot(ctx, context.organization._id, row.creatorTokenIdentifier))
+      )
+    )
+    const page = paginateById(sortNewestFirst(payloads), args.limit, args.after)
 
     return {
       ...page,
@@ -400,10 +522,19 @@ export const getLegacyCustomReactionById = query({
     const context = await getOrganizationContext(ctx, args.slug)
     assertOrganizationMember(context)
 
-    const key = buildOrgScopedKey('custom-reactions', context.organization._id)
-    const rows = await listCompatRows<CompatCustomReaction>(ctx, key, 'custom-reaction')
+    const stored = await ctx.db
+      .query('customReactions')
+      .withIndex('by_public_id', (q: any) => q.eq('publicId', args.id))
+      .unique()
 
-    return rows.find(({ payload }) => payload.id === args.id)?.payload ?? null
+    if (stored && !stored.discardedAt && stored.organizationId === context.organization._id) {
+      return buildCustomReactionPayload(
+        stored,
+        await createCreatorSnapshot(ctx, context.organization._id, stored.creatorTokenIdentifier)
+      )
+    }
+
+    return null
   }
 })
 
@@ -415,10 +546,16 @@ export const getLegacySyncCustomReactions = query({
     const context = await getOrganizationContext(ctx, args.slug)
     assertOrganizationMember(context)
 
-    const key = buildOrgScopedKey('custom-reactions', context.organization._id)
-    const rows = await listCompatRows<CompatCustomReaction>(ctx, key, 'custom-reaction')
+    const storedRows = await listStoredCustomReactions(ctx, context.organization._id)
+    const reactions = sortNewestFirst(
+      await Promise.all(
+        storedRows.map(async (row: any) =>
+          buildCustomReactionPayload(row, await createCreatorSnapshot(ctx, context.organization._id, row.creatorTokenIdentifier))
+        )
+      )
+    )
 
-    return sortNewestFirst(rows.map(({ payload }) => payload)).map((reaction) => ({
+    return reactions.map((reaction) => ({
       id: reaction.id,
       name: reaction.name,
       file_url: reaction.file_url,
@@ -435,9 +572,8 @@ export const getLegacyCustomReactionPacks = query({
     const context = await getOrganizationContext(ctx, args.slug)
     assertOrganizationMember(context)
 
-    const key = buildOrgScopedKey('custom-reactions', context.organization._id)
-    const rows = await listCompatRows<CompatCustomReaction>(ctx, key, 'custom-reaction')
-    const installedPacks = new Set(rows.map(({ payload }) => payload.pack).filter(Boolean))
+    const storedRows = await listStoredCustomReactions(ctx, context.organization._id)
+    const installedPacks = new Set(storedRows.map((row: any) => row.pack).filter(Boolean))
 
     return Object.entries(packCatalog).map(([name, items]) => ({
       name,
@@ -461,37 +597,37 @@ export const createLegacyCustomReaction = mutation({
     const context = await getOrganizationContext(ctx, args.slug)
     assertCanManageCompatResources(context)
 
-    const key = buildOrgScopedKey('custom-reactions', context.organization._id)
-    const rows = await listCompatRows<CompatCustomReaction>(ctx, key, 'custom-reaction')
     const name = validateCustomReactionName(args.name)
+    const existing = await ctx.db
+      .query('customReactions')
+      .withIndex('by_organization_and_name', (q: any) => q.eq('organizationId', context.organization._id).eq('name', name))
+      .unique()
 
-    if (rows.some(({ payload }) => payload.name === name)) {
+    if (existing && !existing.discardedAt) {
       createError('Name already exists')
     }
 
     const creator = await createCreatorSnapshot(ctx, context.organization._id, context.viewerMembership.userTokenIdentifier)
-    const reaction: CompatCustomReaction = {
-      id: generateToken(),
-      name,
-      file_url: args.filePath,
-      file_type: args.fileType,
-      created_at: new Date().toISOString(),
-      creator
-    }
+    const now = Date.now()
+    const publicId = generateToken()
 
-    await ctx.db.insert('scheduledNotifications', {
-      userTokenIdentifier: key,
-      ...buildCompatRowFields('custom-reaction', reaction.id, reaction.name, reaction),
-      createdAt: Date.now(),
-      updatedAt: Date.now()
+    await ctx.db.insert('customReactions', {
+      organizationId: context.organization._id,
+      publicId,
+      name,
+      filePath: args.filePath,
+      fileType: args.fileType,
+      creatorTokenIdentifier: context.viewerMembership.userTokenIdentifier,
+      createdAt: now,
+      updatedAt: now
     })
 
     return {
-      id: reaction.id,
-      name: reaction.name,
-      file_url: reaction.file_url,
-      created_at: reaction.created_at,
-      creator: reaction.creator
+      id: publicId,
+      name,
+      file_url: buildLegacyMediaUrl(args.filePath) ?? args.filePath,
+      created_at: new Date(now).toISOString(),
+      creator
     }
   }
 })
@@ -505,18 +641,22 @@ export const deleteLegacyCustomReaction = mutation({
     const context = await getOrganizationContext(ctx, args.slug)
     assertCanManageCompatResources(context)
 
-    const key = buildOrgScopedKey('custom-reactions', context.organization._id)
-    const rows = await listCompatRows<CompatCustomReaction>(ctx, key, 'custom-reaction')
-    const record = rows.find(({ payload }) => payload.id === args.id)
+    const stored = await ctx.db
+      .query('customReactions')
+      .withIndex('by_public_id', (q: any) => q.eq('publicId', args.id))
+      .unique()
 
-    if (!record) {
-      createError('Custom reaction not found', 'not_found')
+    if (stored && stored.organizationId === context.organization._id && !stored.discardedAt) {
+      const now = Date.now()
+      await ctx.db.patch(stored._id, {
+        discardedAt: now,
+        updatedAt: now
+      })
+      await deleteStoredReactionsForCustomReaction(ctx, args.id)
+      return {}
     }
 
-    await ctx.db.delete(record.row._id)
-    await deleteStoredReactionsForCustomReaction(ctx, args.id)
-
-    return {}
+    createError('Custom reaction not found', 'not_found')
   }
 })
 
@@ -536,31 +676,25 @@ export const installLegacyCustomReactionPack = mutation({
     assertCanManageCompatResources(context)
 
     const items = packCatalog[args.name]
-    const key = buildOrgScopedKey('custom-reactions', context.organization._id)
-    const rows = await listCompatRows<CompatCustomReaction>(ctx, key, 'custom-reaction')
-    const existingNames = new Set(rows.map(({ payload }) => payload.name))
-    const creator = await createCreatorSnapshot(ctx, context.organization._id, context.viewerMembership.userTokenIdentifier)
+    const existingRows = await listStoredCustomReactions(ctx, context.organization._id)
+    const existingNames = new Set(existingRows.map((row: any) => row.name))
+    const now = Date.now()
 
     for (const item of items) {
       if (existingNames.has(item.name)) {
         continue
       }
 
-      const reaction: CompatCustomReaction = {
-        id: generateToken(),
+      await ctx.db.insert('customReactions', {
+        organizationId: context.organization._id,
+        publicId: generateToken(),
         name: item.name,
-        file_url: item.file_url,
-        file_type: item.file_type,
-        created_at: new Date().toISOString(),
+        filePath: item.file_url,
+        fileType: item.file_type,
         pack: args.name,
-        creator
-      }
-
-      await ctx.db.insert('scheduledNotifications', {
-        userTokenIdentifier: key,
-        ...buildCompatRowFields('custom-reaction', reaction.id, reaction.name, reaction),
-        createdAt: Date.now(),
-        updatedAt: Date.now()
+        creatorTokenIdentifier: context.viewerMembership.userTokenIdentifier,
+        createdAt: now,
+        updatedAt: now
       })
     }
 
@@ -583,87 +717,19 @@ export const uninstallLegacyCustomReactionPack = mutation({
     const context = await getOrganizationContext(ctx, args.slug)
     assertCanManageCompatResources(context)
 
-    const key = buildOrgScopedKey('custom-reactions', context.organization._id)
-    const rows = await listCompatRows<CompatCustomReaction>(ctx, key, 'custom-reaction')
-    const packRows = rows.filter(({ payload }) => payload.pack === args.name)
+    const storedRows = await listStoredCustomReactions(ctx, context.organization._id)
+    const packRows = storedRows.filter((row: any) => row.pack === args.name)
 
-    for (const record of packRows) {
-      await ctx.db.delete(record.row._id)
-      await deleteStoredReactionsForCustomReaction(ctx, record.payload.id)
-    }
+    if (packRows.length > 0) {
+      for (const row of packRows) {
+        await ctx.db.patch(row._id, {
+          discardedAt: Date.now(),
+          updatedAt: Date.now()
+        })
+        await deleteStoredReactionsForCustomReaction(ctx, row.publicId)
+      }
 
-    return {}
-  }
-})
-
-export const getLegacyNoteSyncState = query({
-  args: {
-    slug: v.string(),
-    noteId: v.string()
-  },
-  handler: async (ctx, args) => {
-    const context = await getOrganizationContext(ctx, args.slug)
-    assertOrganizationMember(context)
-
-    const key = buildNoteSyncKey(context.organization._id, args.noteId)
-    const rows = await ctx.db
-      .query('scheduledNotifications')
-      .withIndex('by_user_token_identifier', (q: any) => q.eq('userTokenIdentifier', key))
-      .collect()
-
-    const record = rows[0]
-
-    return {
-      id: args.noteId,
-      description_schema_version: record ? Number(record.deliveryTime) || 0 : 0,
-      description_state: record?.timeZone || null,
-      description_html: record?.name || '<p></p>'
-    }
-  }
-})
-
-export const updateLegacyNoteSyncState = mutation({
-  args: {
-    slug: v.string(),
-    noteId: v.string(),
-    descriptionHtml: v.string(),
-    descriptionState: v.string(),
-    descriptionSchemaVersion: v.number()
-  },
-  handler: async (ctx, args) => {
-    const context = await getOrganizationContext(ctx, args.slug)
-    assertOrganizationMember(context)
-
-    const key = buildNoteSyncKey(context.organization._id, args.noteId)
-    const rows = await ctx.db
-      .query('scheduledNotifications')
-      .withIndex('by_user_token_identifier', (q: any) => q.eq('userTokenIdentifier', key))
-      .collect()
-
-    const record = rows[0]
-    const currentVersion = record ? Number(record.deliveryTime) || 0 : 0
-
-    if (args.descriptionSchemaVersion < currentVersion) {
-      createError('description_schema_version cannot be older than the stored document')
-    }
-
-    if (record) {
-      await ctx.db.patch(record._id, {
-        name: args.descriptionHtml,
-        timeZone: args.descriptionState,
-        deliveryTime: `${args.descriptionSchemaVersion}`,
-        updatedAt: Date.now()
-      })
-    } else {
-      await ctx.db.insert('scheduledNotifications', {
-        userTokenIdentifier: key,
-        name: args.descriptionHtml,
-        timeZone: args.descriptionState,
-        deliveryDay: args.noteId,
-        deliveryTime: `${args.descriptionSchemaVersion}`,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      })
+      return {}
     }
 
     return {}
@@ -678,10 +744,7 @@ export const getLegacyOauthApplications = query({
     const context = await getOrganizationContext(ctx, args.slug)
     assertOrganizationMember(context)
 
-    const key = buildOrgScopedKey('oauth-applications', context.organization._id)
-    const rows = await listCompatRows<CompatOauthApplication>(ctx, key, 'oauth-application')
-
-    return sortNewestFirst(rows.map(({ payload }) => payload)).map((app) => buildLegacyOauthApplication(app))
+    return (await listLegacyOauthApplications(ctx, context.organization._id)).map((app) => buildLegacyOauthApplication(app))
   }
 })
 
@@ -694,9 +757,7 @@ export const getLegacyOauthApplicationById = query({
     const context = await getOrganizationContext(ctx, args.slug)
     assertOrganizationMember(context)
 
-    const key = buildOrgScopedKey('oauth-applications', context.organization._id)
-    const rows = await listCompatRows<CompatOauthApplication>(ctx, key, 'oauth-application')
-    const app = rows.find(({ payload }) => payload.id === args.id)?.payload
+    const app = await getLegacyOauthApplication(ctx, context.organization._id, args.id)
 
     if (!app) {
       createError('Integration not found', 'not_found')
@@ -726,40 +787,59 @@ export const createLegacyOauthApplication = mutation({
     const context = await getOrganizationContext(ctx, args.slug)
     assertCanManageCompatResources(context)
 
-    const key = buildOrgScopedKey('oauth-applications', context.organization._id)
-    const rows = await listCompatRows<CompatOauthApplication>(ctx, key, 'oauth-application')
+    const rows = await listStoredOauthApplicationRows(ctx, context.organization._id)
     const name = args.name.trim()
 
     if (!name) {
       createError('Name is required')
     }
 
-    if (rows.some(({ payload }) => payload.name.toLowerCase() === name.toLowerCase())) {
+    if (rows.some((row: any) => row.name.toLowerCase() === name.toLowerCase())) {
       createError('An integration with that name already exists')
     }
 
-    const app: CompatOauthApplication = {
-      id: generateToken(),
+    const createdAt = Date.now()
+    const appId = generateToken()
+    const nextWebhooks = (args.webhooks ?? []).map((webhook) => {
+      const built = buildCompatWebhook(webhook)
+      return {
+        id: built.id,
+        url: built.url,
+        state: built.state,
+        secret: built.secret,
+        eventTypes: built.event_types
+      }
+    })
+    const rowId = await ctx.db.insert('oauthApplications', {
+      organizationId: context.organization._id,
+      publicId: appId,
       name,
-      redirect_uri: validateRedirectUri(args.redirectUri),
-      avatar_path: args.avatarPath || null,
-      client_id: `camp_${generateToken()}`,
-      client_secret: `camp_secret_${generateToken()}`,
-      last_copied_secret_at: null,
-      webhooks: (args.webhooks ?? []).map((webhook) => buildCompatWebhook(webhook)),
-      project_ids: [],
-      thread_ids: [],
-      created_at: new Date().toISOString()
-    }
-
-    await ctx.db.insert('scheduledNotifications', {
-      userTokenIdentifier: key,
-      ...buildCompatRowFields('oauth-application', app.id, app.name, app),
-      createdAt: Date.now(),
-      updatedAt: Date.now()
+      uid: `camp_${generateToken()}`,
+      secret: `camp_secret_${generateToken()}`,
+      redirectUri: validateRedirectUri(args.redirectUri) ?? undefined,
+      scopes: '',
+      confidential: true,
+      avatarPath: args.avatarPath || undefined,
+      discardedAt: undefined,
+      creatorMembershipId: context.viewerMembership._id,
+      lastCopiedSecretAt: undefined,
+      provider: undefined,
+      projectIds: [],
+      threadIds: [],
+      webhooks: nextWebhooks,
+      createdAt,
+      updatedAt: createdAt
     })
 
-    return buildLegacyOauthApplication(app)
+    const row = await ctx.db.get(rowId)
+
+    if (!row) {
+      createError('Integration could not be created')
+    }
+
+    await syncStoredWebhookRows(ctx, context.organization._id, row._id, nextWebhooks)
+
+    return buildLegacyOauthApplication(await hydrateCompatOauthApplicationFromRow(ctx, row))
   }
 })
 
@@ -784,46 +864,65 @@ export const updateLegacyOauthApplication = mutation({
     const context = await getOrganizationContext(ctx, args.slug)
     assertCanManageCompatResources(context)
 
-    const key = buildOrgScopedKey('oauth-applications', context.organization._id)
-    const rows = await listCompatRows<CompatOauthApplication>(ctx, key, 'oauth-application')
-    const record = rows.find(({ payload }) => payload.id === args.id)
+    const rows = await listStoredOauthApplicationRows(ctx, context.organization._id)
+    const record = rows.find((row: any) => row.publicId === args.id)
 
     if (!record) {
       createError('Integration not found', 'not_found')
     }
 
-    const nextName = args.name === undefined ? record.payload.name : args.name.trim()
+    const nextName = args.name === undefined ? record.name : args.name.trim()
 
     if (!nextName) {
       createError('Name is required')
     }
 
-    if (
-      rows.some(({ payload }) => payload.id !== args.id && payload.name.toLowerCase() === nextName.toLowerCase())
-    ) {
+    if (rows.some((row: any) => row.publicId !== args.id && row.name.toLowerCase() === nextName.toLowerCase())) {
       createError('An integration with that name already exists')
     }
 
-    const existingWebhooks = new Map(record.payload.webhooks.map((webhook) => [webhook.id, webhook]))
-    const nextPayload: CompatOauthApplication = {
-      ...record.payload,
-      name: nextName,
-      redirect_uri: args.redirectUri === undefined ? record.payload.redirect_uri : validateRedirectUri(args.redirectUri),
-      avatar_path: args.avatarPath === undefined ? record.payload.avatar_path : args.avatarPath || null,
-      webhooks:
-        args.webhooks === undefined
-          ? record.payload.webhooks
-          : args.webhooks.map((webhook) =>
-              buildCompatWebhook(webhook, webhook.id ? existingWebhooks.get(webhook.id) : undefined)
-            )
-    }
+    const existingWebhooks = new Map<string, CompatOauthWebhook>(
+      (record.webhooks ?? []).map((webhook: any) => [
+        webhook.id,
+        {
+          id: webhook.id,
+          url: webhook.url,
+          state: 'enabled' as const,
+          secret: webhook.secret,
+          event_types: webhook.eventTypes ?? []
+        }
+      ])
+    )
+    const nextWebhooks =
+      args.webhooks === undefined
+        ? record.webhooks
+        : args.webhooks.map((webhook) => {
+            const built = buildCompatWebhook(webhook, webhook.id ? existingWebhooks.get(webhook.id) : undefined)
+            return {
+              id: built.id,
+              url: built.url,
+              state: built.state,
+              secret: built.secret,
+              eventTypes: built.event_types
+            }
+          })
 
-    await ctx.db.patch(record.row._id, {
-      ...buildCompatRowFields('oauth-application', nextPayload.id, nextPayload.name, nextPayload),
+    await ctx.db.patch(record._id, {
+      name: nextName,
+      redirectUri: args.redirectUri === undefined ? record.redirectUri : validateRedirectUri(args.redirectUri) ?? undefined,
+      avatarPath: args.avatarPath === undefined ? record.avatarPath : args.avatarPath || undefined,
+      webhooks: nextWebhooks,
       updatedAt: Date.now()
     })
+    await syncStoredWebhookRows(ctx, context.organization._id, record._id, nextWebhooks)
 
-    return buildLegacyOauthApplication(nextPayload)
+    const nextRow = await ctx.db.get(record._id)
+
+    if (!nextRow) {
+      createError('Integration not found', 'not_found')
+    }
+
+    return buildLegacyOauthApplication(await hydrateCompatOauthApplicationFromRow(ctx, nextRow))
   }
 })
 
@@ -836,15 +935,17 @@ export const deleteLegacyOauthApplication = mutation({
     const context = await getOrganizationContext(ctx, args.slug)
     assertCanManageCompatResources(context)
 
-    const key = buildOrgScopedKey('oauth-applications', context.organization._id)
-    const rows = await listCompatRows<CompatOauthApplication>(ctx, key, 'oauth-application')
-    const record = rows.find(({ payload }) => payload.id === args.id)
+    const record = await getStoredOauthApplicationRow(ctx, context.organization._id, args.id)
 
     if (!record) {
       createError('Integration not found', 'not_found')
     }
 
-    await ctx.db.delete(record.row._id)
+    await ctx.db.patch(record._id, {
+      discardedAt: Date.now(),
+      updatedAt: Date.now()
+    })
+    await syncStoredWebhookRows(ctx, context.organization._id, record._id, [])
 
     return {}
   }
@@ -859,27 +960,26 @@ export const renewLegacyOauthApplicationSecret = mutation({
     const context = await getOrganizationContext(ctx, args.slug)
     assertCanManageCompatResources(context)
 
-    const key = buildOrgScopedKey('oauth-applications', context.organization._id)
-    const rows = await listCompatRows<CompatOauthApplication>(ctx, key, 'oauth-application')
-    const record = rows.find(({ payload }) => payload.id === args.id)
+    const record = await getStoredOauthApplicationRow(ctx, context.organization._id, args.id)
 
     if (!record) {
       createError('Integration not found', 'not_found')
     }
 
     const secret = `camp_secret_${generateToken()}`
-    const nextPayload: CompatOauthApplication = {
-      ...record.payload,
-      client_secret: secret,
-      last_copied_secret_at: new Date().toISOString()
-    }
-
-    await ctx.db.patch(record.row._id, {
-      ...buildCompatRowFields('oauth-application', nextPayload.id, nextPayload.name, nextPayload),
+    await ctx.db.patch(record._id, {
+      secret,
+      lastCopiedSecretAt: Date.now(),
       updatedAt: Date.now()
     })
 
-    return buildLegacyOauthApplication(nextPayload, secret)
+    const nextRow = await ctx.db.get(record._id)
+
+    if (!nextRow) {
+      createError('Integration not found', 'not_found')
+    }
+
+    return buildLegacyOauthApplication(await hydrateCompatOauthApplicationFromRow(ctx, nextRow), secret)
   }
 })
 
@@ -892,16 +992,31 @@ export const createLegacyOauthAccessToken = mutation({
     const context = await getOrganizationContext(ctx, args.slug)
     assertCanManageCompatResources(context)
 
-    const key = buildOrgScopedKey('oauth-applications', context.organization._id)
-    const rows = await listCompatRows<CompatOauthApplication>(ctx, key, 'oauth-application')
-    const record = rows.find(({ payload }) => payload.id === args.id)
+    const record = await getStoredOauthApplicationRow(ctx, context.organization._id, args.id)
 
     if (!record) {
       createError('Integration not found', 'not_found')
     }
 
+    const token = `camp_tok_${generateToken()}`
+
+    await ctx.db.insert('oauthAccessTokens', {
+      organizationId: context.organization._id,
+      applicationId: record._id,
+      token,
+      refreshToken: undefined,
+      previousRefreshToken: undefined,
+      previousToken: undefined,
+      resourceOwnerTokenIdentifier: context.identity.tokenIdentifier,
+      resourceOwnerType: 'User',
+      scopes: '',
+      expiresIn: undefined,
+      revokedAt: undefined,
+      createdAt: Date.now()
+    })
+
     return {
-      token: `camp_tok_${generateToken()}`
+      token
     }
   }
 })
@@ -921,10 +1036,7 @@ export const getLegacyProjectOauthApplications = query({
       createError('Project not found', 'not_found')
     }
 
-    const key = buildOrgScopedKey('oauth-applications', context.organization._id)
-    const rows = await listCompatRows<CompatOauthApplication>(ctx, key, 'oauth-application')
-
-    return sortNewestFirst(rows.map(({ payload }) => payload))
+    return (await listLegacyOauthApplications(ctx, context.organization._id))
       .filter((app) => app.project_ids.includes(args.projectId))
       .map((app) => buildLegacyOauthApplication(app))
   }
@@ -946,25 +1058,18 @@ export const attachLegacyProjectOauthApplication = mutation({
       createError('Project not found', 'not_found')
     }
 
-    const key = buildOrgScopedKey('oauth-applications', context.organization._id)
-    const rows = await listCompatRows<CompatOauthApplication>(ctx, key, 'oauth-application')
-    const record = rows.find(({ payload }) => payload.id === args.oauthApplicationId)
+    const record = await getStoredOauthApplicationRow(ctx, context.organization._id, args.oauthApplicationId)
 
     if (!record) {
       createError('Integration not found', 'not_found')
     }
 
-    if (record.payload.project_ids.includes(args.projectId)) {
+    if (record.projectIds.includes(args.projectId)) {
       return {}
     }
 
-    const nextPayload: CompatOauthApplication = {
-      ...record.payload,
-      project_ids: [...record.payload.project_ids, args.projectId]
-    }
-
-    await ctx.db.patch(record.row._id, {
-      ...buildCompatRowFields('oauth-application', nextPayload.id, nextPayload.name, nextPayload),
+    await ctx.db.patch(record._id, {
+      projectIds: [...record.projectIds, args.projectId],
       updatedAt: Date.now()
     })
 
@@ -988,21 +1093,14 @@ export const detachLegacyProjectOauthApplication = mutation({
       createError('Project not found', 'not_found')
     }
 
-    const key = buildOrgScopedKey('oauth-applications', context.organization._id)
-    const rows = await listCompatRows<CompatOauthApplication>(ctx, key, 'oauth-application')
-    const record = rows.find(({ payload }) => payload.id === args.id)
+    const record = await getStoredOauthApplicationRow(ctx, context.organization._id, args.id)
 
     if (!record) {
       createError('Integration not found', 'not_found')
     }
 
-    const nextPayload: CompatOauthApplication = {
-      ...record.payload,
-      project_ids: record.payload.project_ids.filter((projectId) => projectId !== args.projectId)
-    }
-
-    await ctx.db.patch(record.row._id, {
-      ...buildCompatRowFields('oauth-application', nextPayload.id, nextPayload.name, nextPayload),
+    await ctx.db.patch(record._id, {
+      projectIds: record.projectIds.filter((projectId: string) => projectId !== args.projectId),
       updatedAt: Date.now()
     })
 
@@ -1019,10 +1117,7 @@ export const getLegacyThreadOauthApplications = query({
     const context = await getOrganizationContext(ctx, args.slug)
     assertOrganizationMember(context)
 
-    const key = buildOrgScopedKey('oauth-applications', context.organization._id)
-    const rows = await listCompatRows<CompatOauthApplication>(ctx, key, 'oauth-application')
-
-    return sortNewestFirst(rows.map(({ payload }) => payload))
+    return (await listLegacyOauthApplications(ctx, context.organization._id))
       .filter((app) => app.thread_ids.includes(args.threadId))
       .map((app) => buildLegacyOauthApplication(app))
   }
@@ -1038,25 +1133,18 @@ export const attachLegacyThreadOauthApplication = mutation({
     const context = await getOrganizationContext(ctx, args.slug)
     assertCanManageCompatResources(context)
 
-    const key = buildOrgScopedKey('oauth-applications', context.organization._id)
-    const rows = await listCompatRows<CompatOauthApplication>(ctx, key, 'oauth-application')
-    const record = rows.find(({ payload }) => payload.id === args.oauthApplicationId)
+    const record = await getStoredOauthApplicationRow(ctx, context.organization._id, args.oauthApplicationId)
 
     if (!record) {
       createError('Integration not found', 'not_found')
     }
 
-    if (record.payload.thread_ids.includes(args.threadId)) {
+    if (record.threadIds.includes(args.threadId)) {
       return {}
     }
 
-    const nextPayload: CompatOauthApplication = {
-      ...record.payload,
-      thread_ids: [...record.payload.thread_ids, args.threadId]
-    }
-
-    await ctx.db.patch(record.row._id, {
-      ...buildCompatRowFields('oauth-application', nextPayload.id, nextPayload.name, nextPayload),
+    await ctx.db.patch(record._id, {
+      threadIds: [...record.threadIds, args.threadId],
       updatedAt: Date.now()
     })
 
@@ -1074,21 +1162,14 @@ export const detachLegacyThreadOauthApplication = mutation({
     const context = await getOrganizationContext(ctx, args.slug)
     assertCanManageCompatResources(context)
 
-    const key = buildOrgScopedKey('oauth-applications', context.organization._id)
-    const rows = await listCompatRows<CompatOauthApplication>(ctx, key, 'oauth-application')
-    const record = rows.find(({ payload }) => payload.id === args.id)
+    const record = await getStoredOauthApplicationRow(ctx, context.organization._id, args.id)
 
     if (!record) {
       createError('Integration not found', 'not_found')
     }
 
-    const nextPayload: CompatOauthApplication = {
-      ...record.payload,
-      thread_ids: record.payload.thread_ids.filter((threadId) => threadId !== args.threadId)
-    }
-
-    await ctx.db.patch(record.row._id, {
-      ...buildCompatRowFields('oauth-application', nextPayload.id, nextPayload.name, nextPayload),
+    await ctx.db.patch(record._id, {
+      threadIds: record.threadIds.filter((threadId: string) => threadId !== args.threadId),
       updatedAt: Date.now()
     })
 

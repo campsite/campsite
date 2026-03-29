@@ -19,7 +19,7 @@ One of the best things about Val Town is how quickly you can go from idea to wor
 
 Val Town has an "email" primitive that gives you a public email address and pipes incoming emails into your handler function. I asked Townie, Val Town's AI assistant, to get us started:
 
-> 🤖 Write an email val that receives forwarded emails and sends the original message in a POST request to https://api.campsite.com/v2/posts with a JSON body containing a channel_id const, a title, and a content_markdown field with the forwarded body. The request should use bearer auth and the script should log the POST result when finished.
+> 🤖 Write an email val that receives forwarded emails and sends the original message in a POST request to https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app/v2/posts with a JSON body containing a channel_id const, a title, and a content_markdown field with the forwarded body. The request should use bearer auth and the script should log the POST result when finished.
 
 Since Val Town scripts are instantly deployed to public URLs, we had a working integration in less than a minute. Any email forwarded to our new address would show up as a comment in Campsite:
 

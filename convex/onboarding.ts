@@ -1,8 +1,29 @@
 import { v } from 'convex/values'
 
+import type { Id } from './_generated/dataModel'
+import { internal } from './_generated/api'
 import { mutation, query } from './_generated/server'
 import { getLegacyProjectSubscriptionState, hasLegacyFavorite } from './engagement'
-import { buildLegacyMember as buildLegacyMemberRecord, emptyAvatarUrls, formatDate } from './legacy'
+import {
+  buildLegacyAvatarUrls,
+  buildLegacyMediaUrl,
+  buildLegacyMember as buildLegacyMemberRecord,
+  formatDate
+} from './legacy'
+import {
+  buildLegacyProjectDisplayPreferences,
+  defaultProjectDisplayPreferences,
+  deleteProjectDisplayPreference,
+  getProjectDisplayPreferenceRecord,
+  upsertProjectDisplayPreference
+} from './projectPreferences'
+import { getProjectUnreadForViewer, markProjectRead, markProjectUnread } from './projectViews'
+import {
+  ensureDefaultOrganizationSettings,
+  getOrganizationInvitationProjectIds,
+  getOrganizationSettingsMap,
+  syncOrganizationInvitationProjects
+} from './accountShell'
 import {
   buildLegacyOrganization,
   buildWorkspaceState,
@@ -12,14 +33,11 @@ import {
   getWorkspaceMemberships
 } from './workspace'
 
-const defaultProjectDisplayPreferences = {
-  display_reactions: true,
-  display_attachments: true,
-  display_comments: true,
-  display_resolved: true
-}
-
 const INVITATION_DURATION_MS = 30 * 24 * 60 * 60 * 1000
+
+function createError(message: string, code: string) {
+  return new Error(`${code}:${message}`)
+}
 
 function normalizeEmail(value?: string | null) {
   const normalized = value?.trim().toLowerCase()
@@ -79,10 +97,40 @@ async function getOrganizationProjects(ctx: any, organizationId: any) {
   return await ctx.db.query('projects').withIndex('by_organization_id', (q: any) => q.eq('organizationId', organizationId)).collect()
 }
 
+async function getProjectCallRoomUrl(ctx: any, organizationSlug: string, organizationId: any, messageThreadId?: string | null) {
+  if (!messageThreadId) {
+    return null
+  }
+
+  const thread = await ctx.db
+    .query('messageThreads')
+    .withIndex('by_public_id', (q: any) => q.eq('publicId', messageThreadId))
+    .unique()
+
+  if (!thread || thread.organizationId !== organizationId || !thread.callRoomId) {
+    return null
+  }
+
+  const callRoom = await ctx.db.get(thread.callRoomId)
+
+  if (!callRoom || callRoom.organizationId !== organizationId) {
+    return null
+  }
+
+  return `/${organizationSlug}/calls/join/${callRoom.publicId}`
+}
+
 async function getOrganizationProjectById(ctx: any, organizationId: any, projectId: string) {
   const projects = await getOrganizationProjects(ctx, organizationId)
 
   return projects.find((project: any) => project._id === projectId) ?? null
+}
+
+async function getProjectByInviteToken(ctx: any, inviteToken: string) {
+  return await ctx.db
+    .query('projects')
+    .withIndex('by_invite_token', (q: any) => q.eq('inviteToken', inviteToken))
+    .unique()
 }
 
 async function getOrganizationInvitationById(ctx: any, organizationId: any, invitationId: string) {
@@ -99,6 +147,352 @@ async function getProjectsByIds(ctx: any, organizationId: any, projectIds: strin
   const projects = await getOrganizationProjects(ctx, organizationId)
 
   return projects.filter((project: any) => validProjectIds.has(project._id))
+}
+
+async function getOrganizationMemberships(ctx: any, organizationId: any) {
+  return await ctx.db
+    .query('organizationMemberships')
+    .withIndex('by_organization_id', (q: any) => q.eq('organizationId', organizationId))
+    .collect()
+}
+
+function getProjectMembershipCounts(projectMemberships: any[]) {
+  const guestsCount = projectMemberships.filter((membership: any) => membership.role === 'guest').length
+
+  return {
+    guestsCount,
+    membersAndGuestsCount: projectMemberships.length,
+    membersCount: projectMemberships.length - guestsCount
+  }
+}
+
+async function getUsersByTokenIdentifiers(ctx: any, tokenIdentifiers: string[]) {
+  const uniqueTokenIdentifiers = Array.from(new Set(tokenIdentifiers))
+  const users = await Promise.all(uniqueTokenIdentifiers.map((tokenIdentifier) => getUserByTokenIdentifier(ctx, tokenIdentifier)))
+
+  return new Map(users.filter(Boolean).map((user: any) => [user.tokenIdentifier, user]))
+}
+
+function paginateItems<T extends { _cursor: string }>(items: T[], limit?: number, after?: string) {
+  const safeLimit = Math.max(1, Math.min(limit || 50, 100))
+  const startIndex = after ? items.findIndex((item) => item._cursor === after) + 1 : 0
+  const normalizedStartIndex = Math.max(0, startIndex)
+  const page = items.slice(normalizedStartIndex, normalizedStartIndex + safeLimit)
+
+  return {
+    data: page,
+    next_cursor: normalizedStartIndex + safeLimit < items.length ? page.at(-1)?._cursor ?? null : null,
+    prev_cursor: null
+  }
+}
+
+function viewerCanManageProject(project: any, viewerMembership: any, viewerTokenIdentifier: string) {
+  return viewerMembership.role === 'admin' || project.creatorTokenIdentifier === viewerTokenIdentifier
+}
+
+function viewerCanAccessProject(project: any, viewerMembership: any, viewerTokenIdentifier: string, viewerIsMember: boolean) {
+  return !project.private || viewerMembership.role === 'admin' || viewerIsMember || project.creatorTokenIdentifier === viewerTokenIdentifier
+}
+
+function buildLegacyProjectInvitationUrl(project: any) {
+  return {
+    invitation_url: project.inviteToken ? `/guest/${project.inviteToken}` : ''
+  }
+}
+
+function buildLegacyPublicOrganization(organization: any, viewerMembership?: any | null) {
+  const avatarUrl = buildLegacyMediaUrl(organization.avatarPath ?? organization.avatar_url)
+
+  return {
+    id: organization._id,
+    avatar_url: avatarUrl || '',
+    avatar_urls: buildLegacyAvatarUrls(avatarUrl),
+    name: organization.name,
+    slug: organization.slug,
+    viewer_is_admin: viewerMembership?.role === 'admin',
+    viewer_can_leave: viewerMembership ? viewerMembership.role !== 'admin' : false
+  }
+}
+
+async function getViewerProjectMembership(ctx: any, projectId: any, viewerTokenIdentifier: string) {
+  return await ctx.db
+    .query('projectMemberships')
+    .withIndex('by_project_and_user', (q: any) => q.eq('projectId', projectId).eq('userTokenIdentifier', viewerTokenIdentifier))
+    .unique()
+}
+
+async function ensureProjectSubscription(
+  ctx: any,
+  params: {
+    organizationId: any
+    projectId: any
+    userTokenIdentifier: string
+  }
+) {
+  const existing = await ctx.db
+    .query('subscriptions')
+    .withIndex('by_organization_user_and_subject', (q: any) =>
+      q
+        .eq('organizationId', params.organizationId)
+        .eq('userTokenIdentifier', params.userTokenIdentifier)
+        .eq('subscribableType', 'Project')
+        .eq('subscribableId', params.projectId)
+    )
+    .unique()
+
+  if (!existing) {
+    await ctx.db.insert('subscriptions', {
+      organizationId: params.organizationId,
+      userTokenIdentifier: params.userTokenIdentifier,
+      subscribableType: 'Project',
+      subscribableId: params.projectId,
+      cascade: false,
+      createdAt: Date.now()
+    })
+  }
+}
+
+async function deleteProjectSubscription(
+  ctx: any,
+  params: {
+    organizationId: any
+    projectId: any
+    userTokenIdentifier: string
+  }
+) {
+  const existing = await ctx.db
+    .query('subscriptions')
+    .withIndex('by_organization_user_and_subject', (q: any) =>
+      q
+        .eq('organizationId', params.organizationId)
+        .eq('userTokenIdentifier', params.userTokenIdentifier)
+        .eq('subscribableType', 'Project')
+        .eq('subscribableId', params.projectId)
+    )
+    .unique()
+
+  if (existing) {
+    await ctx.db.delete(existing._id)
+  }
+}
+
+async function deleteProjectFavorite(
+  ctx: any,
+  params: {
+    organizationId: any
+    projectId: any
+    userTokenIdentifier: string
+  }
+) {
+  const existing = await ctx.db
+    .query('favorites')
+    .withIndex('by_organization_user_and_favoritable', (q: any) =>
+      q
+        .eq('organizationId', params.organizationId)
+        .eq('userTokenIdentifier', params.userTokenIdentifier)
+        .eq('favoritableType', 'Project')
+        .eq('favoritableId', params.projectId)
+    )
+    .unique()
+
+  if (existing) {
+    await ctx.db.delete(existing._id)
+  }
+}
+
+async function syncProjectThreadMembership(
+  ctx: any,
+  params: {
+    organizationId: any
+    threadPublicId?: string | null
+    userTokenIdentifier: string
+    remove?: boolean
+  }
+) {
+  if (!params.threadPublicId) {
+    return
+  }
+
+  const threadRow = await ctx.runQuery((internal as any).threads.getMessageThreadRowByPublicId, {
+    organizationId: params.organizationId,
+    threadPublicId: params.threadPublicId
+  })
+
+  if (!threadRow) {
+    return
+  }
+
+  const memberships = await ctx.runQuery((internal as any).threads.listMessageThreadMembershipRows, {
+    organizationId: params.organizationId,
+    threadPublicId: params.threadPublicId
+  })
+
+  if (params.remove) {
+    await ctx.runMutation((internal as any).threads.deleteMessageThreadMembershipRowByUser, {
+      organizationId: params.organizationId,
+      threadPublicId: params.threadPublicId,
+      tokenIdentifier: params.userTokenIdentifier
+    })
+  } else {
+    const now = Date.now()
+
+    await ctx.runMutation((internal as any).threads.upsertMessageThreadMembershipRow, {
+      organizationId: params.organizationId,
+      threadPublicId: params.threadPublicId,
+      tokenIdentifier: params.userTokenIdentifier,
+      dataJson: JSON.stringify({
+        publicId: `project-thread-membership_${generateToken()}`,
+        userTokenIdentifier: params.userTokenIdentifier,
+        notificationLevel: 'all',
+        unreadCount: 0,
+        manuallyMarkedUnread: false,
+        joinedAt: now,
+        createdAt: now,
+        updatedAt: now
+      })
+    })
+  }
+
+  const participantTokenIdentifiers = Array.from(
+    new Set(
+      (params.remove
+        ? memberships
+            .filter((membership: any) => membership.userTokenIdentifier && membership.userTokenIdentifier !== params.userTokenIdentifier)
+            .map((membership: any) => membership.userTokenIdentifier)
+        : [...(threadRow.participantTokenIdentifiers ?? []), params.userTokenIdentifier]
+      ).filter(Boolean)
+    )
+  )
+
+  await ctx.runMutation((internal as any).threads.upsertMessageThreadRow, {
+    organizationId: params.organizationId,
+    threadPublicId: params.threadPublicId,
+    dataJson: JSON.stringify({
+      participantTokenIdentifiers,
+      membersCount: participantTokenIdentifiers.length,
+      updatedAt: Date.now()
+    })
+  })
+}
+
+async function createProjectMembershipRecord(
+  ctx: any,
+  params: {
+    organizationId: any
+    project: any
+    userTokenIdentifier: string
+  }
+) {
+  const existing = await ctx.db
+    .query('projectMemberships')
+    .withIndex('by_project_and_user', (q: any) =>
+      q.eq('projectId', params.project._id).eq('userTokenIdentifier', params.userTokenIdentifier)
+    )
+    .unique()
+
+  if (existing) {
+    return existing
+  }
+
+  const now = Date.now()
+  const membershipId = await ctx.db.insert('projectMemberships', {
+    organizationId: params.organizationId,
+    projectId: params.project._id,
+    userTokenIdentifier: params.userTokenIdentifier,
+    createdAt: now
+  })
+
+  await ensureProjectSubscription(ctx, {
+    organizationId: params.organizationId,
+    projectId: params.project._id,
+    userTokenIdentifier: params.userTokenIdentifier
+  })
+
+  await syncProjectThreadMembership(ctx, {
+    organizationId: params.organizationId,
+    threadPublicId: params.project.messageThreadId,
+    userTokenIdentifier: params.userTokenIdentifier
+  })
+
+  return await ctx.db.get(membershipId)
+}
+
+async function deleteProjectMembershipRecord(
+  ctx: any,
+  params: {
+    organizationId: any
+    project: any
+    userTokenIdentifier: string
+  }
+) {
+  const existing = await ctx.db
+    .query('projectMemberships')
+    .withIndex('by_project_and_user', (q: any) =>
+      q.eq('projectId', params.project._id).eq('userTokenIdentifier', params.userTokenIdentifier)
+    )
+    .unique()
+
+  if (!existing) {
+    return
+  }
+
+  await ctx.db.delete(existing._id)
+
+  await deleteProjectSubscription(ctx, {
+    organizationId: params.organizationId,
+    projectId: params.project._id,
+    userTokenIdentifier: params.userTokenIdentifier
+  })
+
+  await deleteProjectFavorite(ctx, {
+    organizationId: params.organizationId,
+    projectId: params.project._id,
+    userTokenIdentifier: params.userTokenIdentifier
+  })
+
+  await syncProjectThreadMembership(ctx, {
+    organizationId: params.organizationId,
+    threadPublicId: params.project.messageThreadId,
+    userTokenIdentifier: params.userTokenIdentifier,
+    remove: true
+  })
+}
+
+async function getProjectMembershipPositionForUser(
+  ctx: any,
+  params: {
+    organizationId: any
+    userTokenIdentifier: string
+    projectId: string
+  }
+) {
+  const [memberships, projects] = await Promise.all([
+    ctx.db
+      .query('projectMemberships')
+      .withIndex('by_organization_and_user', (q: any) =>
+        q.eq('organizationId', params.organizationId).eq('userTokenIdentifier', params.userTokenIdentifier)
+      )
+      .collect(),
+    getOrganizationProjects(ctx, params.organizationId)
+  ])
+  const projectMap = new Map(projects.map((project: any) => [project._id, project]))
+
+  const orderedMemberships = memberships
+    .map((membership: any) => ({
+      membership,
+      project: projectMap.get(membership.projectId)
+    }))
+    .filter((entry: any) => !!entry.project)
+    .sort((left: any, right: any) => {
+      if (left.project.isGeneral && !right.project.isGeneral) return -1
+      if (!left.project.isGeneral && right.project.isGeneral) return 1
+      return left.membership.createdAt - right.membership.createdAt
+    })
+
+  return Math.max(
+    0,
+    orderedMemberships.findIndex((entry: any) => entry.membership.projectId === params.projectId)
+  )
 }
 
 async function clearPendingAccessRecords(
@@ -239,11 +633,12 @@ function buildLegacySuggestedOrganization(params: {
   joined?: boolean
 }) {
   const { organization, requested, joined } = params
+  const avatarUrl = buildLegacyMediaUrl(organization.avatarPath ?? organization.avatar_url)
 
   return {
     id: organization._id,
-    avatar_url: '',
-    avatar_urls: emptyAvatarUrls,
+    avatar_url: avatarUrl || '',
+    avatar_urls: buildLegacyAvatarUrls(avatarUrl),
     name: organization.name,
     slug: organization.slug,
     requested,
@@ -275,17 +670,30 @@ async function buildLegacyProject(
   }
 ) {
   const { organization, project, viewerMembership, viewerTokenIdentifier } = params
-  const [posts, projectMemberships] = await Promise.all([
+  const [posts, projectMemberships, viewerDisplayPreferences, unreadForViewer] = await Promise.all([
     ctx.db.query('posts').withIndex('by_organization_id', (q: any) => q.eq('organizationId', organization._id)).collect(),
-    ctx.db.query('projectMemberships').withIndex('by_project_id', (q: any) => q.eq('projectId', project._id)).collect()
+    ctx.db.query('projectMemberships').withIndex('by_project_id', (q: any) => q.eq('projectId', project._id)).collect(),
+    getProjectDisplayPreferenceRecord(ctx, {
+      projectId: project._id,
+      organizationMembershipId: viewerMembership?._id
+    }),
+    getProjectUnreadForViewer(ctx, {
+      organizationId: organization._id,
+      projectId: project._id,
+      organizationMembershipId: viewerMembership?._id,
+      viewerTokenIdentifier,
+      messageThreadId: project.messageThreadId
+    })
   ])
   const projectPosts = posts.filter((post: any) => post.projectId === project._id)
   const contributorCount = new Set(projectPosts.map((post: any) => post.authorTokenIdentifier)).size
   const viewerIsMember = projectMemberships.some(
     (membership: any) => membership.userTokenIdentifier === viewerTokenIdentifier
   )
+  const projectMembershipCounts = getProjectMembershipCounts(projectMemberships)
   const canManage = viewerMembership.role === 'admin'
-  const [{ viewer_has_subscribed, viewer_subscription }, viewer_has_favorited] = await Promise.all([
+  const [projectCallRoomUrl, { viewer_has_subscribed, viewer_subscription }, viewer_has_favorited] = await Promise.all([
+    getProjectCallRoomUrl(ctx, organization.slug, organization._id, project.messageThreadId),
     getLegacyProjectSubscriptionState(ctx, {
       organizationId: organization._id,
       tokenIdentifier: viewerTokenIdentifier,
@@ -309,7 +717,7 @@ async function buildLegacyProject(
     last_activity_at: new Date(project.lastActivityAt).toISOString(),
     slack_channel_id: project.slackChannelId ?? null,
     posts_count: projectPosts.length,
-    cover_photo_url: project.coverPhotoPath ?? null,
+    cover_photo_url: buildLegacyMediaUrl(project.coverPhotoPath) ?? null,
     url: `/${organization.slug}/projects/${project._id}`,
     accessory: project.accessory ?? null,
     private: project.private,
@@ -317,11 +725,11 @@ async function buildLegacyProject(
     is_general: project.isGeneral,
     is_default: project.isDefault,
     contributors_count: contributorCount,
-    members_and_guests_count: projectMemberships.length,
-    members_count: projectMemberships.length,
-    guests_count: 0,
-    call_room_url: null,
-    message_thread_id: null,
+    members_and_guests_count: projectMembershipCounts.membersAndGuestsCount,
+    members_count: projectMembershipCounts.membersCount,
+    guests_count: projectMembershipCounts.guestsCount,
+    call_room_url: projectCallRoomUrl,
+    message_thread_id: project.messageThreadId ?? null,
     organization_id: organization._id,
     viewer_has_favorited,
     viewer_can_archive: canManage && !project.isGeneral,
@@ -331,11 +739,11 @@ async function buildLegacyProject(
     viewer_has_subscribed,
     viewer_subscription,
     viewer_is_member: viewerIsMember,
-    unread_for_viewer: false,
+    unread_for_viewer: unreadForViewer,
     slack_channel: null,
     type_name: 'project',
-    viewer_display_preferences: defaultProjectDisplayPreferences,
-    display_preferences: defaultProjectDisplayPreferences
+    viewer_display_preferences: viewerDisplayPreferences ? buildLegacyProjectDisplayPreferences(viewerDisplayPreferences) : null,
+    display_preferences: buildLegacyProjectDisplayPreferences(project)
   }
 }
 
@@ -374,7 +782,7 @@ async function buildLegacyOrganizationInvitation(ctx: any, invitation: any, incl
     throw new Error('Organization not found')
   }
 
-  const projects = await getProjectsByIds(ctx, organization._id, invitation.projectIds)
+  const projects = await getProjectsByIds(ctx, organization._id, await getOrganizationInvitationProjectIds(ctx, invitation))
 
   return {
     id: invitation._id,
@@ -382,8 +790,8 @@ async function buildLegacyOrganizationInvitation(ctx: any, invitation: any, incl
     role: invitation.role,
     expired: invitation.expiresAt <= Date.now(),
     organization: {
-      avatar_url: '',
-      avatar_urls: emptyAvatarUrls,
+      avatar_url: buildLegacyMediaUrl(organization.avatarPath ?? organization.avatar_url) || '',
+      avatar_urls: buildLegacyAvatarUrls(organization.avatarPath ?? organization.avatar_url),
       name: organization.name,
       slug: organization.slug
     },
@@ -455,12 +863,14 @@ async function createLegacyOrganizationInvitationsInternal(
       inviteToken: existingInvitation?.inviteToken || generateToken(),
       organizationId: context.organization._id,
       projectIds: validProjects.map((project: any) => project._id),
+      publicId: existingInvitation?.publicId || generateToken().slice(0, 12),
       recipientTokenIdentifier: undefined,
       role:
         invitation.role === 'admin' || invitation.role === 'viewer' || invitation.role === 'guest'
           ? invitation.role
           : 'member',
-      senderTokenIdentifier: identity.tokenIdentifier
+      senderTokenIdentifier: identity.tokenIdentifier,
+      updatedAt: Date.now()
     } as const
 
     let invitationId = existingInvitation?._id
@@ -474,6 +884,11 @@ async function createLegacyOrganizationInvitationsInternal(
     const createdInvitation = await ctx.db.get(invitationId!)
 
     if (createdInvitation) {
+      await syncOrganizationInvitationProjects(
+        ctx,
+        createdInvitation._id,
+        validProjects.map((project: any) => project._id)
+      )
       results.push(await buildLegacyOrganizationInvitation(ctx, createdInvitation))
     }
   }
@@ -515,7 +930,7 @@ export const resetLegacyOrganizationInviteToken = mutation({
     }
 
     const inviteToken = generateToken()
-    await ctx.db.patch(context.organization._id, { inviteToken })
+    await ctx.db.patch(context.organization._id, { inviteToken, updatedAt: Date.now() })
 
     const memberships = await getWorkspaceMemberships(ctx, identity.tokenIdentifier)
     const updatedOrganization = await ctx.db.get(context.organization._id)
@@ -525,10 +940,13 @@ export const resetLegacyOrganizationInviteToken = mutation({
       throw new Error('Organization could not be reloaded')
     }
 
+    await ensureDefaultOrganizationSettings(ctx, context.organization._id)
+
     return buildLegacyOrganization({
       memberships,
       membership: currentMembership,
-      organization: updatedOrganization
+      organization: updatedOrganization,
+      settings: await getOrganizationSettingsMap(ctx, updatedOrganization._id)
     })
   }
 })
@@ -849,10 +1267,12 @@ export const getLegacyPublicOrganizationByToken = query({
       ? await getOrganizationMembership(ctx, organization._id, identity.tokenIdentifier)
       : null
 
+    const avatarUrl = buildLegacyMediaUrl(organization.avatarPath ?? organization.avatar_url)
+
     return {
       id: organization._id,
-      avatar_url: '',
-      avatar_urls: emptyAvatarUrls,
+      avatar_url: avatarUrl || '',
+      avatar_urls: buildLegacyAvatarUrls(avatarUrl),
       name: organization.name,
       slug: organization.slug,
       viewer_is_admin: membership?.role === 'admin',
@@ -1009,10 +1429,15 @@ export const createLegacyProject = mutation({
     const projectId = await ctx.db.insert('projects', {
       organizationId: context.organization._id,
       creatorTokenIdentifier: context.identity.tokenIdentifier,
+      inviteToken: generateToken(),
       name: args.name.trim(),
       description: args.description?.trim() || undefined,
       accessory: args.accessory?.trim() || undefined,
       coverPhotoPath: args.cover_photo_path || undefined,
+      displayReactions: defaultProjectDisplayPreferences.display_reactions,
+      displayAttachments: defaultProjectDisplayPreferences.display_attachments,
+      displayComments: defaultProjectDisplayPreferences.display_comments,
+      displayResolved: defaultProjectDisplayPreferences.display_resolved,
       slackChannelId: undefined,
       private: !!args.private,
       personal: false,
@@ -1146,6 +1571,222 @@ export const updateLegacyProject = mutation({
   }
 })
 
+export const updateLegacyProjectDisplayPreferences = mutation({
+  args: {
+    slug: v.string(),
+    projectId: v.string(),
+    display_reactions: v.boolean(),
+    display_attachments: v.boolean(),
+    display_comments: v.boolean(),
+    display_resolved: v.boolean()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw new Error('Organization not found')
+    }
+
+    const project = await getOrganizationProjectById(ctx, context.organization._id, args.projectId)
+
+    if (!project) {
+      throw new Error('Project not found')
+    }
+
+    if (context.viewerMembership.role !== 'admin' && project.creatorTokenIdentifier !== context.identity.tokenIdentifier) {
+      throw new Error('Not allowed to update project')
+    }
+
+    await ctx.db.patch(project._id, {
+      displayReactions: args.display_reactions,
+      displayAttachments: args.display_attachments,
+      displayComments: args.display_comments,
+      displayResolved: args.display_resolved,
+      lastActivityAt: Date.now()
+    })
+
+    await deleteProjectDisplayPreference(ctx, {
+      projectId: project._id,
+      organizationMembershipId: context.viewerMembership._id
+    })
+
+    const updatedProject = await ctx.db.get(project._id)
+
+    if (!updatedProject) {
+      throw new Error('Project not found')
+    }
+
+    return await buildLegacyProject(ctx, {
+      organization: context.organization,
+      project: updatedProject,
+      viewerMembership: context.viewerMembership,
+      viewerTokenIdentifier: context.identity.tokenIdentifier
+    })
+  }
+})
+
+export const updateLegacyProjectViewerDisplayPreferences = mutation({
+  args: {
+    slug: v.string(),
+    projectId: v.string(),
+    display_reactions: v.boolean(),
+    display_attachments: v.boolean(),
+    display_comments: v.boolean(),
+    display_resolved: v.boolean()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw new Error('Organization not found')
+    }
+
+    const project = await getOrganizationProjectById(ctx, context.organization._id, args.projectId)
+
+    if (!project) {
+      throw new Error('Project not found')
+    }
+
+    await upsertProjectDisplayPreference(ctx, {
+      organizationId: context.organization._id,
+      projectId: project._id,
+      organizationMembershipId: context.viewerMembership._id,
+      display_reactions: args.display_reactions,
+      display_attachments: args.display_attachments,
+      display_comments: args.display_comments,
+      display_resolved: args.display_resolved
+    })
+
+    return await buildLegacyProject(ctx, {
+      organization: context.organization,
+      project,
+      viewerMembership: context.viewerMembership,
+      viewerTokenIdentifier: context.identity.tokenIdentifier
+    })
+  }
+})
+
+export const deleteLegacyProjectViewerDisplayPreferences = mutation({
+  args: {
+    slug: v.string(),
+    projectId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw new Error('Organization not found')
+    }
+
+    const project = await getOrganizationProjectById(ctx, context.organization._id, args.projectId)
+
+    if (!project) {
+      throw new Error('Project not found')
+    }
+
+    await deleteProjectDisplayPreference(ctx, {
+      projectId: project._id,
+      organizationMembershipId: context.viewerMembership._id
+    })
+
+    return await buildLegacyProject(ctx, {
+      organization: context.organization,
+      project,
+      viewerMembership: context.viewerMembership,
+      viewerTokenIdentifier: context.identity.tokenIdentifier
+    })
+  }
+})
+
+export const markLegacyProjectRead = mutation({
+  args: {
+    slug: v.string(),
+    projectId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw new Error('Organization not found')
+    }
+
+    const project = await getOrganizationProjectById(ctx, context.organization._id, args.projectId)
+
+    if (!project) {
+      throw new Error('Project not found')
+    }
+
+    await markProjectRead(ctx, {
+      organizationId: context.organization._id,
+      projectId: project._id,
+      organizationMembershipId: context.viewerMembership._id
+    })
+
+    return {}
+  }
+})
+
+export const markLegacyProjectUnread = mutation({
+  args: {
+    slug: v.string(),
+    projectId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw new Error('Organization not found')
+    }
+
+    const project = await getOrganizationProjectById(ctx, context.organization._id, args.projectId)
+
+    if (!project) {
+      throw new Error('Project not found')
+    }
+
+    await markProjectUnread(ctx, {
+      organizationId: context.organization._id,
+      projectId: project._id,
+      organizationMembershipId: context.viewerMembership._id
+    })
+
+    return {}
+  }
+})
+
+export const createLegacyProjectView = mutation({
+  args: {
+    slug: v.string(),
+    projectId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw new Error('Organization not found')
+    }
+
+    const project = await getOrganizationProjectById(ctx, context.organization._id, args.projectId)
+
+    if (!project) {
+      throw new Error('Project not found')
+    }
+
+    await markProjectRead(ctx, {
+      organizationId: context.organization._id,
+      projectId: project._id,
+      organizationMembershipId: context.viewerMembership._id
+    })
+
+    return await buildLegacyProject(ctx, {
+      organization: context.organization,
+      project,
+      viewerMembership: context.viewerMembership,
+      viewerTokenIdentifier: context.identity.tokenIdentifier
+    })
+  }
+})
+
 export const deleteLegacyProject = mutation({
   args: {
     slug: v.string(),
@@ -1172,13 +1813,26 @@ export const deleteLegacyProject = mutation({
       throw new Error('Not allowed to delete project')
     }
 
-    const [projectMemberships, posts] = await Promise.all([
+    const [projectMemberships, posts, projectDisplayPreferences, projectViews] = await Promise.all([
       ctx.db.query('projectMemberships').withIndex('by_project_id', (q: any) => q.eq('projectId', project._id)).collect(),
-      ctx.db.query('posts').withIndex('by_organization_id', (q: any) => q.eq('organizationId', context.organization._id)).collect()
+      ctx.db.query('posts').withIndex('by_organization_id', (q: any) => q.eq('organizationId', context.organization._id)).collect(),
+      ctx.db
+        .query('projectDisplayPreferences')
+        .withIndex('by_project_id', (q: any) => q.eq('projectId', project._id))
+        .collect(),
+      ctx.db.query('projectViews').withIndex('by_project_id', (q: any) => q.eq('projectId', project._id)).collect()
     ])
 
     for (const membership of projectMemberships) {
       await ctx.db.delete(membership._id)
+    }
+
+    for (const preference of projectDisplayPreferences) {
+      await ctx.db.delete(preference._id)
+    }
+
+    for (const projectView of projectViews) {
+      await ctx.db.delete(projectView._id)
     }
 
     const projectPosts = posts.filter((post: any) => post.projectId === project._id)
@@ -1275,6 +1929,462 @@ export const unarchiveLegacyProject = mutation({
   }
 })
 
+export const getLegacyProjectMembersPage = query({
+  args: {
+    slug: v.string(),
+    projectId: v.string(),
+    after: v.optional(v.string()),
+    limit: v.optional(v.number()),
+    organization_membership_id: v.optional(v.string()),
+    roles: v.optional(v.array(v.union(v.literal('admin'), v.literal('member'), v.literal('viewer'), v.literal('guest')))),
+    exclude_roles: v.optional(
+      v.array(v.union(v.literal('admin'), v.literal('member'), v.literal('viewer'), v.literal('guest')))
+    )
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw createError('Organization not found', 'not_found')
+    }
+
+    const project = await getOrganizationProjectById(ctx, context.organization._id, args.projectId)
+
+    if (!project) {
+      throw createError('Project not found', 'not_found')
+    }
+
+    const viewerProjectMembership = await getViewerProjectMembership(ctx, project._id, context.identity.tokenIdentifier)
+
+    if (!viewerCanAccessProject(project, context.viewerMembership, context.identity.tokenIdentifier, !!viewerProjectMembership)) {
+      throw createError('Project not found', 'not_found')
+    }
+
+    const [projectMemberships, organizationMemberships] = await Promise.all([
+      ctx.db.query('projectMemberships').withIndex('by_project_id', (q: any) => q.eq('projectId', project._id)).collect(),
+      getOrganizationMemberships(ctx, context.organization._id)
+    ])
+    const activeMemberships = organizationMemberships.filter((membership: any) => !membership.discardedAt)
+    const membershipByTokenIdentifier = new Map(
+      activeMemberships.map((membership: any) => [membership.userTokenIdentifier, membership])
+    )
+    const userMap = await getUsersByTokenIdentifiers(
+      ctx,
+      projectMemberships.map((membership: any) => membership.userTokenIdentifier)
+    )
+
+    const filtered = projectMemberships
+      .map((projectMembership: any) => ({
+        _cursor: projectMembership._id,
+        membership: membershipByTokenIdentifier.get(projectMembership.userTokenIdentifier),
+        user: userMap.get(projectMembership.userTokenIdentifier)
+      }))
+      .filter((entry: any) => !!entry.membership && !!entry.user)
+      .filter((entry: any) => {
+        if (args.organization_membership_id && entry.membership._id !== args.organization_membership_id) {
+          return false
+        }
+
+        if (args.roles?.length && !args.roles.includes(entry.membership.role)) {
+          return false
+        }
+
+        if (args.exclude_roles?.length && args.exclude_roles.includes(entry.membership.role)) {
+          return false
+        }
+
+        return true
+      })
+      .sort((left: any, right: any) => {
+        const byName = left.user.displayName.localeCompare(right.user.displayName)
+
+        if (byName !== 0) {
+          return byName
+        }
+
+        return left.membership._id.localeCompare(right.membership._id)
+      })
+
+    const page = paginateItems(filtered, args.limit, args.after)
+
+    return {
+      ...page,
+      data: page.data.map((entry: any) => buildLegacyMemberRecord(entry.membership, entry.user)),
+      total_count: filtered.length
+    }
+  }
+})
+
+export const getLegacyProjectAddableMembersPage = query({
+  args: {
+    slug: v.string(),
+    projectId: v.string(),
+    after: v.optional(v.string()),
+    limit: v.optional(v.number())
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw createError('Organization not found', 'not_found')
+    }
+
+    const project = await getOrganizationProjectById(ctx, context.organization._id, args.projectId)
+
+    if (!project) {
+      throw createError('Project not found', 'not_found')
+    }
+
+    if (!viewerCanManageProject(project, context.viewerMembership, context.identity.tokenIdentifier)) {
+      throw createError('Not allowed to invite members', 'forbidden')
+    }
+
+    const [projectMemberships, organizationMemberships] = await Promise.all([
+      ctx.db.query('projectMemberships').withIndex('by_project_id', (q: any) => q.eq('projectId', project._id)).collect(),
+      getOrganizationMemberships(ctx, context.organization._id)
+    ])
+    const existingProjectMembers = new Set(projectMemberships.map((membership: any) => membership.userTokenIdentifier))
+    const candidates = organizationMemberships
+      .filter((membership: any) => !membership.discardedAt)
+      .filter((membership: any) => !existingProjectMembers.has(membership.userTokenIdentifier))
+    const userMap = await getUsersByTokenIdentifiers(
+      ctx,
+      candidates.map((membership: any) => membership.userTokenIdentifier)
+    )
+
+    const filtered = candidates
+      .map((membership: any) => ({
+        _cursor: membership._id,
+        membership,
+        user: userMap.get(membership.userTokenIdentifier)
+      }))
+      .filter((entry: any) => !!entry.user)
+      .sort((left: any, right: any) => {
+        const byName = left.user.displayName.localeCompare(right.user.displayName)
+
+        if (byName !== 0) {
+          return byName
+        }
+
+        return left.membership._id.localeCompare(right.membership._id)
+      })
+
+    const page = paginateItems(filtered, args.limit, args.after)
+
+    return {
+      ...page,
+      data: page.data.map((entry: any) => buildLegacyMemberRecord(entry.membership, entry.user)),
+      total_count: filtered.length
+    }
+  }
+})
+
+export const createLegacyProjectMembership = mutation({
+  args: {
+    slug: v.string(),
+    projectId: v.string(),
+    userId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw createError('Organization not found', 'not_found')
+    }
+
+    const [project, targetUser] = await Promise.all([
+      getOrganizationProjectById(ctx, context.organization._id, args.projectId),
+      ctx.db.get(args.userId as Id<'users'>)
+    ])
+
+    if (!project) {
+      throw createError('Project not found', 'not_found')
+    }
+
+    if (!targetUser || !('tokenIdentifier' in targetUser)) {
+      throw createError('Organization member not found', 'not_found')
+    }
+
+    const [viewerProjectMembership, targetOrganizationMembership] = await Promise.all([
+      getViewerProjectMembership(ctx, project._id, context.identity.tokenIdentifier),
+      getOrganizationMembership(ctx, context.organization._id, (targetUser as any).tokenIdentifier)
+    ])
+
+    const isSelf = (targetUser as any)._id === context.user._id
+    const canManage = viewerCanManageProject(project, context.viewerMembership, context.identity.tokenIdentifier)
+    const canSelfJoin =
+      isSelf &&
+      !project.archivedAt &&
+      (!project.private || !!viewerProjectMembership || canManage) &&
+      viewerCanAccessProject(project, context.viewerMembership, context.identity.tokenIdentifier, !!viewerProjectMembership)
+
+    if (!canManage && !canSelfJoin) {
+      throw createError('Not allowed to update project members', 'forbidden')
+    }
+
+    if (!targetOrganizationMembership || targetOrganizationMembership.discardedAt) {
+      throw createError('Organization member not found', 'not_found')
+    }
+
+    const projectMembership = await createProjectMembershipRecord(ctx, {
+      organizationId: context.organization._id,
+      project,
+      userTokenIdentifier: (targetUser as any).tokenIdentifier
+    })
+
+    await markProjectRead(ctx, {
+      organizationId: context.organization._id,
+      projectId: project._id,
+      organizationMembershipId: context.viewerMembership._id
+    })
+
+    const position = await getProjectMembershipPositionForUser(ctx, {
+      organizationId: context.organization._id,
+      userTokenIdentifier: (targetUser as any).tokenIdentifier,
+      projectId: project._id
+    })
+
+    return await buildLegacyProjectMembership(ctx, {
+      organization: context.organization,
+      projectMembership,
+      viewerMembership: context.viewerMembership,
+      viewerTokenIdentifier: context.identity.tokenIdentifier,
+      position
+    })
+  }
+})
+
+export const deleteLegacyProjectMembership = mutation({
+  args: {
+    slug: v.string(),
+    projectId: v.string(),
+    userId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw createError('Organization not found', 'not_found')
+    }
+
+    const [project, targetUser] = await Promise.all([
+      getOrganizationProjectById(ctx, context.organization._id, args.projectId),
+      ctx.db.get(args.userId as Id<'users'>)
+    ])
+
+    if (!project) {
+      throw createError('Project not found', 'not_found')
+    }
+
+    if (!targetUser || !('tokenIdentifier' in targetUser)) {
+      throw createError('Organization member not found', 'not_found')
+    }
+
+    const viewerProjectMembership = await getViewerProjectMembership(ctx, project._id, context.identity.tokenIdentifier)
+    const isSelf = (targetUser as any)._id === context.user._id
+    const canManage = viewerCanManageProject(project, context.viewerMembership, context.identity.tokenIdentifier)
+
+    if (!canManage && !(isSelf && viewerCanAccessProject(project, context.viewerMembership, context.identity.tokenIdentifier, !!viewerProjectMembership))) {
+      throw createError('Not allowed to update project members', 'forbidden')
+    }
+
+    await deleteProjectMembershipRecord(ctx, {
+      organizationId: context.organization._id,
+      project,
+      userTokenIdentifier: (targetUser as any).tokenIdentifier
+    })
+
+    const updatedProject = await ctx.db.get(project._id)
+
+    return await buildLegacyProject(ctx, {
+      organization: context.organization,
+      project: updatedProject || project,
+      viewerMembership: context.viewerMembership,
+      viewerTokenIdentifier: context.identity.tokenIdentifier
+    })
+  }
+})
+
+export const getLegacyProjectInvitationUrl = query({
+  args: {
+    slug: v.string(),
+    projectId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw createError('Organization not found', 'not_found')
+    }
+
+    const project = await getOrganizationProjectById(ctx, context.organization._id, args.projectId)
+
+    if (!project) {
+      throw createError('Project not found', 'not_found')
+    }
+
+    if (!viewerCanManageProject(project, context.viewerMembership, context.identity.tokenIdentifier)) {
+      throw createError('Not allowed to view invitation URL', 'forbidden')
+    }
+
+    return buildLegacyProjectInvitationUrl(project)
+  }
+})
+
+export const resetLegacyProjectInvitationUrl = mutation({
+  args: {
+    slug: v.string(),
+    projectId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw createError('Organization not found', 'not_found')
+    }
+
+    const project = await getOrganizationProjectById(ctx, context.organization._id, args.projectId)
+
+    if (!project) {
+      throw createError('Project not found', 'not_found')
+    }
+
+    if (!viewerCanManageProject(project, context.viewerMembership, context.identity.tokenIdentifier)) {
+      throw createError('Not allowed to reset invitation URL', 'forbidden')
+    }
+
+    const inviteToken = generateToken()
+
+    await ctx.db.patch(project._id, {
+      inviteToken,
+      lastActivityAt: Date.now()
+    })
+
+    return buildLegacyProjectInvitationUrl({
+      ...project,
+      inviteToken
+    })
+  }
+})
+
+export const acceptLegacyProjectInvitationUrl = mutation({
+  args: {
+    slug: v.string(),
+    projectId: v.string(),
+    token: v.string()
+  },
+  handler: async (ctx, args) => {
+    const identity = await getViewerIdentity(ctx)
+    const [organization, user] = await Promise.all([
+      getOrganizationBySlug(ctx, args.slug),
+      getUserByTokenIdentifier(ctx, identity.tokenIdentifier)
+    ])
+
+    if (!organization) {
+      throw createError('Organization not found', 'not_found')
+    }
+
+    const project = await getOrganizationProjectById(ctx, organization._id, args.projectId)
+
+    if (!project || project.inviteToken !== args.token) {
+      throw createError('Project not found', 'not_found')
+    }
+
+    if (!user) {
+      throw createError('Viewer has not been provisioned', 'unauthorized')
+    }
+
+    let membership = await getOrganizationMembership(ctx, organization._id, identity.tokenIdentifier)
+
+    if (!membership || membership.discardedAt) {
+      membership = await createOrRestoreOrganizationMembership(ctx, {
+        organizationId: organization._id,
+        userTokenIdentifier: identity.tokenIdentifier,
+        role: 'guest'
+      })
+    }
+
+    await clearPendingAccessRecords(ctx, {
+      organizationId: organization._id,
+      userTokenIdentifier: identity.tokenIdentifier,
+      email: user.email || undefined
+    })
+
+    await createProjectMembershipRecord(ctx, {
+      organizationId: organization._id,
+      project,
+      userTokenIdentifier: identity.tokenIdentifier
+    })
+
+    await markProjectRead(ctx, {
+      organizationId: organization._id,
+      projectId: project._id,
+      organizationMembershipId: membership._id
+    })
+
+    return {}
+  }
+})
+
+export const createLegacyProjectDataExport = mutation({
+  args: {
+    slug: v.string(),
+    projectId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw createError('Organization not found', 'not_found')
+    }
+
+    const project = await getOrganizationProjectById(ctx, context.organization._id, args.projectId)
+
+    if (!project) {
+      throw createError('Project not found', 'not_found')
+    }
+
+    const viewerProjectMembership = await getViewerProjectMembership(ctx, project._id, context.identity.tokenIdentifier)
+
+    if (!viewerCanAccessProject(project, context.viewerMembership, context.identity.tokenIdentifier, !!viewerProjectMembership)) {
+      throw createError('Project not found', 'not_found')
+    }
+
+    return {}
+  }
+})
+
+export const getLegacyPublicProjectByToken = query({
+  args: {
+    token: v.string()
+  },
+  handler: async (ctx, args) => {
+    const project = await getProjectByInviteToken(ctx, args.token)
+
+    if (!project || project.archivedAt) {
+      return null
+    }
+
+    const organization = await ctx.db.get(project.organizationId)
+
+    if (!organization) {
+      return null
+    }
+
+    const identity = await ctx.auth.getUserIdentity()
+    const viewerMembership = identity
+      ? await getOrganizationMembership(ctx, organization._id, identity.tokenIdentifier)
+      : null
+
+    return {
+      id: project._id,
+      name: project.name,
+      accessory: project.accessory ?? null,
+      organization: buildLegacyPublicOrganization(organization, viewerMembership && !viewerMembership.discardedAt ? viewerMembership : null)
+    }
+  }
+})
+
 export const getLegacyProjectMemberships = query({
   args: {
     slug: v.string()
@@ -1345,17 +2455,22 @@ export const getLegacySyncProjects = query({
 
     return sortProjects(
       projects.filter((project: any) => !project.private || viewerProjectIds.has(project._id) || context.viewerMembership.role === 'admin')
-    ).map((project: any) => ({
-      id: project._id,
-      name: project.name,
-      accessory: project.accessory ?? null,
-      private: project.private,
-      is_general: project.isGeneral,
-      archived: !!project.archivedAt,
-      guests_count: 0,
-      message_thread_id: null,
-      recent_posts_count: posts.filter((post: any) => post.projectId === project._id).length
-    }))
+    ).map((project: any) => {
+      const projectMemberships = viewerProjectMemberships.filter((membership: any) => membership.projectId === project._id)
+      const projectMembershipCounts = getProjectMembershipCounts(projectMemberships)
+
+      return {
+        id: project._id,
+        name: project.name,
+        accessory: project.accessory ?? null,
+        private: project.private,
+        is_general: project.isGeneral,
+        archived: !!project.archivedAt,
+        guests_count: projectMembershipCounts.guestsCount,
+        message_thread_id: project.messageThreadId ?? null,
+        recent_posts_count: posts.filter((post: any) => post.projectId === project._id).length
+      }
+    })
   }
 })
 
@@ -1399,6 +2514,7 @@ export const createLegacyOnboardProjects = mutation({
       const projectId = await ctx.db.insert('projects', {
         organizationId: context.organization._id,
         creatorTokenIdentifier: context.identity.tokenIdentifier,
+        inviteToken: generateToken(),
         name: project.name.trim(),
         description: undefined,
         accessory: project.accessory?.trim() || undefined,

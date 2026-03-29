@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { deleteLegacyThreadOauthApplication } from '@/lib/convex/threads'
+import { detachLegacyThreadOauthApplication } from '@/lib/convex/collaboration'
 import { routeErrorResponse } from '@/lib/routeErrors'
 import { getRouteAccess, routeUnauthorizedResponse } from '@/lib/routeSession'
 
@@ -13,10 +13,10 @@ export async function DELETE(_: Request, { params }: { params: { orgSlug: string
 
   try {
     return NextResponse.json(
-      await deleteLegacyThreadOauthApplication(auth.accessToken, {
+      await detachLegacyThreadOauthApplication(auth.accessToken, {
         slug: params.orgSlug,
         threadId: params.threadId,
-        oauthApplicationId: params.id
+        id: params.id
       })
     )
   } catch (error) {

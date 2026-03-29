@@ -15,13 +15,25 @@ const clientId = process.env.CHANGELOG_CLIENT_ID
 const clientSecret = process.env.CHANGELOG_CLIENT_SECRET
 const installationId = process.env.CHANGELOG_INSTALLATION_ID
 
-const appOctokit = new Octokit({
-  authStrategy: createAppAuth,
-  auth: { appId, privateKey, clientId, clientSecret, installationId }
-})
+function getAppOctokit() {
+  if (!appId || !privateKey || !installationId) {
+    return null
+  }
+
+  return new Octokit({
+    authStrategy: createAppAuth,
+    auth: { appId, privateKey, clientId, clientSecret, installationId }
+  })
+}
 
 export async function getChangelog(): Promise<Changelog[]> {
   try {
+    const appOctokit = getAppOctokit()
+
+    if (!appOctokit) {
+      return []
+    }
+
     const { data } = await appOctokit.request('GET /repos/{owner}/{repo}/releases{?per_page,page}', {
       owner: 'campsite',
       repo: 'campsite',

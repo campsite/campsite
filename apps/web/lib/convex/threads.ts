@@ -10,6 +10,10 @@ export async function getLegacyThreads(accessToken: string, data: { slug: string
   return await callThreadFunction(accessToken, 'threads:getLegacyThreads', data)
 }
 
+export async function promoteLegacyThreadsCompat(accessToken: string, data: { slug: string }) {
+  return await callThreadFunction(accessToken, 'threads:promoteLegacyThreadsCompat', data)
+}
+
 export async function getLegacyThread(accessToken: string, data: { slug: string; threadId: string }) {
   return await callThreadFunction(accessToken, 'threads:getLegacyThreadById', data)
 }

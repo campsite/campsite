@@ -1,8 +1,10 @@
 import { v } from 'convex/values'
 
 import { mutation, query } from './_generated/server'
-import { buildLegacyMember, formatDate } from './legacy'
+import { buildLegacyMediaUrl, buildLegacyMember, formatDate } from './legacy'
 import { createNotificationRecord } from './notifications'
+import { buildLegacyProjectDisplayPreferences, getProjectDisplayPreferenceRecord } from './projectPreferences'
+import { getProjectUnreadForViewer } from './projectViews'
 import { buildWorkspaceState } from './workspace'
 
 const favoritableTypeValues = [
@@ -73,6 +75,55 @@ async function getProjectById(ctx: any, organizationId: any, projectId?: string 
   return projects.find((project: any) => project._id === projectId) ?? null
 }
 
+async function getProjectMemberships(ctx: any, projectId: string) {
+  return await ctx.db
+    .query('projectMemberships')
+    .withIndex('by_project_id', (q: any) => q.eq('projectId', projectId))
+    .collect()
+}
+
+async function getProjectPosts(ctx: any, organizationId: any, projectId: string) {
+  const posts = await ctx.db
+    .query('posts')
+    .withIndex('by_organization_id', (q: any) => q.eq('organizationId', organizationId))
+    .collect()
+
+  return posts.filter((post: any) => post.projectId === projectId)
+}
+
+function getProjectMembershipCounts(projectMemberships: any[]) {
+  const guestsCount = projectMemberships.filter((membership: any) => membership.role === 'guest').length
+
+  return {
+    guestsCount,
+    membersAndGuestsCount: projectMemberships.length,
+    membersCount: projectMemberships.length - guestsCount
+  }
+}
+
+async function getProjectCallRoomUrl(ctx: any, organizationSlug: string, organizationId: any, messageThreadId?: string | null) {
+  if (!messageThreadId) {
+    return null
+  }
+
+  const thread = await ctx.db
+    .query('messageThreads')
+    .withIndex('by_public_id', (q: any) => q.eq('publicId', messageThreadId))
+    .unique()
+
+  if (!thread || thread.organizationId !== organizationId || !thread.callRoomId) {
+    return null
+  }
+
+  const callRoom = await ctx.db.get(thread.callRoomId)
+
+  if (!callRoom || callRoom.organizationId !== organizationId) {
+    return null
+  }
+
+  return `/${organizationSlug}/calls/join/${callRoom.publicId}`
+}
+
 async function getPostById(ctx: any, organizationId: any, postId: string) {
   const posts = await ctx.db
     .query('posts')
@@ -91,12 +142,27 @@ async function getCommentById(ctx: any, organizationId: any, commentId: string) 
   return comments.find((comment: any) => comment._id === commentId) ?? null
 }
 
+async function getMessageById(ctx: any, organizationId: any, messageId: string) {
+  const message = await ctx.db
+    .query('messages')
+    .withIndex('by_public_id', (q: any) => q.eq('publicId', messageId))
+    .unique()
+
+  if (!message || message.organizationId !== organizationId) {
+    return null
+  }
+
+  return message
+}
+
 async function getSubjectRecord(ctx: any, organizationId: any, subjectType: string, subjectId: string) {
   switch (subjectType) {
     case 'Post':
       return await getPostById(ctx, organizationId, subjectId)
     case 'Comment':
       return await getCommentById(ctx, organizationId, subjectId)
+    case 'Message':
+      return await getMessageById(ctx, organizationId, subjectId)
     default:
       return null
   }
@@ -181,7 +247,47 @@ async function getSubjectProjectId(ctx: any, organizationId: any, subjectType: s
     return post?.projectId ?? undefined
   }
 
+  if (subjectType === 'Message') {
+    const message = await getMessageById(ctx, organizationId, subjectId)
+
+    if (!message) {
+      return undefined
+    }
+
+    const thread = await ctx.db.get(message.threadId)
+    return thread?.projectId ?? undefined
+  }
+
   return undefined
+}
+
+async function archiveNotificationsByInboxKey(
+  ctx: any,
+  params: {
+    organizationId: any
+    recipientTokenIdentifier: string
+    inboxKey: string
+  }
+) {
+  const notifications = await ctx.db
+    .query('notifications')
+    .withIndex('by_organization_and_recipient', (q: any) =>
+      q.eq('organizationId', params.organizationId).eq('recipientTokenIdentifier', params.recipientTokenIdentifier)
+    )
+    .collect()
+  const now = Date.now()
+
+  for (const notification of notifications) {
+    if (notification.inboxKey !== params.inboxKey || notification.archivedAt) {
+      continue
+    }
+
+    await ctx.db.patch(notification._id, {
+      activitySeen: true,
+      archivedAt: now,
+      readAt: notification.readAt ?? now
+    })
+  }
 }
 
 async function getFavoritesForUser(ctx: any, organizationId: any, tokenIdentifier: string) {
@@ -420,13 +526,41 @@ function buildFavoriteUrl(slug: string, favorite: any) {
 
 async function buildLegacyFavorite(ctx: any, slug: string, organizationId: any, favorite: any) {
   const project = favorite.favoritableType === 'Project' ? await getProjectById(ctx, organizationId, favorite.favoritableId) : null
-  const projectSubscriptionState =
-    project &&
-    (await getLegacyProjectSubscriptionState(ctx, {
-      organizationId,
-      tokenIdentifier: favorite.userTokenIdentifier,
-      projectId: project._id
-    }))
+  const viewerMembership = project ? await getMembership(ctx, organizationId, favorite.userTokenIdentifier) : null
+  const [projectSubscriptionState, projectViewerDisplayPreferences, unreadForViewer, projectCallRoomUrl, projectMemberships, projectPosts] =
+    await Promise.all([
+    project
+      ? getLegacyProjectSubscriptionState(ctx, {
+          organizationId,
+          tokenIdentifier: favorite.userTokenIdentifier,
+          projectId: project._id
+        })
+      : null,
+    project
+      ? getProjectDisplayPreferenceRecord(ctx, {
+          projectId: project._id,
+          organizationMembershipId: viewerMembership?._id
+        })
+      : null,
+    project
+      ? getProjectUnreadForViewer(ctx, {
+          organizationId,
+          projectId: project._id,
+          organizationMembershipId: viewerMembership?._id,
+          viewerTokenIdentifier: favorite.userTokenIdentifier,
+          messageThreadId: project.messageThreadId
+        })
+      : false,
+    project ? getProjectCallRoomUrl(ctx, slug, organizationId, project.messageThreadId) : null,
+    project ? getProjectMemberships(ctx, project._id) : Promise.resolve([]),
+    project ? getProjectPosts(ctx, organizationId, project._id) : Promise.resolve([])
+  ])
+  const viewerProjectMembership = projectMemberships.find(
+    (membership: any) => membership.userTokenIdentifier === favorite.userTokenIdentifier
+  )
+  const projectMembershipCounts = getProjectMembershipCounts(projectMemberships)
+  const contributorCount = new Set(projectPosts.map((post: any) => post.authorTokenIdentifier)).size
+  const canManage = !!project && !!viewerMembership && viewerMembership.role === 'admin'
 
   return {
     id: favorite._id,
@@ -451,44 +585,36 @@ async function buildLegacyFavorite(ctx: any, slug: string, organizationId: any, 
           archived: !!project.archivedAt,
           last_activity_at: new Date(project.lastActivityAt).toISOString(),
           slack_channel_id: project.slackChannelId ?? null,
-          posts_count: 0,
-          cover_photo_url: project.coverPhotoPath ?? null,
+          posts_count: projectPosts.length,
+          cover_photo_url: buildLegacyMediaUrl(project.coverPhotoPath) ?? null,
           url: `/${slug}/projects/${project._id}`,
           accessory: project.accessory ?? null,
           private: project.private,
           personal: project.personal,
           is_general: project.isGeneral,
           is_default: project.isDefault,
-          contributors_count: 0,
-          members_and_guests_count: 0,
-          members_count: 0,
-          guests_count: 0,
-          call_room_url: null,
-          message_thread_id: null,
+          contributors_count: contributorCount,
+          members_and_guests_count: projectMembershipCounts.membersAndGuestsCount,
+          members_count: projectMembershipCounts.membersCount,
+          guests_count: projectMembershipCounts.guestsCount,
+          call_room_url: projectCallRoomUrl,
+          message_thread_id: project.messageThreadId ?? null,
           organization_id: organizationId,
           viewer_has_favorited: true,
-          viewer_can_archive: false,
-          viewer_can_destroy: false,
-          viewer_can_unarchive: false,
-          viewer_can_update: false,
+          viewer_can_archive: canManage && !project.isGeneral,
+          viewer_can_destroy: canManage && !project.isGeneral,
+          viewer_can_unarchive: canManage,
+          viewer_can_update: canManage || project.creatorTokenIdentifier === favorite.userTokenIdentifier,
           viewer_has_subscribed: projectSubscriptionState?.viewer_has_subscribed ?? false,
           viewer_subscription: projectSubscriptionState?.viewer_subscription ?? 'none',
-          viewer_is_member: false,
-          unread_for_viewer: false,
+          viewer_is_member: !!viewerProjectMembership,
+          unread_for_viewer: unreadForViewer,
           slack_channel: null,
           type_name: 'project',
-          viewer_display_preferences: {
-            display_reactions: true,
-            display_attachments: true,
-            display_comments: true,
-            display_resolved: true
-          },
-          display_preferences: {
-            display_reactions: true,
-            display_attachments: true,
-            display_comments: true,
-            display_resolved: true
-          }
+          viewer_display_preferences: projectViewerDisplayPreferences
+            ? buildLegacyProjectDisplayPreferences(projectViewerDisplayPreferences)
+            : null,
+          display_preferences: buildLegacyProjectDisplayPreferences(project)
         }
       : null,
     message_thread: null
@@ -539,7 +665,7 @@ async function buildLegacyFollowUp(ctx: any, slug: string, organizationId: any, 
             accessory: project.accessory ?? null,
             private: project.private,
             archived: !!project.archivedAt,
-            message_thread_id: null
+            message_thread_id: project.messageThreadId ?? null
           }
         : null,
       resolved: false
@@ -837,6 +963,11 @@ export const deleteLegacyFollowUp = mutation({
     }
 
     await ctx.db.delete(followUp._id)
+    await archiveNotificationsByInboxKey(ctx, {
+      organizationId: context.organization._id,
+      recipientTokenIdentifier: context.identity.tokenIdentifier,
+      inboxKey: `${followUp.subjectType.toLowerCase()}:${followUp.subjectId}:follow_up`
+    })
 
     return {}
   }
@@ -998,14 +1129,20 @@ export const createLegacyReaction = mutation({
       getSubjectRecord(ctx, context.organization._id, args.subjectType, args.subjectId)
     ])
 
-    if (subject?.authorTokenIdentifier) {
+    const recipientTokenIdentifier = subject?.authorTokenIdentifier ?? subject?.senderTokenIdentifier
+
+    if (recipientTokenIdentifier) {
       const targetTitle =
-        args.subjectType === 'Post' ? subject.title || stripHtml(subject.descriptionHtml) : stripHtml(subject.bodyHtml)
+        args.subjectType === 'Post'
+          ? subject.title || stripHtml(subject.descriptionHtml)
+          : args.subjectType === 'Comment'
+            ? stripHtml(subject.bodyHtml)
+            : stripHtml(subject.content) || (subject.attachments?.length ? 'Attachment' : 'Message')
       const projectId = await getSubjectProjectId(ctx, context.organization._id, args.subjectType, args.subjectId)
 
       await createNotificationRecord(ctx, {
         organizationId: context.organization._id,
-        recipientTokenIdentifier: subject.authorTokenIdentifier,
+        recipientTokenIdentifier,
         actorTokenIdentifier: context.identity.tokenIdentifier,
         reason: 'author',
         inboxKey: `${args.subjectType.toLowerCase()}:${args.subjectId}:reaction`,

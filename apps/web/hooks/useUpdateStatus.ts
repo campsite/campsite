@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
+import { filter, isTruthy, uniqBy } from 'remeda'
 
 import { OrganizationMember, OrganizationsOrgSlugMembersMeStatusesPutRequest } from '@campsite/types'
 
@@ -49,6 +50,31 @@ export function useUpdateStatus() {
               pause_notifications: params.pause_notifications ?? false
             }
           })
+        },
+        {
+          query: {
+            queryKey: apiClient.organizations.getMembersMeStatuses().requestKey(org),
+            exact: true
+          },
+          updater: (old: OrganizationsOrgSlugMembersMeStatusesPutRequest[] = []) =>
+            uniqBy(
+              filter(
+                [
+                  {
+                    emoji: params.emoji ?? '',
+                    message: params.message ?? '',
+                    expiration_setting: params.expiration_setting ?? '30m',
+                    expires_at:
+                      params.expires_at ??
+                      (params.expiration_setting ? getExpiration(params.expiration_setting)?.toISOString() ?? null : null),
+                    pause_notifications: params.pause_notifications ?? false
+                  },
+                  ...old
+                ],
+                isTruthy
+              ),
+              (status) => status.message
+            )
         }
       ]
     }

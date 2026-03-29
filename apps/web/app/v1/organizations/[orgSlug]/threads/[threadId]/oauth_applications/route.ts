@@ -3,10 +3,11 @@ import { NextResponse } from 'next/server'
 import { OauthApplication } from '@campsite/types/generated'
 
 import {
+  attachLegacyThreadOauthApplication,
   getLegacyOauthApplications,
-  getLegacyOauthApplicationById
+  getLegacyOauthApplicationById,
+  getLegacyThreadOauthApplications
 } from '@/lib/convex/collaboration'
-import { createLegacyThreadOauthApplication, getLegacyThreadOauthApplications } from '@/lib/convex/threads'
 import { routeErrorResponse } from '@/lib/routeErrors'
 import { getRouteAccess, routeUnauthorizedResponse } from '@/lib/routeSession'
 
@@ -54,7 +55,7 @@ export async function POST(request: Request, { params }: { params: { orgSlug: st
     })
 
     return NextResponse.json(
-      await createLegacyThreadOauthApplication(auth.accessToken, {
+      await attachLegacyThreadOauthApplication(auth.accessToken, {
         slug: params.orgSlug,
         threadId: params.threadId,
         oauthApplicationId

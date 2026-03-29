@@ -26,6 +26,10 @@ export function buildLegacyMediaUrl(value?: string | null) {
   return value || null
 }
 
+function getViewerTimezone(user: { preferences?: Record<string, string> } | null | undefined) {
+  return user?.preferences?.timezone ?? null
+}
+
 export function formatDate(value?: number | null) {
   return value ? new Date(value).toISOString() : null
 }
@@ -77,7 +81,7 @@ export function buildLegacyUser(user: any) {
     integration: false,
     notifications_paused: isNotificationsPaused(user),
     notification_pause_expires_at: formatDate(user.notificationPauseExpiresAt),
-    timezone: null,
+    timezone: getViewerTimezone(user),
     logged_in: true,
     type_name: 'user'
   }
