@@ -13,10 +13,16 @@ const clientId = process.env.CHANGELOG_CLIENT_ID
 const clientSecret = process.env.CHANGELOG_CLIENT_SECRET
 const installationId = process.env.CHANGELOG_INSTALLATION_ID
 
-const appOctokit = new Octokit({
-  authStrategy: createAppAuth,
-  auth: { appId, privateKey, clientId, clientSecret, installationId }
-})
+function getAppOctokit() {
+  if (!appId || !privateKey || !installationId) {
+    return null
+  }
+
+  return new Octokit({
+    authStrategy: createAppAuth,
+    auth: { appId, privateKey, clientId, clientSecret, installationId }
+  })
+}
 
 interface GitHubRelease {
   id: number
@@ -26,6 +32,12 @@ interface GitHubRelease {
 }
 
 async function getLatestChangelog(): Promise<Changelog[] | null> {
+  const appOctokit = getAppOctokit()
+
+  if (!appOctokit) {
+    return null
+  }
+
   const { data } = await appOctokit.request('GET /repos/{owner}/{repo}/releases', {
     owner: 'campsite',
     repo: 'campsite',
@@ -43,10 +55,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).json(null)
   }
 
-  const latest_releases = await getLatestChangelog()
+  let latest_releases: Changelog[] | null = null
 
-  if (!latest_releases || latest_releases instanceof Error) {
-    return res.status(500).json({ message: 'Failed to find latest release' })
+  try {
+    latest_releases = await getLatestChangelog()
+  } catch {
+    latest_releases = null
   }
 
   res.setHeader('Cache-Control', 'max-age=0, s-maxage=86400')

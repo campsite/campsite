@@ -13,6 +13,7 @@ export async function getLegacyNotesPage(
     after?: string
     limit?: number
     q?: string
+    mode?: 'all' | 'for_me' | 'viewer'
     order?: {
       by: 'created_at' | 'last_activity_at'
       direction: 'asc' | 'desc'

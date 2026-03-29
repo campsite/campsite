@@ -2110,6 +2110,52 @@ export const getLegacyPostsPage = query({
   }
 })
 
+export const getLegacyPersonalDraftPostsPage = query({
+  args: {
+    slug: v.string(),
+    after: v.optional(v.string()),
+    limit: v.optional(v.number()),
+    order: v.optional(
+      v.object({
+        by: v.literal('last_activity_at'),
+        direction: v.union(v.literal('asc'), v.literal('desc'))
+      })
+    )
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw new Error('Organization not found')
+    }
+
+    const order = args.order ?? { by: 'last_activity_at' as const, direction: 'desc' as const }
+    const limit = Math.max(1, Math.min(args.limit ?? 20, 100))
+    const posts = sortPosts(
+      (await listOrganizationPosts(ctx, context.organization._id)).filter(
+        (post: any) => post.authorTokenIdentifier === context.identity.tokenIdentifier && !!post.draft
+      ),
+      order.by,
+      order.direction
+    ).slice(0, limit)
+
+    return {
+      data: await Promise.all(
+        posts.map((post: any) =>
+          buildLegacyPost(ctx, {
+            post,
+            organization: context.organization,
+            viewerMembership: context.viewerMembership,
+            viewerTokenIdentifier: context.identity.tokenIdentifier
+          })
+        )
+      ),
+      next_cursor: null,
+      prev_cursor: null
+    }
+  }
+})
+
 export const getLegacyMemberPostsPage = query({
   args: {
     slug: v.string(),

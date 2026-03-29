@@ -166,6 +166,23 @@ export async function getLegacyPostsPage(
   return await client.query(api.content.getLegacyPostsPage, data)
 }
 
+export async function getLegacyPersonalDraftPostsPage(
+  accessToken: string,
+  data: {
+    slug: string
+    after?: string
+    limit?: number
+    order?: {
+      by: 'last_activity_at'
+      direction: 'asc' | 'desc'
+    }
+  }
+) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.query(api.content.getLegacyPersonalDraftPostsPage, data)
+}
+
 export async function getLegacyMemberPostsPage(
   accessToken: string,
   data: {

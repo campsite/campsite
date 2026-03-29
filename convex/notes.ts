@@ -2402,6 +2402,7 @@ export const getLegacyNotesPage = action({
     after: v.optional(v.string()),
     limit: v.optional(v.number()),
     q: v.optional(v.string()),
+    mode: v.optional(v.union(v.literal('all'), v.literal('for_me'), v.literal('viewer'))),
     order: v.optional(
       v.object({
         by: v.union(v.literal('created_at'), v.literal('last_activity_at')),
@@ -2434,6 +2435,16 @@ export const getLegacyNotesPage = action({
       notes = notes.filter((note: any) => {
         const haystack = `${note.title} ${stripHtml(note.description_html)}`.toLowerCase()
         return haystack.includes(query)
+      })
+    }
+
+    if (args.mode === 'viewer') {
+      notes = notes.filter((note: any) => !!note.viewer_is_author)
+    }
+
+    if (args.mode === 'for_me') {
+      notes = notes.filter((note: any) => {
+        return !!note.viewer_is_author || !!note.project || !!note.viewer_has_favorited || note.follow_ups.length > 0
       })
     }
 
