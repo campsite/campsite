@@ -29,6 +29,10 @@ export function useEditorSync({ resourceId, resourceType, initialState }: Props)
   const [syncState, setSyncState] = useState<EditorSyncState>('connecting')
 
   const [provider] = useState(() => {
+    if (!SYNC_URL) {
+      return null
+    }
+
     let document: Y.Doc | undefined
 
     if (initialState) {
@@ -82,6 +86,11 @@ export function useEditorSync({ resourceId, resourceType, initialState }: Props)
   })
 
   useEffect(() => {
+    if (!provider) {
+      setSyncState('disconnected')
+      return
+    }
+
     if (!provider.isConnected) {
       provider.connect()
     }

@@ -13,6 +13,8 @@
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "catalog:",
+    "@types/node": "catalog:",
+    "convex": "catalog:",
     "prettier": "catalog:",
     "prettier-plugin-packagejson": "catalog:",
     "prettier-plugin-tailwindcss": "catalog:",
@@ -29,7 +31,8 @@
       "@types/react": "^18.0.0"
     },
     "patchedDependencies": {
-      "@radix-ui/react-popper": "patches/@radix-ui__react-popper.patch"
+      "@radix-ui/react-popper": "patches/@radix-ui__react-popper.patch",
+      "@workos-inc/authkit-nextjs@2.15.0": "patches/@workos-inc__authkit-nextjs@2.15.0.patch"
     }
   }
 }

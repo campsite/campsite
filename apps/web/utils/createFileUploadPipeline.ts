@@ -1,7 +1,6 @@
 import * as Sentry from '@sentry/nextjs'
 import { v4 as uuid } from 'uuid'
 
-import { IMGIX_DOMAIN } from '@campsite/config/index'
 import { uuidExpression } from '@campsite/regex'
 import { Attachment } from '@campsite/types/generated'
 
@@ -9,6 +8,7 @@ import { VALID_AUDIO_TYPES, VALID_IMAGE_TYPES, VALID_VIDEO_TYPES } from '@/compo
 import { handleFile } from '@/hooks/useUploadFile'
 import { getLottieThumbnailAndDuration } from '@/utils/getLottieThumbnailAndDuration'
 import { getVideoThumbnailAndDuration } from '@/utils/getVideoThumbnailAndDuration'
+import { resolveMediaUrl } from '@/utils/mediaUrl'
 import { fileIsLottie, generateImageValues } from '@/utils/transformFile'
 import { urlToHlsUrl } from '@/utils/urlToHlsUrl'
 
@@ -241,13 +241,17 @@ export async function createFileUploadPipeline({
     uploadPromises.push(
       handleFile({ file, type: file.type, resource: 'Post', orgSlug: scope as string }).then((path) => {
         if (path) {
-          onUpdate(optimisticId, { optimistic_file_path: path, url: `${IMGIX_DOMAIN}/${path}` })
+          const resolvedUrl = resolveMediaUrl(path)
+
+          onUpdate(optimisticId, { optimistic_file_path: path, url: resolvedUrl })
 
           // prefetch the hls video to kick off a transcription job
           if (attachment.video) {
-            const hlsUrl = urlToHlsUrl(`${IMGIX_DOMAIN}/${path}`)
+            const hlsUrl = urlToHlsUrl(resolvedUrl)
 
-            return fetch(hlsUrl, { method: 'HEAD' })
+            if (hlsUrl) {
+              return fetch(hlsUrl, { method: 'HEAD' })
+            }
           }
         }
       })

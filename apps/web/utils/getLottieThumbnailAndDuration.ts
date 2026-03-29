@@ -1,8 +1,12 @@
-import lottie from 'lottie-web/build/player/lottie_light'
-
 export async function getLottieThumbnailAndDuration(
   file: File
 ): Promise<{ preview: File; duration: number; width: number; height: number }> {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    throw new Error('Lottie previews can only be generated in the browser')
+  }
+
+  const { default: lottie } = await import('lottie-web/build/player/lottie_light')
+
   return new Promise<any>((resolve, reject) => {
     const src = URL.createObjectURL(file)
 

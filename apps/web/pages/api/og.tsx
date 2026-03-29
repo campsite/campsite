@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/alt-text */
 import { ImageResponse } from '@vercel/og'
 
-import { DEFAULT_SEO } from '@campsite/config'
+import { DEFAULT_SEO, WEB_URL } from '@campsite/config'
 
 export const config = {
   runtime: 'edge'
@@ -15,12 +15,7 @@ export default async function handler(request: Request) {
   const org = searchParams.get('org') || 'Campsite'
   const orgAvatar =
     searchParams.get('orgAvatar') ||
-    'https://campsite.imgix.net/o/cl3gijjgd001/a/99693eed-1e95-47ff-b68a-42e298182f40.png?fit=crop&h=56&w=56'
-
-  const [medium, bold] = await Promise.all([
-    await fetch(new URL('../../assets/Inter-Medium.ttf', import.meta.url)).then((res) => res.arrayBuffer()),
-    await fetch(new URL('../../assets/Inter-Bold.ttf', import.meta.url)).then((res) => res.arrayBuffer())
-  ])
+    new URL('/img/campsite-avatar-fallback.png', WEB_URL).toString()
 
   return new ImageResponse(
     (
@@ -56,7 +51,7 @@ export default async function handler(request: Request) {
               justifyContent: 'center',
               flexDirection: 'row',
               fontSize: 32,
-              fontFamily: '"Inter-Medium"',
+              fontWeight: 500,
               lineHeight: '56px',
               color: 'black'
             }}
@@ -76,7 +71,7 @@ export default async function handler(request: Request) {
             style={{
               display: 'flex',
               fontSize: 56,
-              fontFamily: '"Inter-Bold"',
+              fontWeight: 700,
               color: 'black',
               lineHeight: '1.2em',
               maxHeight: '3.6em',
@@ -91,19 +86,7 @@ export default async function handler(request: Request) {
     ),
     {
       width: 1200,
-      height: 630,
-      fonts: [
-        {
-          name: 'Inter-Medium',
-          data: medium,
-          style: 'normal'
-        },
-        {
-          name: 'Inter-Bold',
-          data: bold,
-          style: 'normal'
-        }
-      ]
+      height: 630
     }
   )
 }

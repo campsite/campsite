@@ -3,3 +3,5 @@ declare namespace JSX {
     'lottie-player': any
   }
 }
+
+declare module 'use-sound'

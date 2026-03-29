@@ -59,7 +59,7 @@
     "@sentry/nextjs": "^8.17.0",
     "jotai": "^2.0.3",
     "jotai-scope": "^0.4.1",
-    "next": "^14.2.5",
+    "next": "^14.2.26",
     "next-themes": "^0.2.1",
     "react": "^18.2.0",
     "react-hot-toast": "^2.4.0"

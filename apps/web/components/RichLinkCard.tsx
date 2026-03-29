@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/nextjs'
 
+import { WEB_URL } from '@campsite/config'
 import { parseCampsiteUrl } from '@campsite/editor'
 
 import { CallPreviewCard } from '@/components/PreviewCards/CallPreviewCard'
@@ -47,7 +48,10 @@ function isTwitterUrl(url: URL) {
 }
 
 function isCampsiteUrl(url: URL) {
-  return url.host === location.host || (url.host === 'app.campsite.co' && location.host === 'app.campsite.com')
+  const configuredHost = new URL(WEB_URL).host
+  const currentHost = typeof location !== 'undefined' ? location.host : null
+
+  return new Set([currentHost, configuredHost].filter(Boolean)).has(url.host)
 }
 
 export function RichLinkCard({

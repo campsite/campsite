@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import slugify from 'slugify'
 import { z } from 'zod'
 
+import { WEB_URL } from '@campsite/config'
 import { Button, cn, PencilIcon, Select, SelectTrigger, SelectValue, TextField, Tooltip, UIText } from '@campsite/ui'
 
 import { AvatarUploader } from '@/components/AvatarUploader'
@@ -53,6 +54,8 @@ const SOURCE_OPTIONS = [
   { value: 'campsite-email', label: 'Campsite email' },
   { value: OTHER_SELECTION, label: 'Other' }
 ]
+
+const WEB_HOST = new URL(WEB_URL).host
 
 function randomizeOptions(options: { value: string; label: string }[]) {
   const [firstOption, ...restOptions] = options
@@ -229,14 +232,14 @@ export function NewOrganizationForm() {
                   value={slug}
                   onChange={(value) => setValue('slug', value)}
                   additionalClasses='h-10'
-                  prefix='app.campsite.com/'
+                  prefix={`${WEB_HOST}/`}
                   placeholder='Required'
                   required
                   autoFocus
                 />
               ) : (
                 <span className='text-quaternary flex max-w-full items-center py-0.5 text-sm'>
-                  app.campsite.com/<span className='text-secondary truncate'>{slug}</span>
+                  {WEB_HOST}/<span className='text-secondary truncate'>{slug}</span>
                   {name.length > 0 && (
                     <Tooltip label='Change your URL'>
                       <button

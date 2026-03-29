@@ -2,7 +2,7 @@ import * as SettingsSection from 'components/SettingsSection'
 import toast from 'react-hot-toast'
 
 import { PublicOrganization } from '@campsite/types'
-import { Avatar, Button, LazyLoadingSpinner, Link, UIText, useCopyToClipboard } from '@campsite/ui'
+import { Avatar, Button, LazyLoadingSpinner, UIText, useCopyToClipboard } from '@campsite/ui'
 
 import { useGetOrganizationMemberships } from '@/hooks/useGetOrganizationMemberships'
 import { useGetPersonalCallRoom } from '@/hooks/useGetPersonalCallRoom'
@@ -17,15 +17,8 @@ export function PersonalCallLinks() {
       </SettingsSection.Header>
 
       <SettingsSection.Description>
-        Share these links with anyone or add them to scheduling tools,{' '}
-        <Link
-          className='text-blue-500 hover:underline'
-          href='https://www.campsite.com/changelog/2024-07-18-personal-meeting-links'
-          target='_blank'
-        >
-          like Notion Calendar and Calendly
-        </Link>
-        . Whoever clicks them will join your call, no Campsite account required.
+        Share these links with anyone or add them to scheduling tools like Notion Calendar and Calendly. Whoever clicks
+        them will join your call, no Campsite account required.
       </SettingsSection.Description>
 
       <SettingsSection.Separator />

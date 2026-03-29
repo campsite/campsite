@@ -1,8 +1,7 @@
-const RAILS_API_URL = new URLSearchParams(location.search).get('API_URL')
-
 function postProductLog({ name, data, session_id, user_id }) {
-  fetch(`${RAILS_API_URL}/v1/product_logs`, {
+  return fetch('/v1/product_logs', {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json', 'X-Campsite-PWA': true },
     body: JSON.stringify({
       events: [{ name, data, session_id, user_id, log_ts: new Date().getTime() / 1000 }]
@@ -86,17 +85,20 @@ self.addEventListener('notificationclick', function (event) {
 
 self.addEventListener('pushsubscriptionchange', function (event) {
   try {
+    if (!event.newSubscription) return
+
     const conv = (val) => btoa(String.fromCharCode.apply(null, new Uint8Array(val)))
 
     event.waitUntil(
-      fetch(`${RAILS_API_URL}/v1/push_subscriptions`, {
+      fetch('/v1/push_subscriptions', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          old_endpoint: changeEvent.oldSubscription ? changeEvent.oldSubscription.endpoint : null,
-          new_endpoint: changeEvent.newSubscription ? changeEvent.newSubscription.endpoint : null,
-          p256dh: changeEvent.newSubscription ? conv(changeEvent.newSubscription.getKey('p256dh')) : null,
-          auth: changeEvent.newSubscription ? conv(changeEvent.newSubscription.getKey('auth')) : null
+          old_endpoint: event.oldSubscription ? event.oldSubscription.endpoint : null,
+          new_endpoint: event.newSubscription.endpoint,
+          p256dh: conv(event.newSubscription.getKey('p256dh')),
+          auth: conv(event.newSubscription.getKey('auth'))
         })
       })
     )

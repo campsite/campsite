@@ -1,11 +1,21 @@
-const WEB_URL_PROD = 'https://app.campsite.com'
-const WEB_URL_DEV = 'http://app.campsite.test:3000'
+const DEFAULT_WEB_URL_PROD = 'https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app'
+const WEB_URL_PROD = stripTrailingSlash(
+  firstDefined(
+    process.env.NEXT_PUBLIC_WEB_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : undefined,
+    DEFAULT_WEB_URL_PROD
+  ) as string
+)
+const WEB_URL_DEV = stripTrailingSlash(firstDefined(process.env.NEXT_PUBLIC_WEB_URL, 'http://localhost:3000') as string)
 
-const SITE_URL_PROD = 'https://www.campsite.com'
-const SITE_URL_DEV = 'http://campsite.test:3003'
+const SITE_URL_PROD = WEB_URL_PROD
+const SITE_URL_DEV = WEB_URL_DEV
 
-const SYNC_URL_PROD = 'wss://sync.campsite.com'
-const SYNC_URL_DEV = 'ws://localhost:9000'
+const SYNC_URL_DEV = firstDefined(process.env.NEXT_PUBLIC_SYNC_URL, 'ws://localhost:9000') as string
+
+const RAILS_API_URL_DEV = WEB_URL_DEV
+
+const RAILS_AUTH_URL_DEV = WEB_URL_DEV
 
 export const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 export const SCOPE_COOKIE_NAME = 'scope'
@@ -13,28 +23,46 @@ export const POLL_OPTION_DESCRIPTION_LENGTH = 32
 
 export const IS_NGROK = !!process.env.NEXT_PUBLIC_IS_NGROK
 
-export const WEB_URL = IS_PRODUCTION ? WEB_URL_PROD : process.env.NEXT_PUBLIC_WEB_URL || WEB_URL_DEV
-export const SITE_URL = IS_PRODUCTION ? SITE_URL_PROD : SITE_URL_DEV
-export const SYNC_URL = IS_PRODUCTION ? SYNC_URL_PROD : process.env.NEXT_PUBLIC_SYNC_URL || SYNC_URL_DEV
+function firstDefined(...values: Array<string | undefined>) {
+  return values.find((value) => !!value)
+}
+
+function stripTrailingSlash(value: string) {
+  return value.replace(/\/$/, '')
+}
+
+export const WEB_URL = firstDefined(process.env.NEXT_PUBLIC_WEB_URL, IS_PRODUCTION ? WEB_URL_PROD : WEB_URL_DEV) as string
+export const SITE_URL = firstDefined(
+  process.env.NEXT_PUBLIC_SITE_URL,
+  process.env.NEXT_PUBLIC_WEB_URL,
+  IS_PRODUCTION ? SITE_URL_PROD : SITE_URL_DEV
+) as string
+export const SYNC_URL = firstDefined(process.env.NEXT_PUBLIC_SYNC_URL, IS_PRODUCTION ? undefined : SYNC_URL_DEV) || ''
 
 export const DESKTOP_APP_PROTOCOL = IS_PRODUCTION ? 'campsite://' : 'campsite-dev://'
 export const LAST_CLIENT_JS_BUILD_ID_LS_KEY = 'latest-js-time'
 
-export const RAILS_API_URL = IS_PRODUCTION
-  ? 'https://api.campsite.com'
-  : process.env.NEXT_PUBLIC_API_URL || 'http://api.campsite.test:3001'
+export const RAILS_API_URL = firstDefined(
+  process.env.NEXT_PUBLIC_API_URL,
+  process.env.NEXT_PUBLIC_WEB_URL,
+  WEB_URL,
+  IS_PRODUCTION ? WEB_URL_PROD : RAILS_API_URL_DEV
+) as string
 
-const RAILS_AUTH_URL_PROD_COM = 'https://auth.campsite.com'
-
-export const RAILS_AUTH_URL = IS_PRODUCTION
-  ? RAILS_AUTH_URL_PROD_COM
-  : process.env.NEXT_PUBLIC_AUTH_URL || 'http://auth.campsite.test:3001'
+export const RAILS_AUTH_URL = firstDefined(
+  process.env.NEXT_PUBLIC_AUTH_URL,
+  process.env.NEXT_PUBLIC_WEB_URL,
+  WEB_URL,
+  IS_PRODUCTION ? WEB_URL_PROD : RAILS_AUTH_URL_DEV
+) as string
 
 /*
   Not using an env variable because we use this variable in the browser, which
   requires extra config with Next.js to send env variables to the browser.
 */
-export const IMGIX_DOMAIN = IS_PRODUCTION ? 'https://campsite.imgix.net' : 'https://campsite-dev.imgix.net'
+export const IMGIX_DOMAIN = stripTrailingSlash(
+  firstDefined(process.env.NEXT_PUBLIC_MEDIA_BASE_URL, process.env.NEXT_PUBLIC_WEB_URL, WEB_URL) as string
+)
 
 export const FIGMA_PLUGIN_URL = 'https://www.figma.com/community/plugin/1108886817260186751'
 export const ZAPIER_APP_URL = 'https://zapier.com/apps/campsite/integrations'
@@ -48,12 +76,10 @@ export const LINEAR_CLIENT_ID = IS_PRODUCTION ? LINEAR_PROD_CLIENT_ID : LINEAR_D
 export const ONBOARDING_STEP_KEY = 'onboardingStep'
 export const ONBOARDING_SHARED_POSTS_KEY = 'onboardingPostIds'
 
-export const PUSHER_KEY = IS_PRODUCTION ? '1301e1180de87095b1c0' : '874a1de2f18896929939'
-export const PUSHER_APP_CLUSTER = 'us3'
+export const PUSHER_KEY = firstDefined(process.env.NEXT_PUBLIC_PUSHER_KEY, '') as string
+export const PUSHER_APP_CLUSTER = firstDefined(process.env.NEXT_PUBLIC_PUSHER_APP_CLUSTER, 'us3') as string
 
-// Key is generated from the VAPID keys in the Rails app but without padding ("=")
-export const WEB_PUSH_PUBLIC_KEY =
-  'BF151mIoXtZOsN_515tWb1ykezZZn1HIkDP-fwRjhPOyiKl29G4WwEvFWyxwlLuN0YE_TvyIcx5liEctScKX3nI'
+export const WEB_PUSH_PUBLIC_KEY = firstDefined(process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY, '') as string
 
 const DEFAULT_SEO_TITLE = 'Campsite — Work communication for distributed teams'
 const DEFAULT_SEO_DESCRIPTION =

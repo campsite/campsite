@@ -13,7 +13,7 @@ interface UrlProps {
 export function signinUrl({ inviteToken, from }: UrlProps = {}): string {
   const url = new URL(RAILS_AUTH_URL)
 
-  url.pathname = '/sign-in'
+  url.pathname = '/login'
 
   if (inviteToken) {
     url.searchParams.append('token', inviteToken)
@@ -51,11 +51,8 @@ export function reauthorizeSSOUrl({
   from: string
   desktop: boolean
 }): string {
-  const url = new URL(RAILS_AUTH_URL)
-
-  url.pathname = '/sign-in/sso/reauthorize'
+  const url = new URL(signinUrl({ from }))
   url.searchParams.append('org_slug', orgSlug)
-  url.searchParams.append('from', from)
   if (desktop) url.searchParams.append('desktop', 'true')
 
   return url.toString()

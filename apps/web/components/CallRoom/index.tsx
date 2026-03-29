@@ -40,5 +40,9 @@ export function CallRoom({ callRoomId }: Props) {
     return <FullPageLoading />
   }
 
+  if (!callRoom.viewer_token) {
+    return <FullPageError message='Calls are not configured yet.' />
+  }
+
   return <FullPageActiveCallContainer />
 }

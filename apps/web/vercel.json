@@ -5,6 +5,6 @@
   "git": {
     "deploymentEnabled": false
   },
-  "buildCommand": "cd ../.. && npx turbo run build --filter=@campsite/web",
-  "installCommand": "pnpm install --prefix=../.."
+  "buildCommand": "npx turbo run build --filter=@campsite/web",
+  "installCommand": "pnpm install"
 }
