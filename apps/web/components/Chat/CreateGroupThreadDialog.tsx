@@ -85,6 +85,7 @@ function GroupContent({ onSuccess, onCancel }: { onSuccess: (thread: MessageThre
       if (a.role !== 'guest' && b.role === 'guest') return -1
       return 0
     }
+
     return members
       .filter((member) => member.user.id !== currentUser?.id)
       .filter((member) => !addedMemberIds.has(member.user.id))
@@ -104,6 +105,7 @@ function GroupContent({ onSuccess, onCancel }: { onSuccess: (thread: MessageThre
       event.preventDefault()
       const hasTitle = !!title.length
       const hasSpecificMembers = visibility === 'specific' && !!selectedMembers.length
+
       if (hasTitle && (visibility === 'all' || visibility === 'personal' || hasSpecificMembers)) {
         handleSubmit(event)
       }

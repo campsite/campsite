@@ -1,127 +1,31 @@
-import { KeyboardEvent, useMemo, useState } from 'react'
-import { atom, useAtom, useSetAtom } from 'jotai'
+import { useState } from 'react'
 import { useRouter } from 'next/router'
-import pluralize from 'pluralize'
-import { OnChangeValue } from 'react-select'
 
-import { MessageThread, OauthApplication, SyncOrganizationMember } from '@campsite/types'
-import {
-  Avatar,
-  Button,
-  ChevronRightIcon,
-  Command,
-  PlusIcon,
-  RadioGroup,
-  RadioGroupItem,
-  SearchIcon,
-  TextField,
-  UIText
-} from '@campsite/ui'
+import { OauthApplication, SyncOrganizationMember } from '@campsite/types'
+import { Avatar, Button, Command, SearchIcon, UIText } from '@campsite/ui'
 import { HighlightedCommandItem } from '@campsite/ui/Command'
 import * as Dialog from '@campsite/ui/src/Dialog'
-import { isMetaEnter } from '@campsite/ui/src/utils'
 
 import { AppBadge } from '@/components/AppBadge'
 import { GuestBadge } from '@/components/GuestBadge'
-import {
-  OrganizationMemberMultiSelect,
-  OrganizationMemberMultiSelectOptionType,
-  organizationMemberToMultiSelectOption
-} from '@/components/OrganizationMember/OrganizationMemberMultiSelect'
 import { InvitePeopleButton } from '@/components/People/InvitePeopleButton'
 import { useScope } from '@/contexts/scope'
-import { useCreateThread } from '@/hooks/useCreateThread'
-import { useGetCurrentOrganization } from '@/hooks/useGetCurrentOrganization'
-import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
 import { useGetOauthApplications } from '@/hooks/useGetOauthApplications'
 import { useSyncedMembers } from '@/hooks/useSyncedMembers'
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onCreate?: (thread: MessageThread) => void
 }
 
-type Step = 'dm' | 'group'
-type Visibility = 'all' | 'specific' | 'personal'
-
-const step = atom<Step>('dm')
-const titleAtom = atom<string>('')
-const visibilityAtom = atom<Visibility>('specific')
-const membersAtom = atom<SyncOrganizationMember[]>([])
-
-const createGroupChatAtom = atom(
-  (get) => ({
-    step: get(step),
-    title: get(titleAtom),
-    visibility: get(visibilityAtom),
-    members: get(membersAtom),
-    memberIds: get(membersAtom).map((member) => member.id)
-  }),
-  (_get, set, action: Action) => {
-    switch (action.type) {
-      case 'set-step':
-        set(step, action.payload)
-        break
-      case 'set-title':
-        set(titleAtom, action.payload)
-        break
-      case 'set-visibility':
-        set(visibilityAtom, action.payload)
-        break
-      case 'set-members':
-        set(membersAtom, action.payload)
-        break
-      case 'reset':
-        set(step, 'dm')
-        set(titleAtom, '')
-        set(visibilityAtom, 'all')
-        set(membersAtom, [])
-        break
-      default:
-        break
-    }
-  }
-)
-
-type Action =
-  | { type: 'set-step'; payload: Step }
-  | { type: 'set-title'; payload: string }
-  | { type: 'set-visibility'; payload: Visibility }
-  | { type: 'set-members'; payload: SyncOrganizationMember[] }
-  | { type: 'reset' }
-
 export function CreateChatThreadDialog({ open, onOpenChange }: Props) {
-  const router = useRouter()
-  const { scope } = useScope()
-  const [state, dispatch] = useAtom(createGroupChatAtom)
-  const title = state.step === 'dm' ? 'New chat' : 'New group chat'
-
-  function handleOpenChange(value: boolean) {
-    if (!value) dispatch({ type: 'reset' })
-
-    onOpenChange(value)
-  }
-
   return (
-    <Dialog.Root open={open} onOpenChange={handleOpenChange} size='lg' align='top' disableDescribedBy>
+    <Dialog.Root open={open} onOpenChange={onOpenChange} size='lg' align='top' disableDescribedBy>
       <Dialog.Header>
-        <Dialog.Title>{title}</Dialog.Title>
+        <Dialog.Title>New chat</Dialog.Title>
       </Dialog.Header>
 
-      {open && state.step === 'dm' && (
-        <DMStep onSelect={() => handleOpenChange(false)} onCancel={() => handleOpenChange(false)} />
-      )}
-
-      {open && state.step === 'group' && (
-        <GroupStep
-          onSuccess={(thread) => {
-            handleOpenChange(false)
-
-            router.push(`/${scope}/chat/${thread.id}`)
-          }}
-        />
-      )}
+      {open && <DMStep onSelect={() => onOpenChange(false)} onCancel={() => onOpenChange(false)} />}
     </Dialog.Root>
   )
 }
@@ -130,7 +34,6 @@ function DMStep({ onSelect, onCancel }: { onSelect: () => void; onCancel: () => 
   const router = useRouter()
   const { scope } = useScope()
   const [query, setQuery] = useState('')
-  const dispatch = useSetAtom(createGroupChatAtom)
   const { members: allOrgMembers } = useSyncedMembers({ excludeCurrentUser: true })
   const { data: allOauthApplications } = useGetOauthApplications()
   const guests = allOrgMembers.filter((member) => member.role === 'guest')
@@ -140,14 +43,11 @@ function DMStep({ onSelect, onCancel }: { onSelect: () => void; onCancel: () => 
 
   function onSelectMember(member: SyncOrganizationMember) {
     onSelect()
-    dispatch({ type: 'reset' })
-
     router.push(`/${scope}/chat/new?username=${member.user.username}`)
   }
+
   function onSelectOauthApplication(app: OauthApplication) {
     onSelect()
-    dispatch({ type: 'reset' })
-
     router.push(`/${scope}/chat/new?oauth_application_id=${app.id}`)
   }
 
@@ -214,179 +114,6 @@ function DMStep({ onSelect, onCancel }: { onSelect: () => void; onCancel: () => 
             Cancel
           </Button>
         </Dialog.LeadingActions>
-      </Dialog.Footer>
-    </>
-  )
-}
-
-function GroupStep({ onSuccess }: { onSuccess: (thread: MessageThread) => void }) {
-  const { data: currentOrganization } = useGetCurrentOrganization()
-  const [state, dispatch] = useAtom(createGroupChatAtom)
-  const { data: currentUser } = useGetCurrentUser()
-  const { members } = useSyncedMembers()
-  const isOnlyOrgMember = members.length === 1
-  const allOrgMembers = members.filter((member) => member.role !== 'guest')
-
-  const createThread = useCreateThread()
-
-  const MEMBER_IDS = {
-    all: allOrgMembers.map((member) => member.id),
-    specific: state.memberIds,
-    personal: []
-  }
-
-  async function handleSubmit(e: any) {
-    e.preventDefault()
-
-    createThread.mutate(
-      {
-        group: true,
-        title: state.title,
-        member_ids: MEMBER_IDS[state.visibility],
-        attachments: []
-      },
-
-      {
-        onSuccess
-      }
-    )
-  }
-
-  const options: OrganizationMemberMultiSelectOptionType[] = useMemo(() => {
-    const addedMemberIds = new Set(state.members.map((member) => member.id))
-
-    const guestsToBottom = (a: SyncOrganizationMember, b: SyncOrganizationMember) => {
-      if (a.role === 'guest' && b.role !== 'guest') return 1
-      if (a.role !== 'guest' && b.role === 'guest') return -1
-      return 0
-    }
-
-    return members
-      .filter((member) => member.user.id !== currentUser?.id)
-      .filter((member) => !addedMemberIds.has(member.user.id))
-      .sort(guestsToBottom)
-      .map((member) => organizationMemberToMultiSelectOption(member))
-  }, [members, state.members, currentUser?.id])
-
-  function handleChange(newValue: OnChangeValue<OrganizationMemberMultiSelectOptionType, true>) {
-    if (newValue === null) return
-
-    dispatch({ type: 'set-members', payload: newValue.map((o) => o.member) })
-  }
-
-  const value = state.members.map((member) => organizationMemberToMultiSelectOption(member))
-
-  function onKeyDownCapture(event: KeyboardEvent<HTMLInputElement>) {
-    if (isMetaEnter(event)) {
-      event.preventDefault()
-      const hasTitle = !!state.title.length
-      const hasSpecificMembers = state.visibility === 'specific' && !!state.members.length
-
-      if (hasTitle && (state.visibility === 'all' || state.visibility === 'personal' || hasSpecificMembers)) {
-        handleSubmit(event)
-      }
-    }
-  }
-
-  return (
-    <>
-      <Dialog.Content className='overflow-visible pt-1'>
-        <div className='flex flex-col gap-5'>
-          <TextField
-            type='text'
-            minLength={2}
-            maxLength={32}
-            autoFocus={!state.title}
-            value={state.title}
-            placeholder='Group name (optional)'
-            onChange={(payload) => dispatch({ type: 'set-title', payload })}
-            helpText='Name this group to make it easy for people to recognize.'
-            onKeyDownCapture={onKeyDownCapture}
-          />
-
-          <div className='flex flex-col gap-3'>
-            {isOnlyOrgMember && (
-              <div className='bg-tertiary flex flex-col gap-2 rounded-lg p-3'>
-                <UIText secondary>
-                  You are the only member of{' '}
-                  <span className='text-primary font-semibold'>{currentOrganization?.name}</span>. After you invite
-                  people, you can add them to this group.
-                </UIText>
-
-                <InvitePeopleButton label='Invite your team' />
-              </div>
-            )}
-
-            {!isOnlyOrgMember && (
-              <RadioGroup
-                loop
-                aria-label='Default channel membership'
-                defaultValue={state.visibility}
-                className='flex flex-col gap-3'
-                orientation='vertical'
-                onValueChange={(payload: Visibility) => dispatch({ type: 'set-visibility', payload })}
-              >
-                <div className='flex flex-col gap-1.5'>
-                  <RadioGroupItem id='specific' value='specific'>
-                    <UIText secondary>Add specific people</UIText>
-                  </RadioGroupItem>
-                  {state.visibility === 'specific' && (
-                    <div className='min-h-10 pl-8'>
-                      <OrganizationMemberMultiSelect
-                        openMenuOnFocus
-                        value={value}
-                        options={options}
-                        onChange={handleChange}
-                        className='bg-quaternary flex-1 rounded-md border'
-                        placeholder='Add people...'
-                        loadingMessage={() => 'Searching people...'}
-                        noOptionsMessage={() => 'Nobody found'}
-                      />
-                    </div>
-                  )}
-                </div>
-                <RadioGroupItem id='all' value='all'>
-                  <UIText secondary>
-                    Add {allOrgMembers.length > 1 && 'all'} {pluralize('member', allOrgMembers.length, true)} of{' '}
-                    <span className='text-primary font-semibold'>{currentOrganization?.name}</span>
-                  </UIText>
-                  {members.some((member) => member.role === 'guest') && (
-                    <UIText size='text-xs' tertiary>
-                      Excludes guests
-                    </UIText>
-                  )}
-                </RadioGroupItem>
-                <RadioGroupItem id='personal' value='personal'>
-                  <UIText secondary>Just for me</UIText>
-                </RadioGroupItem>
-
-                {state.visibility === 'personal' && (
-                  <div className='-mt-3 pl-8'>
-                    <UIText tertiary>You can add more people to this group chat later.</UIText>
-                  </div>
-                )}
-              </RadioGroup>
-            )}
-          </div>
-        </div>
-      </Dialog.Content>
-
-      <Dialog.Footer>
-        <Dialog.LeadingActions>
-          <Button variant='flat' onClick={() => dispatch({ type: 'set-step', payload: 'dm' })}>
-            Back
-          </Button>
-        </Dialog.LeadingActions>
-        <Dialog.TrailingActions>
-          <Button
-            disabled={state.visibility === 'specific' && !state.members.length}
-            variant='primary'
-            onClick={handleSubmit}
-            loading={createThread.isPending}
-          >
-            Create
-          </Button>
-        </Dialog.TrailingActions>
       </Dialog.Footer>
     </>
   )
