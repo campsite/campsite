@@ -1,9 +1,11 @@
+import { api } from '@/convex/_generated/api'
 import { getConvexServerClient } from './server'
 
 async function callThreadFunction<T>(accessToken: string, name: string, args: Record<string, unknown>) {
   const client = getConvexServerClient(accessToken)
+  const fn = name.split(':').reduce((obj: any, key) => obj?.[key], api)
 
-  return (await (client as any).function(name, undefined, args)) as T
+  return (await client.action(fn, args)) as T
 }
 
 export async function getLegacyThreads(accessToken: string, data: { slug: string }) {

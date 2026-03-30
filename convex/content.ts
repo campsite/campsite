@@ -2524,7 +2524,7 @@ export const createLegacyPost = mutation({
     }
 
     if (args.project_id) {
-      const project = await ctx.db.get(args.project_id as any)
+      const project = (await ctx.db.get(args.project_id as any)) as { _id: any; private: boolean } | null
 
       if (project && !project.private) {
         const existingMembership = await ctx.db

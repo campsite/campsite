@@ -6,9 +6,9 @@
   "authKit": {
     "dev": {
         "configure": {
-        "redirectUris": ["http://localhost:3000/callback"],
-        "appHomepageUrl": "http://localhost:3000/",
-        "corsOrigins": ["http://localhost:3000"]
+        "redirectUris": ["http://localhost:3000/callback", "https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app/callback"],
+        "appHomepageUrl": "https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app/",
+        "corsOrigins": ["http://localhost:3000", "https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app"]
       },
       "localEnvVars": {
         "WORKOS_CLIENT_ID": "${authEnv.WORKOS_CLIENT_ID}",

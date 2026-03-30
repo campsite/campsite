@@ -548,17 +548,17 @@ async function getThreadByIdOrThrow(ctx: any, organizationId: string, threadId: 
 
 async function getLinkedProjectForThread(ctx: any, organizationId: string, thread: StoredThread) {
   if (thread.projectId) {
-    const project = await ctx.db.get(thread.projectId)
+    const project = await ctx.runQuery((internal as any).threads.getProjectById, { projectId: thread.projectId })
 
     if (project && project.organizationId === organizationId) {
       return project
     }
   }
 
-  return await ctx.db
-    .query('projects')
-    .withIndex('by_message_thread_id', (q: any) => q.eq('messageThreadId', thread.id))
-    .unique()
+  return await ctx.runQuery((internal as any).threads.getProjectByMessageThreadId, {
+    organizationId,
+    messageThreadId: thread.id
+  })
 }
 
 async function buildLegacyThread(
@@ -1076,7 +1076,8 @@ export const upsertMessageThreadRow = internalMutation({
   },
   handler: async (ctx, args) => {
     const existing = await getMessageThreadRowByPublicIdForOrg(ctx, args.organizationId, args.threadPublicId)
-    const data = JSON.parse(args.dataJson)
+    const raw = JSON.parse(args.dataJson)
+    const data = Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== null))
     const callRoom =
       data.callRoomId && typeof data.callRoomId === 'string'
         ? await ctx.db
@@ -1086,15 +1087,15 @@ export const upsertMessageThreadRow = internalMutation({
         : null
     const payload = {
       ...data,
-      callRoomId: callRoom?._id ?? data.callRoomId
+      callRoomId: callRoom?._id || undefined
     }
 
     if (existing) {
-      await ctx.db.patch(existing._id, payload)
+      await (ctx.db as any).patch(existing._id, payload)
       return existing._id
     }
 
-    return await ctx.db.insert('messageThreads', {
+    return await (ctx.db as any).insert('messageThreads', {
       organizationId: args.organizationId,
       publicId: args.threadPublicId,
       ...payload
@@ -1190,11 +1191,11 @@ export const upsertMessageThreadMembershipRow = internalMutation({
     }
 
     if (existing) {
-      await ctx.db.patch(existing._id, payload)
+      await (ctx.db as any).patch(existing._id, payload)
       return existing._id
     }
 
-    return await ctx.db.insert('messageThreadMemberships', payload)
+    return await (ctx.db as any).insert('messageThreadMemberships', payload)
   }
 })
 
@@ -1312,7 +1313,8 @@ export const upsertMessageRow = internalMutation({
       .query('messages')
       .withIndex('by_public_id', (q: any) => q.eq('publicId', args.messagePublicId))
       .unique()
-    const data = JSON.parse(args.dataJson)
+    const raw = JSON.parse(args.dataJson)
+    const data = Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== null))
     const senderMembership = data.senderTokenIdentifier
       ? await ctx.db
           .query('organizationMemberships')
@@ -1341,15 +1343,15 @@ export const upsertMessageRow = internalMutation({
       publicId: args.messagePublicId,
       senderMembershipId: senderMembership?._id,
       replyToMessageId: replyTo?._id,
-      callId: call?._id ?? data.callId
+      callId: call?._id || undefined
     }
 
     if (existing) {
-      await ctx.db.patch(existing._id, payload)
+      await (ctx.db as any).patch(existing._id, payload)
       return existing._id
     }
 
-    return await ctx.db.insert('messages', payload)
+    return await (ctx.db as any).insert('messages', payload)
   }
 })
 
@@ -1482,6 +1484,23 @@ export const deleteMessageReactions = internalMutation({
     }
 
     return {}
+  }
+})
+
+export const getProjectById = internalQuery({
+  args: { projectId: v.id('projects') },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.projectId)
+  }
+})
+
+export const getProjectByMessageThreadId = internalQuery({
+  args: { organizationId: v.string(), messageThreadId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('projects')
+      .withIndex('by_message_thread_id', (q: any) => q.eq('messageThreadId', args.messageThreadId))
+      .unique()
   }
 })
 

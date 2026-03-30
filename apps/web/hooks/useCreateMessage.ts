@@ -98,6 +98,12 @@ function useCreateMessageCallbacks() {
             ...old,
             threads: [existingThread, ...filtered]
           }
+        } else {
+          // new thread — add it to the top of the list
+          return {
+            ...old,
+            threads: [data.message_thread, ...old.threads]
+          }
         }
       })
 
