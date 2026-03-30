@@ -21,8 +21,6 @@ export async function GET(request: Request, context: Context) {
   const client = getCallsCompatClient(auth.accessToken)
 
   try {
-    await client.promoteCompatCalls({ slug: orgSlug })
-
     return NextResponse.json(
       await client.getCallsPage({
         slug: orgSlug,
