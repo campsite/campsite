@@ -11,6 +11,7 @@ function getErrorMessage(error: unknown) {
 export function routeErrorResponse(error: unknown) {
   const rawMessage = getErrorMessage(error)
 
+  // eslint-disable-next-line no-console
   console.error('[routeErrorResponse]', rawMessage, error)
 
   const [code, ...rest] = rawMessage.split(':')

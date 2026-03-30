@@ -62,6 +62,7 @@ export async function getRouteAccess(): Promise<{ accessToken: string } | null> 
   try {
     await ensureWorkspace(accessToken, user)
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('[getRouteAccess] ensureWorkspace failed:', err)
     throw err
   }

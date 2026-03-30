@@ -1,3 +1,5 @@
+import { api } from '@/convex/_generated/api'
+
 import { toAbsoluteWebUrl } from './compat'
 import { getConvexServerClient } from './server'
 
@@ -13,12 +15,6 @@ export interface CompatCallRoom {
   remote_room_id?: string | null
 }
 
-async function callRoomFunction<T>(accessToken: string | null | undefined, name: string, args: Record<string, unknown>) {
-  const client = getConvexServerClient(accessToken)
-
-  return (await (client as any).function(name, undefined, args)) as T
-}
-
 export function normalizeLegacyCallRoom<T extends CompatCallRoom>(callRoom: T): T {
   return {
     ...callRoom,
@@ -30,19 +26,29 @@ export async function getLegacyCallRoom(
   accessToken: string | null | undefined,
   data: { slug: string; callRoomId: string }
 ) {
-  return normalizeLegacyCallRoom(await callRoomFunction<CompatCallRoom>(accessToken, 'callRooms:getLegacyCallRoomById', data))
+  const client = getConvexServerClient(accessToken)
+
+  return normalizeLegacyCallRoom(
+    await client.query(api.callRooms.getLegacyCallRoomById, data) as CompatCallRoom
+  )
 }
 
 export async function createLegacyCallRoom(
   accessToken: string,
   data: { slug: string; source: 'subject' | 'new_call_button' | 'cal_dot_com' }
 ) {
-  return normalizeLegacyCallRoom(await callRoomFunction<CompatCallRoom>(accessToken, 'callRooms:createLegacyCallRoom', data))
+  const client = getConvexServerClient(accessToken)
+
+  return normalizeLegacyCallRoom(
+    await client.mutation(api.callRooms.createLegacyCallRoom, data) as CompatCallRoom
+  )
 }
 
 export async function getLegacyPersonalCallRoom(accessToken: string, data: { slug: string }) {
+  const client = getConvexServerClient(accessToken)
+
   return normalizeLegacyCallRoom(
-    await callRoomFunction<CompatCallRoom>(accessToken, 'callRooms:getOrCreateLegacyPersonalCallRoom', data)
+    await client.mutation(api.callRooms.getOrCreateLegacyPersonalCallRoom, data) as CompatCallRoom
   )
 }
 
@@ -50,12 +56,16 @@ export async function createLegacyCallRoomInvitations(
   accessToken: string,
   data: { slug: string; callRoomId: string; memberIds: string[] }
 ) {
-  return await callRoomFunction<object>(accessToken, 'callRooms:createLegacyCallRoomInvitations', data)
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.callRooms.createLegacyCallRoomInvitations, data) as object
 }
 
 export async function updateLegacyCallRoomRemoteRoomId(
   accessToken: string | null | undefined,
   data: { callRoomId: string; remoteRoomId: string }
 ) {
-  return await callRoomFunction(accessToken, 'callRooms:updateLegacyCallRoomRemoteRoomId', data)
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.callRooms.updateLegacyCallRoomRemoteRoomId, data)
 }

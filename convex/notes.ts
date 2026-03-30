@@ -1220,7 +1220,20 @@ async function ensureNoteRow(ctx: any, params: {
   post: any
   record: StoredNoteRecord
 }) {
-  return await ctx.runMutation(internal.notes.ensureNoteRowInternal, params)
+  return await ctx.runMutation(internal.notes.ensureNoteRowInternal, {
+    ...params,
+    post: {
+      _id: params.post._id,
+      authorTokenIdentifier: params.post.authorTokenIdentifier,
+      title: params.post.title ?? '',
+      descriptionHtml: params.post.descriptionHtml ?? '<p></p>',
+      visibility: params.post.visibility ?? 'default',
+      projectId: params.post.projectId ?? undefined,
+      createdAt: params.post.createdAt ?? Date.now(),
+      updatedAt: params.post.updatedAt ?? Date.now(),
+      lastActivityAt: params.post.lastActivityAt ?? Date.now()
+    }
+  })
 }
 
 async function patchNoteRow(
@@ -1828,6 +1841,16 @@ export const deleteStorageFileInternal = internalMutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.fileId)
+  }
+})
+
+export const listSubjectPermissionsInternal = internalQuery({
+  args: {
+    subjectType: v.string(),
+    subjectId: v.string()
+  },
+  handler: async (ctx, args) => {
+    return await listSubjectPermissions(ctx, args.subjectType, args.subjectId)
   }
 })
 

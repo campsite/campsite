@@ -1,10 +1,6 @@
+import { api } from '@/convex/_generated/api'
+
 import { getConvexServerClient } from './server'
-
-async function callRealtimeFunction<T>(accessToken: string | null | undefined, name: string, args: Record<string, unknown>) {
-  const client = getConvexServerClient(accessToken)
-
-  return (await (client as any).function(name, undefined, args)) as T
-}
 
 export async function recordLegacyProductLogs(
   accessToken: string | null | undefined,
@@ -21,7 +17,9 @@ export async function recordLegacyProductLogs(
     userAgent?: string
   }
 ) {
-  return await callRealtimeFunction(accessToken, 'realtime:recordLegacyProductLogs', data)
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.realtime.recordLegacyProductLogs, data)
 }
 
 export async function storeLegacyPushSubscription(
@@ -33,5 +31,7 @@ export async function storeLegacyPushSubscription(
     auth: string
   }
 ) {
-  return await callRealtimeFunction(accessToken, 'realtime:storeLegacyPushSubscription', data)
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.realtime.storeLegacyPushSubscription, data)
 }
