@@ -60,6 +60,7 @@ import { useGetNotifications } from '@/hooks/useGetNotifications'
 import { useMarkNotificationRead } from '@/hooks/useMarkNotificationRead'
 import { useMarkNotificationUnread } from '@/hooks/useMarkNotificationUnread'
 import { useScopedStorage } from '@/hooks/useScopedStorage'
+import { useScope } from '@/contexts/scope'
 import { useUnarchiveNotification } from '@/hooks/useUnarchiveNotification'
 import { flattenInfiniteData } from '@/utils/flattenInfiniteData'
 import { getGroupDateHeading } from '@/utils/getGroupDateHeading'
@@ -704,6 +705,22 @@ function InboxIndexEmptyState({ inboxView }: { inboxView: InboxView }) {
         <AlarmIcon className='text-gray-300 dark:text-gray-700' size={80} />
       )}
     </IndexPageEmptyState>
+  )
+}
+
+function CallRoomInvitationDetail({ target }: { target: NotificationTarget }) {
+  const { scope } = useScope()
+
+  return (
+    <div className='flex flex-1 flex-col items-center justify-center gap-4 p-8'>
+      <VideoCameraFilledIcon className='text-green-500' size={48} />
+      <UIText size='text-lg' weight='font-semibold'>
+        {target.title}
+      </UIText>
+      <Button href={`/${scope}/calls/join/${target.id}`} variant='primary' size='large'>
+        Join call
+      </Button>
+    </div>
   )
 }
 
