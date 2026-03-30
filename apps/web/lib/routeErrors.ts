@@ -10,6 +10,9 @@ function getErrorMessage(error: unknown) {
 
 export function routeErrorResponse(error: unknown) {
   const rawMessage = getErrorMessage(error)
+
+  console.error('[routeErrorResponse]', rawMessage, error)
+
   const [code, ...rest] = rawMessage.split(':')
   const message = rest.length > 0 ? rest.join(':').trim() : rawMessage
 

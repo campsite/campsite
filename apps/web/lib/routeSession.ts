@@ -59,7 +59,12 @@ export async function getRouteAccess(): Promise<{ accessToken: string } | null> 
     return null
   }
 
-  await ensureWorkspace(accessToken, user)
+  try {
+    await ensureWorkspace(accessToken, user)
+  } catch (err) {
+    console.error('[getRouteAccess] ensureWorkspace failed:', err)
+    throw err
+  }
 
   return { accessToken }
 }
