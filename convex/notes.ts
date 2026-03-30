@@ -803,7 +803,7 @@ function buildStoredViewsFromRows(rows: any[]): StoredView[] {
 }
 
 async function listDedicatedNoteViews(ctx: any, noteId: string) {
-  return await ctx.db.query('noteViews').withIndex('by_note_id', (query: any) => query.eq('noteId', noteId)).collect()
+  return await ctx.runQuery(internal.notes.listDedicatedNoteViewsInternal, { noteId })
 }
 
 async function upsertDedicatedNoteView(
@@ -1883,6 +1883,13 @@ export const hasFavoriteInternal = internalQuery({
   }
 })
 
+export const listDedicatedNoteViewsInternal = internalQuery({
+  args: { noteId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db.query('noteViews').withIndex('by_note_id', (query: any) => query.eq('noteId', args.noteId)).collect()
+  }
+})
+
 export const listSubjectPermissionsInternal = internalQuery({
   args: {
     subjectType: v.string(),
@@ -1955,7 +1962,7 @@ export const upsertStoredNoteRecordInternal = internalMutation({
     const existing = files.find((f: any) => f.name === args.noteId)
 
     if (existing) {
-      await ctx.db.patch(existing._id, { storageId: args.storageId, updatedAt: Date.now() })
+      await ctx.db.patch(existing._id, { storageId: args.storageId })
       if (args.oldStorageId) {
         try { await ctx.storage.delete(args.oldStorageId) } catch {}
       }
@@ -1964,8 +1971,7 @@ export const upsertStoredNoteRecordInternal = internalMutation({
         ownerTokenIdentifier: owner,
         name: args.noteId,
         storageId: args.storageId,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
+        createdAt: Date.now()
       })
     }
   }
@@ -1987,7 +1993,7 @@ export const deleteStoredNoteRecordInternal = internalMutation({
     if (!existing) return
 
     await ctx.db.delete(existing._id)
-    await ctx.storage.delete(existing.storageId)
+    try { await ctx.storage.delete(existing.storageId) } catch {}
   }
 })
 
@@ -2166,7 +2172,7 @@ export const createNoteContainerPostInternal = internalMutation({
       status: 'none',
       visibility: 'default',
       projectId: args.project_id || undefined,
-      draft: true,
+      draft: false,
       links: [],
       attachments: [],
       version: 1,
