@@ -28,6 +28,7 @@ export function SidebarGroupsSectionGroup() {
 
   const unreadAndSelectedItems = groupThreads?.filter((thread) => {
     const isHovering = thread.id === hoveredId
+
     return thread.manually_marked_unread || thread.unread_count > 0 || thread.id === selectedThreadId || isHovering
   })
 
