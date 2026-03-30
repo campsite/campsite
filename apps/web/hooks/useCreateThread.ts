@@ -48,6 +48,9 @@ export function useCreateThread() {
         }
       })
 
+      // also invalidate so the query refetches if the cache was empty or errored
+      queryClient.invalidateQueries({ queryKey: getThreads.requestKey(`${scope}`) })
+
       const getMembersByUsername = apiClient.organizations.getMembersByUsername()
 
       thread.other_members.forEach((member) => {
