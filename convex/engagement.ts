@@ -524,8 +524,79 @@ function buildFavoriteUrl(slug: string, favorite: any) {
   }
 }
 
+async function getMessageThreadForFavorite(ctx: any, organizationId: any, favorite: any) {
+  const thread = await ctx.db
+    .query('messageThreads')
+    .withIndex('by_public_id', (q: any) => q.eq('publicId', favorite.favoritableId))
+    .unique()
+
+  if (!thread || thread.organizationId !== organizationId) {
+    return null
+  }
+
+  const memberships = await ctx.db
+    .query('organizationMemberships')
+    .withIndex('by_organization_id', (q: any) => q.eq('organizationId', organizationId))
+    .collect()
+
+  const users = await Promise.all(
+    memberships.map((m: any) =>
+      ctx.db
+        .query('users')
+        .withIndex('by_token_identifier', (q: any) => q.eq('tokenIdentifier', m.userTokenIdentifier))
+        .unique()
+    )
+  )
+
+  const userByToken = new Map(users.filter(Boolean).map((u: any) => [u.tokenIdentifier, u]))
+  const otherMembers = thread.participantTokenIdentifiers
+    .filter((t: string) => t !== favorite.userTokenIdentifier)
+    .map((t: string) => userByToken.get(t))
+    .filter(Boolean)
+
+  const title = thread.title || (otherMembers.length === 1
+    ? otherMembers[0].displayName
+    : otherMembers.length === 2
+      ? otherMembers.map((m: any) => m.displayName).join(' and ')
+      : otherMembers.length > 2
+        ? `${otherMembers[0].displayName} and ${otherMembers.length - 1} others`
+        : 'Chat')
+
+  return {
+    name: title,
+    data: {
+      id: thread.publicId,
+      last_message_at: thread.lastMessageAt ? new Date(thread.lastMessageAt).toISOString() : null,
+      latest_message_truncated: thread.latestMessageTruncated ?? null,
+      image_url: null,
+      avatar_urls: null,
+      group: thread.group,
+      channel_name: `thread-${thread.publicId}`,
+      organization_slug: thread.organizationSlug,
+      path: `/${thread.organizationSlug}/chat/${thread.publicId}`,
+      call_room_url: null,
+      remote_call_room_id: null,
+      integration_dm: thread.integrationDm,
+      active_call: null,
+      deactivated_members: [],
+      type_name: 'message_thread',
+      title,
+      project_id: null,
+      unread_count: 0,
+      manually_marked_unread: false,
+      viewer_has_favorited: true,
+      other_members: [],
+      viewer_is_thread_member: true,
+      viewer_can_manage_integrations: false,
+      viewer_can_delete: false,
+      viewer_can_force_notification: false
+    }
+  }
+}
+
 async function buildLegacyFavorite(ctx: any, slug: string, organizationId: any, favorite: any) {
   const project = favorite.favoritableType === 'Project' ? await getProjectById(ctx, organizationId, favorite.favoritableId) : null
+  const messageThread = favorite.favoritableType === 'MessageThread' ? await getMessageThreadForFavorite(ctx, organizationId, favorite) : null
   const viewerMembership = project ? await getMembership(ctx, organizationId, favorite.userTokenIdentifier) : null
   const [projectSubscriptionState, projectViewerDisplayPreferences, unreadForViewer, projectCallRoomUrl, projectMemberships, projectPosts] =
     await Promise.all([
@@ -572,7 +643,9 @@ async function buildLegacyFavorite(ctx: any, slug: string, organizationId: any, 
       project?.name ??
       (favorite.favoritableType === 'Post'
         ? (await getPostById(ctx, organizationId, favorite.favoritableId))?.title || 'Post'
-        : favorite.favoritableType),
+        : favorite.favoritableType === 'MessageThread'
+          ? messageThread?.name ?? 'Chat'
+          : favorite.favoritableType),
     url: buildFavoriteUrl(slug, favorite),
     private: project?.private ?? false,
     project: project
@@ -617,7 +690,7 @@ async function buildLegacyFavorite(ctx: any, slug: string, organizationId: any, 
           display_preferences: buildLegacyProjectDisplayPreferences(project)
         }
       : null,
-    message_thread: null
+    message_thread: messageThread?.data ?? null
   }
 }
 
