@@ -2523,6 +2523,28 @@ export const createLegacyPost = mutation({
       throw new Error('Organization not found')
     }
 
+    if (args.project_id) {
+      const project = await ctx.db.get(args.project_id as any)
+
+      if (project && !project.private) {
+        const existingMembership = await ctx.db
+          .query('projectMemberships')
+          .withIndex('by_project_and_user', (q: any) =>
+            q.eq('projectId', project._id).eq('userTokenIdentifier', context.identity.tokenIdentifier)
+          )
+          .unique()
+
+        if (!existingMembership) {
+          await ctx.db.insert('projectMemberships', {
+            organizationId: context.organization._id,
+            projectId: project._id,
+            userTokenIdentifier: context.identity.tokenIdentifier,
+            createdAt: Date.now()
+          })
+        }
+      }
+    }
+
     const now = Date.now()
     const parentPost = args.parent_id ? await getPostById(ctx, context.organization._id, args.parent_id) : null
     const rootPostId = parentPost?.rootPostId ?? parentPost?._id

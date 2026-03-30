@@ -157,9 +157,7 @@ export function resolveViewerProfile(identity: ViewerIdentity, profile?: ViewerP
 }
 
 export function fallbackUsername(identity: ViewerIdentity | ResolvedViewerProfile) {
-  const base = identity.preferredUsername || identity.email?.split('@')[0] || fallbackName(identity)
-
-  return toSlug(base) || 'user'
+  return identity.email?.toLowerCase().trim() || toSlug(identity.preferredUsername || fallbackName(identity)) || 'user'
 }
 
 function fallbackWorkspaceSlug(identity: ViewerIdentity) {
@@ -396,7 +394,7 @@ export const ensureViewerWorkspace = mutation({
       await ctx.db.patch(existingUser._id, userFields)
       await seedUserPreferences(ctx, { ...existingUser, ...userFields }, defaultPreferences)
       await recordFriendlySlug(ctx, {
-        slug: userFields.username,
+        slug: toSlug(userFields.username),
         sluggableType: 'User',
         sluggableId: existingUser.publicId ?? existingUser._id
       })
@@ -411,7 +409,7 @@ export const ensureViewerWorkspace = mutation({
       })
       await seedUserPreferences(ctx, { _id: userId, ...userFields }, defaultPreferences)
       await recordFriendlySlug(ctx, {
-        slug: userFields.username,
+        slug: toSlug(userFields.username),
         sluggableType: 'User',
         sluggableId: userPublicId
       })
@@ -616,7 +614,20 @@ export const updateViewerProfile = mutation({
     }
 
     if (typeof args.username === 'string') {
-      updates.username = toSlug(args.username) || user.username
+      const newUsername = toSlug(args.username) || user.username
+
+      if (newUsername !== user.username) {
+        const existing = await ctx.db
+          .query('users')
+          .withIndex('by_username', (q: any) => q.eq('username', newUsername))
+          .unique()
+
+        if (existing) {
+          throw new Error('Username is already taken')
+        }
+      }
+
+      updates.username = newUsername
     }
 
     if (args.avatarPath !== undefined) {

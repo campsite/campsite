@@ -568,7 +568,9 @@ async function createOrRestoreOrganizationMembership(
     lastSeenAt: Date.now(),
     lastViewedPostsAt: new Date().toISOString(),
     organizationId: params.organizationId,
+    publicId: generateToken().slice(0, 12),
     role: params.role,
+    updatedAt: Date.now(),
     userTokenIdentifier: params.userTokenIdentifier
   })
 

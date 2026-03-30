@@ -130,7 +130,8 @@ export default defineSchema({
     lastSeenAt: v.number()
   })
     .index('by_token_identifier', ['tokenIdentifier'])
-    .index('by_public_id', ['publicId']),
+    .index('by_public_id', ['publicId'])
+    .index('by_username', ['username']),
   organizations: defineTable({
     publicId: v.optional(v.string()),
     slug: v.string(),
