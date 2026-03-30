@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { triggerPusherEvents } from '@/lib/realtime/pusherTrigger'
 import { routeErrorResponse } from '@/lib/routeErrors'
 import { getRouteAccess, routeUnauthorizedResponse } from '@/lib/routeSession'
 
@@ -26,11 +27,31 @@ export async function POST(request: Request, context: Context) {
   const client = getCallRoomsCompatClient(auth.accessToken)
 
   try {
-    await client.createInvitations({
+    const result = await client.createInvitations({
       slug: orgSlug,
       callRoomId,
       memberIds: body.member_ids
-    })
+    }) as {
+      invitedUserIds?: string[]
+      callRoom?: any
+      creatorMember?: any
+    }
+
+    if (result.invitedUserIds?.length && result.creatorMember) {
+      const events = result.invitedUserIds.map((userId) => ({
+        channel: `private-user-${userId}`,
+        event: 'incoming-call-room-invitation',
+        data: {
+          call_room_id: callRoomId,
+          call_room_url: result.callRoom?.url ?? `/${orgSlug}/calls/join/${callRoomId}`,
+          creator_member: result.creatorMember,
+          other_active_peers: result.callRoom?.active_peers ?? [],
+          skip_push: false
+        }
+      }))
+
+      await triggerPusherEvents(events).catch(() => undefined)
+    }
 
     return NextResponse.json({})
   } catch (error) {

@@ -235,18 +235,6 @@ function normalizeStoredNoteRecord(value: unknown, noteId: string): StoredNoteRe
   }
 }
 
-async function blobToJson(blob: Blob | null) {
-  if (!blob) {
-    return null
-  }
-
-  try {
-    return JSON.parse(await blob.text())
-  } catch {
-    return null
-  }
-}
-
 function buildMemberMaps(users: any[], memberships: any[]) {
   const usersByTokenIdentifier = new Map(users.map((user: any) => [user.tokenIdentifier, user]))
   const membershipsByTokenIdentifier = new Map(memberships.map((membership: any) => [membership.userTokenIdentifier, membership]))
@@ -747,7 +735,7 @@ function buildPermissionList(
     .filter(Boolean)
 }
 
-async function getStoredNotePermissionRows(ctx: any, noteId: string) {
+async function getStoredNotePermissionRows(ctx: any, noteId: string): Promise<StoredPermission[]> {
   const rows = await ctx.runQuery(internal.notes.listSubjectPermissionsInternal, {
     subjectType: 'Note',
     subjectId: noteId

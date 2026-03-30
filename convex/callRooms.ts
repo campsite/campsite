@@ -223,6 +223,7 @@ export const createLegacyCallRoomInvitations = mutation({
       .collect()
     const membershipMap = new Map(memberships.map((membership: any) => [membership._id, membership]))
     const now = Date.now()
+    const invitedUserIds: string[] = []
 
     for (const memberId of args.memberIds) {
       const inviteeMembershipId = memberId as Id<'organizationMemberships'>
@@ -243,6 +244,14 @@ export const createLegacyCallRoomInvitations = mutation({
         continue
       }
 
+      const inviteeUser = await getUserByTokenIdentifier(ctx, membership.userTokenIdentifier)
+
+      if (!inviteeUser) {
+        continue
+      }
+
+      invitedUserIds.push(inviteeUser._id)
+
       if (existingInvitation) {
         await ctx.db.patch(existingInvitation._id, {
           discardedAt: undefined,
@@ -260,7 +269,37 @@ export const createLegacyCallRoomInvitations = mutation({
       })
     }
 
-    return {}
+    const creatorUser = await getUserByTokenIdentifier(ctx, context.viewerMembership.userTokenIdentifier)
+    const callRoomPayload = await buildLegacyCallRoomPayload(ctx, { organization: context.organization, room })
+
+    return {
+      invitedUserIds,
+      callRoom: callRoomPayload,
+      creatorMember: creatorUser
+        ? {
+            id: context.viewerMembership._id,
+            role: context.viewerMembership.role,
+            created_at: new Date(context.viewerMembership.createdAt).toISOString(),
+            deactivated: false,
+            is_organization_member: true,
+            user: {
+              id: creatorUser._id,
+              avatar_url: creatorUser.avatarPath || '',
+              avatar_urls: {
+                xs: creatorUser.avatarPath || '',
+                sm: creatorUser.avatarPath || '',
+                base: creatorUser.avatarPath || '',
+                lg: creatorUser.avatarPath || '',
+                xl: creatorUser.avatarPath || '',
+                xxl: creatorUser.avatarPath || ''
+              },
+              display_name: creatorUser.displayName,
+              username: creatorUser.username
+            },
+            status: null
+          }
+        : null
+    }
   }
 })
 
