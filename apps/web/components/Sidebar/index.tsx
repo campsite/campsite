@@ -31,6 +31,7 @@ import { useScope } from '@/contexts/scope'
 import { useChatSubscriptions } from '@/hooks/useChatSubscriptions'
 import { useGetCurrentOrganization } from '@/hooks/useGetCurrentOrganization'
 import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
+import { useGetThreads } from '@/hooks/useGetThreads'
 import { useIsOrganizationMember } from '@/hooks/useIsOrganizationMember'
 import { useLiveOrganizationUpdates } from '@/hooks/useLiveOrganizationUpdates'
 import { useProjectSubscriptions } from '@/hooks/useProjectSubscriptions'
@@ -168,8 +169,7 @@ function SidebarContent() {
 
         <SidebarFavoritesGroup />
         <SidebarProjectsGroup />
-        <SidebarGroupsSectionGroup />
-        <SidebarChatSectionGroup />
+        <SidebarChatAndGroupsSections />
 
         <div className='flex-1' />
 
@@ -187,5 +187,26 @@ function SidebarContent() {
         <SidebarProfile />
       </SidebarGroup>
     </nav>
+  )
+}
+
+function SidebarChatAndGroupsSections() {
+  const { data: threadsInbox } = useGetThreads()
+  const hasGroups = threadsInbox?.threads.some((thread) => thread.group && !thread.viewer_has_favorited)
+
+  if (hasGroups) {
+    return (
+      <>
+        <SidebarGroupsSectionGroup />
+        <SidebarChatSectionGroup />
+      </>
+    )
+  }
+
+  return (
+    <>
+      <SidebarChatSectionGroup />
+      <SidebarGroupsSectionGroup />
+    </>
   )
 }
