@@ -17,7 +17,6 @@ import { useScopedStorage } from '@/hooks/useScopedStorage'
 export function SidebarChatSectionGroup() {
   const router = useRouter()
   const { data: threadsInbox, isLoading } = useGetThreads()
-  const hasThreads = threadsInbox?.threads && threadsInbox.threads.length > 0
   const [collapsed, setCollapsed] = useScopedStorage('sidebar-chat-collapsed', false)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [hoveredId, setHoveredId] = useState<undefined | string>()
@@ -25,6 +24,7 @@ export function SidebarChatSectionGroup() {
 
   const selectedThreadId = router.query.threadId as string
   const nonFavoritedThreads = threadsInbox?.threads.filter((thread) => !thread.viewer_has_favorited && !thread.group)
+  const hasThreads = nonFavoritedThreads && nonFavoritedThreads.length > 0
   const unreadAndSelectedItems = nonFavoritedThreads?.filter((thread) => {
     const isHovering = thread.id === hoveredId
 
