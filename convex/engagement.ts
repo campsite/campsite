@@ -539,6 +539,8 @@ async function getMessageThreadForFavorite(ctx: any, organizationId: any, favori
     .withIndex('by_organization_id', (q: any) => q.eq('organizationId', organizationId))
     .collect()
 
+  const membershipByToken = new Map(memberships.map((m: any) => [m.userTokenIdentifier, m]))
+
   const users = await Promise.all(
     memberships.map((m: any) =>
       ctx.db
@@ -549,18 +551,27 @@ async function getMessageThreadForFavorite(ctx: any, organizationId: any, favori
   )
 
   const userByToken = new Map(users.filter(Boolean).map((u: any) => [u.tokenIdentifier, u]))
-  const otherMembers = thread.participantTokenIdentifiers
-    .filter((t: string) => t !== favorite.userTokenIdentifier)
-    .map((t: string) => userByToken.get(t))
-    .filter(Boolean)
+  const otherTokens = thread.participantTokenIdentifiers.filter((t: string) => t !== favorite.userTokenIdentifier)
+  const otherUsers = otherTokens.map((t: string) => userByToken.get(t)).filter(Boolean)
 
-  const title = thread.title || (otherMembers.length === 1
-    ? otherMembers[0].displayName
-    : otherMembers.length === 2
-      ? otherMembers.map((m: any) => m.displayName).join(' and ')
-      : otherMembers.length > 2
-        ? `${otherMembers[0].displayName} and ${otherMembers.length - 1} others`
+  const title = thread.title || (otherUsers.length === 1
+    ? otherUsers[0].displayName
+    : otherUsers.length === 2
+      ? otherUsers.map((m: any) => m.displayName).join(' and ')
+      : otherUsers.length > 2
+        ? `${otherUsers[0].displayName} and ${otherUsers.length - 1} others`
         : 'Chat')
+
+  const otherMembersLegacy = otherTokens.map((tokenIdentifier: string) => {
+    const membership = membershipByToken.get(tokenIdentifier)
+    const user = userByToken.get(tokenIdentifier)
+
+    if (!membership || !user) {
+      return null
+    }
+
+    return buildLegacyMember(membership, user)
+  }).filter(Boolean)
 
   return {
     name: title,
@@ -585,7 +596,7 @@ async function getMessageThreadForFavorite(ctx: any, organizationId: any, favori
       unread_count: 0,
       manually_marked_unread: false,
       viewer_has_favorited: true,
-      other_members: [],
+      other_members: otherMembersLegacy,
       viewer_is_thread_member: true,
       viewer_can_manage_integrations: false,
       viewer_can_delete: false,

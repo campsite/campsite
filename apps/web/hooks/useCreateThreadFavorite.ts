@@ -10,6 +10,7 @@ import { apiClient } from '@/utils/queryClient'
 import { createNormalizedOptimisticUpdate } from '@/utils/queryNormalization'
 
 const postThreadsFavorites = apiClient.organizations.postThreadsFavorites()
+const getThreads = apiClient.organizations.getThreads()
 
 export function useCreateThreadFavorite() {
   const { scope } = useScope()
@@ -39,6 +40,7 @@ export function useCreateThreadFavorite() {
     },
     onSuccess: (data, thread) => {
       replaceOptimisticFavorite({ queryClient, scope, favoritableId: thread.id, data })
+      queryClient.invalidateQueries({ queryKey: getThreads.requestKey(`${scope}`) })
     },
     onError(error, thread) {
       apiErrorToast(error)
