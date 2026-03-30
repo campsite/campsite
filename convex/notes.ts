@@ -323,7 +323,7 @@ async function buildProjectForNote(ctx: any, params: {
         })
       : Promise.resolve(false),
     viewerMembership?.userTokenIdentifier
-      ? getLegacyProjectSubscriptionState(ctx, {
+      ? ctx.runQuery(internal.notes.getProjectSubscriptionStateInternal, {
           organizationId: organization._id,
           tokenIdentifier: viewerMembership.userTokenIdentifier,
           projectId: project._id
@@ -333,7 +333,7 @@ async function buildProjectForNote(ctx: any, params: {
           viewer_subscription: 'none'
         }),
     viewerMembership?.userTokenIdentifier
-      ? hasLegacyFavorite(ctx, {
+      ? ctx.runQuery(internal.notes.hasFavoriteInternal, {
           organizationId: organization._id,
           tokenIdentifier: viewerMembership.userTokenIdentifier,
           favoritableType: 'Project',
@@ -748,7 +748,10 @@ function buildPermissionList(
 }
 
 async function getStoredNotePermissionRows(ctx: any, noteId: string) {
-  const rows = await listSubjectPermissions(ctx, 'Note', noteId)
+  const rows = await ctx.runQuery(internal.notes.listSubjectPermissionsInternal, {
+    subjectType: 'Note',
+    subjectId: noteId
+  })
 
   return rows
     .filter((row: any) => row.userTokenIdentifier)
@@ -1040,16 +1043,19 @@ async function getStoredNoteRecord(
   organizationId: string,
   noteId: string
 ): Promise<StoredNoteRecordEntry | null> {
-  const files: StoredNoteFile[] = await getStoredNoteFiles(ctx, organizationId)
-  const file: StoredNoteFile | undefined = files.find((entry) => entry.name === noteId)
+  const result = await ctx.runMutation(internal.notes.getStoredNoteRecordInternal, {
+    organizationId,
+    noteId
+  })
 
-  if (!file) {
-    return null
-  }
+  if (!result || !result.url) return null
+
+  const response = await fetch(result.url)
+  const json = response.ok ? await response.json().catch(() => null) : null
 
   return {
-    file,
-    record: normalizeStoredNoteRecord(await blobToJson(await ctx.storage.get(file.storageId)), noteId)
+    file: result.file,
+    record: normalizeStoredNoteRecord(json, noteId)
   }
 }
 
@@ -1061,21 +1067,17 @@ async function upsertStoredNoteRecord(
 ) {
   const existing = await getStoredNoteRecord(ctx, organizationId, noteId)
   const next = updater(existing?.record ?? defaultStoredNoteRecord(noteId))
-  const storageId = await ctx.storage.store(new Blob([JSON.stringify(next)], { type: NOTE_RECORD_CONTENT_TYPE }))
 
-  if (existing?.file) {
-    await ctx.runMutation(internal.notes.updateStorageFileInternal, {
-      fileId: existing.file._id,
-      storageId
-    })
-    await ctx.storage.delete(existing.file.storageId)
-  } else {
-    await ctx.runMutation(internal.notes.createStorageFileInternal, {
-      owner: noteStorageOwner(organizationId),
-      name: noteId,
-      storageId
-    })
-  }
+  const storageId = await ctx.storage.store(
+    new Blob([JSON.stringify(next)], { type: NOTE_RECORD_CONTENT_TYPE })
+  )
+
+  await ctx.runMutation(internal.notes.upsertStoredNoteRecordInternal, {
+    organizationId,
+    noteId,
+    storageId,
+    oldStorageId: existing?.file?.storageId
+  })
 
   return next
 }
@@ -1083,12 +1085,14 @@ async function upsertStoredNoteRecord(
 async function deleteStoredNoteRecord(ctx: any, organizationId: string, noteId: string) {
   const existing = await getStoredNoteRecord(ctx, organizationId, noteId)
 
-  if (!existing?.file) {
-    return
+  if (existing?.file?.storageId) {
+    try { await ctx.storage.delete(existing.file.storageId) } catch {}
   }
 
-  await ctx.runMutation(internal.notes.deleteStorageFileInternal, { fileId: existing.file._id })
-  await ctx.storage.delete(existing.file.storageId)
+  await ctx.runMutation(internal.notes.deleteStoredNoteRecordInternal, {
+    organizationId,
+    noteId
+  })
 }
 
 async function ensureNoteRowInDb(ctx: any, params: {
@@ -1221,7 +1225,8 @@ async function ensureNoteRow(ctx: any, params: {
   record: StoredNoteRecord
 }) {
   return await ctx.runMutation(internal.notes.ensureNoteRowInternal, {
-    ...params,
+    organizationId: params.organizationId,
+    noteId: params.noteId,
     post: {
       _id: params.post._id,
       authorTokenIdentifier: params.post.authorTokenIdentifier,
@@ -1232,6 +1237,17 @@ async function ensureNoteRow(ctx: any, params: {
       createdAt: params.post.createdAt ?? Date.now(),
       updatedAt: params.post.updatedAt ?? Date.now(),
       lastActivityAt: params.post.lastActivityAt ?? Date.now()
+    },
+    record: {
+      noteId: params.record.noteId,
+      descriptionState: params.record.descriptionState,
+      descriptionSchemaVersion: params.record.descriptionSchemaVersion,
+      memberViews: params.record.memberViews,
+      nonMemberViewsCount: params.record.nonMemberViewsCount,
+      permittedUsers: params.record.permittedUsers,
+      projectPermission: params.record.projectPermission,
+      projectPinId: params.record.projectPinId,
+      timelineEvents: params.record.timelineEvents
     }
   })
 }
@@ -1844,6 +1860,29 @@ export const deleteStorageFileInternal = internalMutation({
   }
 })
 
+export const getProjectSubscriptionStateInternal = internalQuery({
+  args: {
+    organizationId: v.string(),
+    tokenIdentifier: v.string(),
+    projectId: v.string()
+  },
+  handler: async (ctx, args) => {
+    return await getLegacyProjectSubscriptionState(ctx, args)
+  }
+})
+
+export const hasFavoriteInternal = internalQuery({
+  args: {
+    organizationId: v.string(),
+    tokenIdentifier: v.string(),
+    favoritableType: v.string(),
+    favoritableId: v.string()
+  },
+  handler: async (ctx, args) => {
+    return await hasLegacyFavorite(ctx, args as any)
+  }
+})
+
 export const listSubjectPermissionsInternal = internalQuery({
   args: {
     subjectType: v.string(),
@@ -1851,6 +1890,104 @@ export const listSubjectPermissionsInternal = internalQuery({
   },
   handler: async (ctx, args) => {
     return await listSubjectPermissions(ctx, args.subjectType, args.subjectId)
+  }
+})
+
+export const getStoredNoteRecordInternal = internalMutation({
+  args: {
+    organizationId: v.string(),
+    noteId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const files = await ctx.db
+      .query('files')
+      .withIndex('by_owner', (q: any) => q.eq('ownerTokenIdentifier', noteStorageOwner(args.organizationId)))
+      .collect()
+    const file = files.find((f: any) => f.name === args.noteId)
+
+    if (!file) return null
+
+    const url = await ctx.storage.getUrl(file.storageId)
+
+    return {
+      file: { _id: file._id, name: file.name, storageId: file.storageId },
+      url
+    }
+  }
+})
+
+export const getAllStoredNoteRecordsInternal = internalMutation({
+  args: {
+    organizationId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const files = await ctx.db
+      .query('files')
+      .withIndex('by_owner', (q: any) => q.eq('ownerTokenIdentifier', noteStorageOwner(args.organizationId)))
+      .collect()
+
+    return await Promise.all(
+      files.map(async (file: any) => {
+        const url = await ctx.storage.getUrl(file.storageId)
+
+        return {
+          file: { _id: file._id, name: file.name, storageId: file.storageId },
+          url
+        }
+      })
+    )
+  }
+})
+
+export const upsertStoredNoteRecordInternal = internalMutation({
+  args: {
+    organizationId: v.string(),
+    noteId: v.string(),
+    storageId: v.id('_storage'),
+    oldStorageId: v.optional(v.id('_storage'))
+  },
+  handler: async (ctx, args) => {
+    const owner = noteStorageOwner(args.organizationId)
+    const files = await ctx.db
+      .query('files')
+      .withIndex('by_owner', (q: any) => q.eq('ownerTokenIdentifier', owner))
+      .collect()
+    const existing = files.find((f: any) => f.name === args.noteId)
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { storageId: args.storageId, updatedAt: Date.now() })
+      if (args.oldStorageId) {
+        try { await ctx.storage.delete(args.oldStorageId) } catch {}
+      }
+    } else {
+      await ctx.db.insert('files', {
+        ownerTokenIdentifier: owner,
+        name: args.noteId,
+        storageId: args.storageId,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      })
+    }
+  }
+})
+
+export const deleteStoredNoteRecordInternal = internalMutation({
+  args: {
+    organizationId: v.string(),
+    noteId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const owner = noteStorageOwner(args.organizationId)
+    const files = await ctx.db
+      .query('files')
+      .withIndex('by_owner', (q: any) => q.eq('ownerTokenIdentifier', owner))
+      .collect()
+    const existing = files.find((f: any) => f.name === args.noteId)
+
+    if (!existing) return
+
+    await ctx.db.delete(existing._id)
+    await ctx.storage.delete(existing.storageId)
   }
 })
 
@@ -2435,15 +2572,18 @@ export const getLegacyNotesPage = action({
   },
   handler: async (ctx, args) => {
     const context = await getAuthorizedContext(ctx, args.slug)
-    const files = await getStoredNoteFiles(ctx, context.organization._id)
-    const records = (
-      await Promise.all(
-        files.map(async (file: any) => ({
-          file,
-          record: normalizeStoredNoteRecord(await blobToJson(await ctx.storage.get(file.storageId)), file.name)
-        }))
-      )
-    ).map((entry) => entry.record)
+    const allRecordResults = await ctx.runMutation(
+      internal.notes.getAllStoredNoteRecordsInternal,
+      { organizationId: context.organization._id }
+    )
+    const records = await Promise.all(
+      allRecordResults.map(async (entry: any) => {
+        if (!entry.url) return defaultStoredNoteRecord(entry.file.name)
+        const response = await fetch(entry.url)
+        const json = response.ok ? await response.json().catch(() => null) : null
+        return normalizeStoredNoteRecord(json, entry.file.name)
+      })
+    )
 
     let notes = await buildNotes(ctx, {
       organization: context.organization,
