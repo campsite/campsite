@@ -24,7 +24,7 @@ export function SidebarChatSectionGroup() {
   const hasSidebarDMs = useCurrentUserOrOrganizationHasFeature('sidebar_dms')
 
   const selectedThreadId = router.query.threadId as string
-  const nonFavoritedThreads = threadsInbox?.threads.filter((thread) => !thread.viewer_has_favorited)
+  const nonFavoritedThreads = threadsInbox?.threads.filter((thread) => !thread.viewer_has_favorited && !thread.group)
   const unreadAndSelectedItems = nonFavoritedThreads?.filter((thread) => {
     const isHovering = thread.id === hoveredId
 
@@ -50,7 +50,7 @@ export function SidebarChatSectionGroup() {
             <div className='text-quaternary p-2 pt-0.5'>
               <div className='flex flex-col gap-1'>
                 <UIText size='text-xs' inherit>
-                  Send direct messages or start a group conversation.
+                  Send direct messages to people in your organization.
                 </UIText>
                 <button onClick={() => setCreateDialogOpen(true)} className='text-left text-blue-500 hover:underline'>
                   <UIText size='text-xs' inherit>

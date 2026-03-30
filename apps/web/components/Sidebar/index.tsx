@@ -17,6 +17,7 @@ import { SidebarActivity } from '@/components/Sidebar/SidebarActivity'
 import { SidebarChatSectionGroup } from '@/components/Sidebar/SidebarChatSectionGroup'
 import { SidebarDrafts } from '@/components/Sidebar/SidebarDrafts'
 import { SidebarFavoritesGroup } from '@/components/Sidebar/SidebarFavoritesGroup'
+import { SidebarGroupsSectionGroup } from '@/components/Sidebar/SidebarGroupsSectionGroup'
 import {
   SIDEBAR_SCROLL_CONTAINER_ID,
   SidebarMoreUnreadsBottom,
@@ -167,6 +168,7 @@ function SidebarContent() {
 
         <SidebarFavoritesGroup />
         <SidebarProjectsGroup />
+        <SidebarGroupsSectionGroup />
         <SidebarChatSectionGroup />
 
         <div className='flex-1' />

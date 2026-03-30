@@ -154,24 +154,6 @@ function DMStep({ onSelect, onCancel }: { onSelect: () => void; onCancel: () => 
   return (
     <>
       <Command className='bg-elevated flex min-h-[30dvh] flex-1 flex-col overflow-hidden p-0 px-2' loop>
-        <button
-          className='hover:bg-quaternary focus:bg-quaternary group mb-2 flex items-center gap-3 rounded-lg px-2 py-2 text-left focus-within:ring-0'
-          onClick={() => dispatch({ type: 'set-step', payload: 'group' })}
-        >
-          <div className='flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-500 group-focus-within:bg-blue-500 group-focus-within:text-white group-hover:bg-blue-500 group-hover:text-white dark:bg-blue-900/50'>
-            <PlusIcon size={16} />
-          </div>
-          <UIText
-            className='group-hover:text-primary group-focus-within:text-primary flex-1 text-blue-600 dark:text-blue-400'
-            inherit
-          >
-            New group
-          </UIText>
-          <ChevronRightIcon className='text-quaternary' />
-        </button>
-
-        <div className='-mx-2 h-px border-b' />
-
         {!isOnlyOrgMember && (
           <div className='-mx-2 flex items-center gap-3 border-b px-4'>
             <div className='flex h-6 w-6 items-center justify-center'>
