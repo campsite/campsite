@@ -122,6 +122,19 @@ function stripHtml(value?: string | null) {
   return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
+function extractFirstUrl(html: string): string | null {
+  const hrefMatch = /href="(https?:\/\/[^"]+)"/.exec(html)
+
+  if (hrefMatch) {
+    return hrefMatch[1]
+  }
+
+  const text = stripHtml(html)
+  const urlMatch = /(https?:\/\/\S+)/.exec(text)
+
+  return urlMatch ? urlMatch[1] : null
+}
+
 function buildMessagePreview(content: string, attachments: StoredAttachment[], senderDisplayName: string, viewerIsSender: boolean) {
   const text = stripHtml(content)
   const prefix = viewerIsSender ? 'You: ' : ''
@@ -849,12 +862,14 @@ async function appendMessageToThread(
   }
 
   const now = Date.now()
+  const extractedUrl = extractFirstUrl(data.content || '')
   const message: StoredMessage = {
     id: `message_${generateToken()}`,
     threadId: thread.id,
     senderTokenIdentifier: snapshot.identity.tokenIdentifier,
     content: data.content || '',
     attachments,
+    unfurledLink: extractedUrl,
     createdAt: now,
     updatedAt: now,
     replyToMessageId: data.replyTo

@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/nextjs'
 
 import { WEB_URL } from '@campsite/config'
 import { parseCampsiteUrl } from '@campsite/editor'
+import { Button, UIText, VideoCameraFilledIcon } from '@campsite/ui'
 
 import { CallPreviewCard } from '@/components/PreviewCards/CallPreviewCard'
 import { CommentPreviewCard } from '@/components/PreviewCards/CommentPreviewCard'
@@ -83,6 +84,8 @@ export function RichLinkCard({
         return <ProjectPreviewCard projectId={parsedUrl.id} interactive={interactive} />
       } else if (parsedUrl.subject === 'calls') {
         return <CallPreviewCard callId={parsedUrl.id} interactive={interactive} />
+      } else if (parsedUrl.subject === 'call_room') {
+        return <CallRoomJoinCard className={className} callRoomId={parsedUrl.id} orgSlug={parsedUrl.org} />
       } else if (parsedUrl.subject === 'comment') {
         return <CommentPreviewCard commentId={parsedUrl.id} />
       }
@@ -132,4 +135,25 @@ export function RichLinkCard({
   }
 
   return <OpenGraphCard className={className} onForceRemove={onForceRemove} url={href} />
+}
+
+function CallRoomJoinCard({ className, callRoomId, orgSlug }: { className?: string; callRoomId: string; orgSlug: string }) {
+  return (
+    <div className={`bg-primary dark:bg-elevated dark flex w-full max-w-sm items-center gap-3 p-3 ${className ?? ''}`}>
+      <div className='rounded-full bg-green-500 p-2'>
+        <VideoCameraFilledIcon size={24} />
+      </div>
+      <UIText weight='font-semibold' className='flex-1'>
+        Join call
+      </UIText>
+      <Button
+        variant='plain'
+        round
+        className='bg-green-500 text-white hover:bg-green-400 dark:hover:bg-green-500'
+        href={`/${orgSlug}/calls/join/${callRoomId}`}
+      >
+        Join
+      </Button>
+    </div>
+  )
 }

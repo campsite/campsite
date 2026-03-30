@@ -10,10 +10,12 @@ import { useDebouncedCallback } from 'use-debounce'
 import type { FollowUp, Notification, NotificationTarget } from '@campsite/types'
 import {
   AlarmIcon,
+  Button,
   InboxIcon,
   LayeredHotkeys,
   Link,
   UIText,
+  VideoCameraFilledIcon,
   useBreakpoint,
   useCallbackRef,
   useIsDesktopApp
@@ -715,6 +717,8 @@ const Detail = memo(function Detail({ target }: { target: NotificationTarget }) 
       return <NoteView noteId={target.id} />
     case 'Call':
       return <CallView callId={target.id} />
+    case 'CallRoom':
+      return <CallRoomInvitationDetail target={target} />
     default:
       return <p>Not found</p>
   }

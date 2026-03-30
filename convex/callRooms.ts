@@ -3,6 +3,7 @@ import { v } from 'convex/values'
 import { api, internal } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
+import { createNotificationRecord } from './notifications'
 import { generateToken, getViewerIdentity, getWorkspaceMemberships } from './workspace'
 
 function createError(message: string, code: string) {
@@ -270,6 +271,36 @@ export const createLegacyCallRoomInvitations = mutation({
     }
 
     const creatorUser = await getUserByTokenIdentifier(ctx, context.viewerMembership.userTokenIdentifier)
+    const creatorName = creatorUser?.displayName ?? 'Someone'
+    const callRoomUrl = `/${context.organization.slug}/calls/join/${room.publicId}`
+
+    for (const memberId of args.memberIds) {
+      const inviteeMembershipId = memberId as Id<'organizationMemberships'>
+      const membership = membershipMap.get(inviteeMembershipId)
+
+      if (!membership || membership.discardedAt || membership.userTokenIdentifier === context.identity.tokenIdentifier) {
+        continue
+      }
+
+      await createNotificationRecord(ctx, {
+        organizationId: context.organization._id,
+        recipientTokenIdentifier: membership.userTokenIdentifier,
+        actorTokenIdentifier: context.identity.tokenIdentifier,
+        reason: 'added',
+        inboxKey: `call_room_invitation:${room.publicId}`,
+        isInbox: true,
+        subjectType: 'CallRoom',
+        subjectId: room.publicId,
+        subjectTitle: `Call from ${creatorName}`,
+        targetType: 'CallRoom',
+        targetId: room.publicId,
+        targetTitle: `Call from ${creatorName}`,
+        bodyPreviewPrefix: undefined,
+        bodyPreview: 'invited you to a call',
+        previewUrl: callRoomUrl
+      })
+    }
+
     const callRoomPayload = await buildLegacyCallRoomPayload(ctx, { organization: context.organization, room })
 
     return {

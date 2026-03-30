@@ -35,6 +35,7 @@ import { MobileTypingIndicator, TypingIndicator } from '@/components/Thread/Typi
 import { ADD_ATTACHMENT_SHORTCUT, ComposerEditorRef } from '@/components/Thread/utils'
 import { useAlphaNumericKeyPress } from '@/hooks/useAlphaNumericKeyPress'
 import { useCurrentUserOrOrganizationHasFeature } from '@/hooks/useCurrentUserOrOrganizationHasFeature'
+import { useStartCallFromChat } from '@/hooks/useStartCallFromChat'
 import { useStoredState } from '@/hooks/useStoredState'
 import { trimHtml } from '@/utils/trimHtml'
 
@@ -97,6 +98,7 @@ export const Composer = forwardRef<HTMLFormElement, Props>(function Composer(
   const editorRef = useRef<ComposerEditorRef>(null)
   const setDraftDebounced = useDebouncedCallback((editor: CoreEditor) => setStoredValue(editor.getJSON()), 300)
   const [inReplyTo, setInReplyTo] = useAtom(inReplyToAtom)
+  const { mutate: startCall, isPending: isStartingCall } = useStartCallFromChat({ thread })
 
   // use refs to avoid rerendering the editor component. without these, the callbacks would change often as you type.
   const submitStateRef = useRef({ canSend, canSendAttachments, hasContent, onMessage })
@@ -211,7 +213,7 @@ export const Composer = forwardRef<HTMLFormElement, Props>(function Composer(
         )}
 
         <div className='flex items-end gap-2'>
-          <ComposerActions editorRef={editorRef} onUpload={onUpload} dropzone={dropzone} />
+          <ComposerActions editorRef={editorRef} onUpload={onUpload} dropzone={dropzone} onStartCall={() => startCall()} isStartingCall={isStartingCall} />
 
           <div className='flex flex-1 flex-col'>
             <div

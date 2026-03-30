@@ -1171,3 +1171,20 @@ export const deleteLegacyScheduledNotification = mutation({
     return {}
   }
 })
+
+export const cleanupCallRoomNotifications = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query('notifications').collect()
+    let count = 0
+
+    for (const notification of all) {
+      if (notification.targetType === 'CallRoom') {
+        await ctx.db.delete(notification._id)
+        count += 1
+      }
+    }
+
+    return { deleted: count }
+  }
+})

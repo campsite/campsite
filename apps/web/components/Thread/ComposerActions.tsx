@@ -9,6 +9,7 @@ import {
   GifIcon,
   PicturePlusIcon,
   PlusIcon,
+  VideoCameraFilledIcon,
   useBreakpoint
 } from '@campsite/ui'
 
@@ -22,9 +23,11 @@ interface ComposerActionsProps {
   editorRef: React.RefObject<ComposerEditorRef>
   onUpload: (files: File[]) => void
   dropzone: ReturnType<typeof useDropzone>
+  onStartCall?: () => void
+  isStartingCall?: boolean
 }
 
-export function ComposerActions({ editorRef, onUpload, dropzone }: ComposerActionsProps) {
+export function ComposerActions({ editorRef, onUpload, dropzone, onStartCall, isStartingCall }: ComposerActionsProps) {
   const threadPlacement = useAtomValue(chatThreadPlacementAtom)
   const [editMode, setEditMode] = useAtom(editModeAtom)
   const [shouldMinimizeComposerActions, setShouldMinimizeComposerActions] = useAtom(shouldMinimizeComposerActionsAtom)
@@ -131,6 +134,20 @@ export function ComposerActions({ editorRef, onUpload, dropzone }: ComposerActio
               onGifSelect={(gif) => onUpload([gif])}
               onClose={() => editorRef.current?.editor()?.commands.focus()}
             />
+            {onStartCall && (
+              <Button
+                round
+                variant='plain'
+                type='button'
+                onClick={onStartCall}
+                onMouseDown={(e) => e.preventDefault()}
+                disabled={isStartingCall}
+                iconOnly={<VideoCameraFilledIcon size={24} />}
+                accessibilityLabel='Start a call'
+                className='h-8.5 w-8.5'
+                tooltip='Start a call'
+              />
+            )}
           </m.div>
         )}
       </AnimatePresence>
