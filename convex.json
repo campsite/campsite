@@ -27,9 +27,9 @@
     "prod": {
       "environmentType": "production",
       "configure": {
-        "redirectUris": ["https://${buildEnv.VERCEL_PROJECT_PRODUCTION_URL}/callback"],
-        "appHomepageUrl": "https://${buildEnv.VERCEL_PROJECT_PRODUCTION_URL}/",
-        "corsOrigins": ["https://${buildEnv.VERCEL_PROJECT_PRODUCTION_URL}"]
+        "redirectUris": ["https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app/callback"],
+        "appHomepageUrl": "https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app/",
+        "corsOrigins": ["https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app"]
       }
     }
   }
