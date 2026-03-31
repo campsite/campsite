@@ -1,8 +1,6 @@
 import { refreshSession, withAuth } from '@workos-inc/authkit-nextjs'
 import { NextResponse } from 'next/server'
 
-import { ensureWorkspace } from '@/lib/convex/server'
-
 const ACCESS_TOKEN_REFRESH_BUFFER_SECONDS = 60
 
 function shouldRefreshAccessToken(accessToken?: string | null) {
@@ -57,14 +55,6 @@ export async function getRouteAccess(): Promise<{ accessToken: string } | null> 
 
   if (!user || !accessToken) {
     return null
-  }
-
-  try {
-    await ensureWorkspace(accessToken, user)
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('[getRouteAccess] ensureWorkspace failed:', err)
-    throw err
   }
 
   return { accessToken }

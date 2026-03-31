@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/nextjs'
 import { WEB_URL } from '@campsite/config'
 import { parseCampsiteUrl } from '@campsite/editor'
 import { Button, UIText, VideoCameraFilledIcon } from '@campsite/ui'
+import { cn } from '@campsite/ui/src/utils'
 
 import { CallPreviewCard } from '@/components/PreviewCards/CallPreviewCard'
 import { CommentPreviewCard } from '@/components/PreviewCards/CommentPreviewCard'
@@ -139,11 +140,16 @@ export function RichLinkCard({
 
 function CallRoomJoinCard({ className, callRoomId, orgSlug }: { className?: string; callRoomId: string; orgSlug: string }) {
   return (
-    <div className={`bg-primary dark:bg-elevated dark flex w-full max-w-sm items-center gap-3 p-3 ${className ?? ''}`}>
+    <div
+      className={cn(
+        'bg-gray-900 dark:bg-gray-800 flex w-full max-w-sm items-center gap-3 p-3',
+        className
+      )}
+    >
       <div className='rounded-full bg-green-500 p-2'>
-        <VideoCameraFilledIcon size={24} />
+        <VideoCameraFilledIcon size={24} className='text-white' />
       </div>
-      <UIText weight='font-semibold' className='flex-1'>
+      <UIText weight='font-semibold' className='flex-1 text-white'>
         Join call
       </UIText>
       <Button

@@ -19,12 +19,29 @@ function getConvexUrl() {
   return convexUrl
 }
 
+// Reuse clients per access token to avoid re-establishing connections
+const clientCache = new Map<string, ConvexHttpClient>()
+
 export function getConvexServerClient(accessToken?: string | null) {
+  const cacheKey = accessToken ?? '__anonymous__'
+  const cached = clientCache.get(cacheKey)
+
+  if (cached) return cached
+
   const client = new ConvexHttpClient(getConvexUrl())
 
   if (accessToken) {
     client.setAuth(accessToken)
   }
+
+  // Limit cache size to avoid unbounded growth
+  if (clientCache.size > 500) {
+    const firstKey = clientCache.keys().next().value
+
+    if (firstKey) clientCache.delete(firstKey)
+  }
+
+  clientCache.set(cacheKey, client)
 
   return client
 }

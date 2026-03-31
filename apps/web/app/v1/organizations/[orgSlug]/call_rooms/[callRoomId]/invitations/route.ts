@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 
+import { createLegacyThreadMessage } from '@/lib/convex/threads'
 import { triggerPusherEvents } from '@/lib/realtime/pusherTrigger'
 import { routeErrorResponse } from '@/lib/routeErrors'
 import { getRouteAccess, routeUnauthorizedResponse } from '@/lib/routeSession'
+import { WEB_URL } from '@campsite/config'
 
 import { getCallRoomsCompatClient } from '../../_compat'
 
@@ -18,7 +20,7 @@ export async function POST(request: Request, context: Context) {
     return routeUnauthorizedResponse()
   }
 
-  const body = (await request.json().catch(() => null)) as { member_ids?: string[] } | null
+  const body = (await request.json().catch(() => null)) as { member_ids?: string[]; thread_ids?: string[] } | null
 
   if (!body?.member_ids || !Array.isArray(body.member_ids)) {
     return NextResponse.json({ code: 'invalid_request', message: 'member_ids is required.' }, { status: 400 })
@@ -52,6 +54,21 @@ export async function POST(request: Request, context: Context) {
 
       await triggerPusherEvents(events).catch(() => undefined)
     }
+
+    // Post join message to any selected group threads
+    const threadIds = Array.isArray(body.thread_ids) ? body.thread_ids : []
+    const joinUrl = `${WEB_URL}/${orgSlug}/calls/join/${callRoomId}`
+
+    await Promise.all(
+      threadIds.map((threadId) =>
+        createLegacyThreadMessage(auth.accessToken, {
+          slug: orgSlug,
+          threadId,
+          content: `<p><a href="${joinUrl}">${joinUrl}</a></p>`,
+          attachments: []
+        }).catch(() => undefined)
+      )
+    )
 
     return NextResponse.json({})
   } catch (error) {

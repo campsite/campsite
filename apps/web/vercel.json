@@ -5,6 +5,7 @@
   "git": {
     "deploymentEnabled": false
   },
+  "regions": ["lhr1"],
   "buildCommand": "npx turbo run build --filter=@campsite/web",
   "installCommand": "pnpm install"
 }

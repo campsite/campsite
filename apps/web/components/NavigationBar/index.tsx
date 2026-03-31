@@ -54,7 +54,7 @@ import { useGoBack } from '@/components/Providers/HistoryProvider'
 import { SearchField } from '@/components/SearchIndex'
 import { addRecentSearchAtom } from '@/components/SearchIndex/RecentSearches'
 import { ChatThreadOverflowMenu } from '@/components/Thread/ChatThreadOverflowMenu'
-import { BreadcrumbCallButton } from '@/components/ThreadView/ThreadViewTitlebar'
+import { BreadcrumbCallButton, StartInstantCallButton } from '@/components/ThreadView/ThreadViewTitlebar'
 import { useScope } from '@/contexts/scope'
 import { useChatSubscriptions } from '@/hooks/useChatSubscriptions'
 import { useGetCall } from '@/hooks/useGetCall'
@@ -700,6 +700,7 @@ function ChatThreadTrailingAccessory() {
   return (
     <>
       <BreadcrumbCallButton thread={thread} />
+      <StartInstantCallButton thread={thread} />
       <ChatThreadOverflowMenu thread={thread} />
     </>
   )

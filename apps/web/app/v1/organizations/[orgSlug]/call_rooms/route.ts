@@ -24,30 +24,26 @@ export async function POST(request: Request, context: Context) {
   const client = getCallRoomsCompatClient(auth.accessToken)
 
   try {
-    let callRoom = await client.createCallRoom({
-      slug: orgSlug,
-      source
-    })
+    // Kick off user fetch immediately in parallel with room creation
+    const [callRoom, currentUser] = await Promise.all([
+      client.createCallRoom({ slug: orgSlug, source }),
+      getLegacyCurrentUser(auth.accessToken)
+    ])
 
-    if (!callRoom.remote_room_id) {
-      const remoteRoomId = await createHmsRoom()
+    let remoteRoomId = callRoom.remote_room_id
+
+    if (!remoteRoomId) {
+      remoteRoomId = await createHmsRoom()
 
       if (!remoteRoomId) {
         throw new Error('service_unavailable: Calls are not configured yet.')
       }
 
-      await client.updateRemoteRoomId({
-        callRoomId: callRoom.id,
-        remoteRoomId
-      })
-      callRoom = {
-        ...callRoom,
-        remote_room_id: remoteRoomId
-      }
+      // Fire and forget — don't block the response on persisting the room ID
+      client.updateRemoteRoomId({ callRoomId: callRoom.id, remoteRoomId }).catch(() => undefined)
     }
 
-    const currentUser = await getLegacyCurrentUser(auth.accessToken)
-    const viewerToken = createHmsViewerToken({ roomId: callRoom.remote_room_id, userId: currentUser.id })
+    const viewerToken = createHmsViewerToken({ roomId: remoteRoomId, userId: currentUser.id })
 
     if (!viewerToken) {
       throw new Error('service_unavailable: Calls are not configured yet.')
@@ -55,6 +51,7 @@ export async function POST(request: Request, context: Context) {
 
     return NextResponse.json({
       ...callRoom,
+      remote_room_id: remoteRoomId,
       viewer_token: viewerToken
     })
   } catch (error) {
