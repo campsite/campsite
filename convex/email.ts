@@ -10,7 +10,7 @@ export const sendOrganizationInvitation = internalAction({
     organizationName: v.string(),
     invitationUrl: v.string()
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     const apiKey = process.env.RESEND_API_KEY
 
     if (!apiKey) {
