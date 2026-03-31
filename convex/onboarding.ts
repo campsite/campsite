@@ -892,6 +892,19 @@ async function createLegacyOrganizationInvitationsInternal(
         validProjects.map((project: any) => project._id)
       )
       results.push(await buildLegacyOrganizationInvitation(ctx, createdInvitation))
+
+      // Send invitation email via Resend
+      const sender = await getUserByTokenIdentifier(ctx, identity.tokenIdentifier)
+      const senderName = sender?.display_name || sender?.name || identity.name || 'Someone'
+      const appUrl = process.env.APP_URL || 'https://campsite-m6ttjz3k3-declans-projects-c9b6a22c.vercel.app'
+      const invitationUrl = `${appUrl}/invitation/${createdInvitation.inviteToken}`
+
+      await ctx.scheduler.runAfter(0, (internal as any).email.sendOrganizationInvitation, {
+        to: createdInvitation.email,
+        senderName,
+        organizationName: context.organization.name,
+        invitationUrl
+      })
     }
   }
 

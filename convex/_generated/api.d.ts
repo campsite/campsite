@@ -16,6 +16,7 @@ import type * as collaboration from "../collaboration.js";
 import type * as content from "../content.js";
 import type * as desktopSessions from "../desktopSessions.js";
 import type * as digests from "../digests.js";
+import type * as email from "../email.js";
 import type * as engagement from "../engagement.js";
 import type * as externalPlatforms from "../externalPlatforms.js";
 import type * as files from "../files.js";
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   content: typeof content;
   desktopSessions: typeof desktopSessions;
   digests: typeof digests;
+  email: typeof email;
   engagement: typeof engagement;
   externalPlatforms: typeof externalPlatforms;
   files: typeof files;
