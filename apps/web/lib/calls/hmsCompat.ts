@@ -87,6 +87,7 @@ export async function createHmsRoom(): Promise<string | null> {
 
   const response = await fetch('https://api.100ms.live/v2/rooms', {
     method: 'POST',
+    signal: AbortSignal.timeout(5000),
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${buildHmsManagementToken(credentials)}`

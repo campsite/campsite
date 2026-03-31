@@ -24,21 +24,20 @@ export async function POST(request: Request, context: Context) {
   const client = getCallRoomsCompatClient(auth.accessToken)
 
   try {
-    // Kick off user fetch immediately in parallel with room creation
-    const [callRoom, currentUser] = await Promise.all([
+    // Kick off all three in parallel — HMS room creation, Convex room creation, and user fetch
+    const [callRoom, currentUser, hmsRoomId] = await Promise.all([
       client.createCallRoom({ slug: orgSlug, source }),
-      getLegacyCurrentUser(auth.accessToken)
+      getLegacyCurrentUser(auth.accessToken),
+      createHmsRoom()
     ])
 
-    let remoteRoomId = callRoom.remote_room_id
+    const remoteRoomId = callRoom.remote_room_id ?? hmsRoomId
 
     if (!remoteRoomId) {
-      remoteRoomId = await createHmsRoom()
+      throw new Error('service_unavailable: Calls are not configured yet.')
+    }
 
-      if (!remoteRoomId) {
-        throw new Error('service_unavailable: Calls are not configured yet.')
-      }
-
+    if (!callRoom.remote_room_id && hmsRoomId) {
       // Fire and forget — don't block the response on persisting the room ID
       client.updateRemoteRoomId({ callRoomId: callRoom.id, remoteRoomId }).catch(() => undefined)
     }

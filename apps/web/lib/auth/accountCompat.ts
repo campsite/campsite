@@ -1,4 +1,4 @@
-import { getWorkOS, refreshSession } from '@workos-inc/authkit-nextjs'
+import { getWorkOS } from '@workos-inc/authkit-nextjs'
 
 import type { CurrentUser } from '@campsite/types'
 
@@ -43,7 +43,6 @@ interface TwoFactorVerificationResult {
 
 type AuthenticationResponse = Awaited<ReturnType<ReturnType<typeof getWorkOS>['userManagement']['authenticateWithPassword']>>
 type User = Awaited<ReturnType<ReturnType<typeof getWorkOS>['userManagement']['getUser']>>
-type RefreshedSession = Awaited<ReturnType<typeof refreshSession>>
 
 function getPendingTwoFactorEnrollment(user: User): PendingTwoFactorEnrollment {
   return {
@@ -194,17 +193,20 @@ export async function buildCurrentUserResponse(
     workosUser?: User
   }
 ): Promise<CurrentUser> {
-  let legacyUser = await getLegacyCurrentUser(accessToken)
+  // Fetch Convex user and WorkOS data in parallel
+  const [legacyUser, freshUser] = await Promise.all([
+    getLegacyCurrentUser(accessToken),
+    workosUser ? Promise.resolve(workosUser) : getFreshWorkOSUser(userId)
+  ])
 
+  // Set timezone fire-and-forget — don't block the response on it
   if (!legacyUser.timezone && clientTimeZone) {
-    await updateViewerPreference(accessToken, {
+    updateViewerPreference(accessToken, {
       preference: 'timezone',
       value: clientTimeZone
-    })
-    legacyUser = await getLegacyCurrentUser(accessToken)
+    }).catch(() => undefined)
   }
 
-  const freshUser = workosUser ?? (await getFreshWorkOSUser(userId))
   const factors = await listTotpFactors(freshUser.id)
 
   return {
@@ -483,14 +485,6 @@ export async function disableViewerTwoFactor(
   }
 
   await clearPendingTwoFactorEnrollment(user)
-}
-
-export async function refreshViewerSession(): Promise<RefreshedSession | null> {
-  try {
-    return await refreshSession()
-  } catch {
-    return null
-  }
 }
 
 export async function getFreshViewerAccount(userId: string): Promise<User> {

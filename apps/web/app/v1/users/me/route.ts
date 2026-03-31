@@ -1,3 +1,4 @@
+import { refreshSession } from '@workos-inc/authkit-nextjs'
 import { NextResponse } from 'next/server'
 
 import {
@@ -6,12 +7,11 @@ import {
   getClientTimeZone,
   getFreshViewerAccount,
   isManagedWorkOSUser,
-  refreshViewerSession,
   updateViewerPassword,
   updateViewerWorkOSProfile
 } from '@/lib/auth/accountCompat'
 import { buildCurrentUser } from '@/lib/auth/campsiteCompat'
-import { ensureWorkspace, updateViewerProfile } from '@/lib/convex/server'
+import { updateViewerProfile } from '@/lib/convex/server'
 import { getFreshRouteAuth } from '@/lib/routeSession'
 
 export async function GET(request: Request) {
@@ -22,8 +22,6 @@ export async function GET(request: Request) {
   }
 
   try {
-    await ensureWorkspace(accessToken, user)
-
     return NextResponse.json(
       await buildCurrentUserResponse(accessToken, {
         clientTimeZone: getClientTimeZone(request),
@@ -56,8 +54,6 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    await ensureWorkspace(accessToken, user)
-
     let workosUser = await getFreshViewerAccount(user.id)
     const managed = isManagedWorkOSUser(workosUser)
 
@@ -95,7 +91,7 @@ export async function PATCH(request: Request) {
         name: nextName
       })
 
-      await refreshViewerSession()
+      await refreshSession()
     }
 
     await updateViewerProfile(accessToken, {

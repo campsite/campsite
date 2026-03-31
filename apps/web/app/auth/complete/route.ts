@@ -2,7 +2,7 @@ import { withAuth } from '@workos-inc/authkit-nextjs'
 import * as Sentry from '@sentry/nextjs'
 import { NextResponse } from 'next/server'
 
-import { ensureWorkspace } from '@/lib/convex/server'
+import { getLegacyOrganizationMemberships } from '@/lib/convex/server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -17,8 +17,8 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL('/login', baseUrl))
     }
 
-    const workspace = await ensureWorkspace(accessToken, user)
-    const organizationSlug = workspace.organization?.slug
+    const memberships = await getLegacyOrganizationMemberships(accessToken)
+    const organizationSlug = memberships[0]?.organization?.slug
 
     if (!organizationSlug) {
       return NextResponse.redirect(new URL('/login', baseUrl))

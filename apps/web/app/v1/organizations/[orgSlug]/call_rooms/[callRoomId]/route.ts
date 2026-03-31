@@ -29,10 +29,8 @@ export async function GET(_: Request, context: Context) {
         throw new Error('service_unavailable: Calls are not configured yet.')
       }
 
-      await client.updateRemoteRoomId({
-        callRoomId: callRoom.id,
-        remoteRoomId
-      })
+      // Fire and forget — don't block the response on persisting the room ID
+      client.updateRemoteRoomId({ callRoomId: callRoom.id, remoteRoomId }).catch(() => undefined)
       callRoom = {
         ...callRoom,
         remote_room_id: remoteRoomId
