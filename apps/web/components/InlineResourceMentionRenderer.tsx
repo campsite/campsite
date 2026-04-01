@@ -53,6 +53,7 @@ export function ResourceMentionView({ href }: { href: string }) {
 
   if (item?.note) {
     const note = item.note
+
     return (
       <NoteCard
         title={note.title}
