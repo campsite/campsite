@@ -19,8 +19,9 @@ export function InlineResourceMentionRenderer(props: NodeViewWrapperProps) {
 
   return (
     <NodeViewWrapper
-      as='span'
+      as='div'
       className={cn(
+        'my-2',
         {
           'rounded-md outline outline-2 outline-blue-500 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-500':
             props.editor.options.editable && props.selected && props.editor.isFocused
@@ -49,8 +50,40 @@ function IconContainer({ children }: React.PropsWithChildren) {
   return <span className='inline-flex h-[18px] items-center justify-center pr-1 align-text-bottom'>{children}</span>
 }
 
+/**
+ * Fallback URL parser for campsite URLs when parseCampsiteUrl fails.
+ * Handles both absolute and relative URLs by extracting subject and id from path segments.
+ */
+function fallbackParseCampsiteUrl(href: string): { subject: string; id: string } | null {
+  if (!href) return null
+
+  // Try to extract path from the href, handling both absolute and relative URLs
+  let pathname: string
+
+  try {
+    const url = new URL(href, 'https://placeholder.com')
+
+    pathname = url.pathname
+  } catch {
+    pathname = href
+  }
+
+  const segments = pathname.split('/').filter(Boolean)
+
+  // Look for notes/posts/calls anywhere in the segments, take the next segment as ID
+  for (let i = 0; i < segments.length - 1; i++) {
+    const seg = segments[i]
+
+    if ((seg === 'notes' || seg === 'posts' || seg === 'calls') && segments[i + 1]) {
+      return { subject: seg, id: segments[i + 1] }
+    }
+  }
+
+  return null
+}
+
 export function ResourceMentionView({ href }: { href: string }) {
-  const parsed = parseCampsiteUrl(href)
+  const parsed = parseCampsiteUrl(href) ?? fallbackParseCampsiteUrl(href)
 
   if (parsed?.subject === 'notes') {
     return <LinkedNotePreview noteId={parsed.id} />

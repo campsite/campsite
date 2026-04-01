@@ -1,9 +1,17 @@
+import { parseCampsiteUrl } from '@campsite/editor'
 import { cn, Link } from '@campsite/ui'
 
+import { ResourceMentionView } from '@/components/InlineResourceMentionRenderer'
 import { Kbd } from '@/components/RichTextRenderer/handlers/Kbd'
 import { convertAttributes } from '@/components/RichTextRenderer/utils/attributes'
 
 import { NodeHandler } from '.'
+
+function isCampsiteNoteOrPostUrl(href: string): boolean {
+  const parsed = parseCampsiteUrl(href)
+
+  return !!parsed && (parsed.subject === 'notes' || parsed.subject === 'posts')
+}
 
 export const Text: NodeHandler = ({ node }) => {
   const content = node.text
@@ -42,6 +50,14 @@ export const Text: NodeHandler = ({ node }) => {
       Element = 'a'
       hasHref = !!markAttrs.href
       if (hasHref) {
+        // If this is a campsite note/post URL, render as NoteCard instead of plain link
+        if (isCampsiteNoteOrPostUrl(markAttrs.href)) {
+          return (
+            <Link href={markAttrs.href}>
+              <ResourceMentionView href={markAttrs.href} />
+            </Link>
+          )
+        }
         Element = Link
       }
       break

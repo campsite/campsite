@@ -8,7 +8,7 @@ interface NoteCardProps {
 
 export function NoteCard({ title, type, channel }: NoteCardProps) {
   return (
-    <div className='hover:bg-secondary dark:hover:bg-secondary flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors'>
+    <div className='not-prose hover:bg-secondary dark:hover:bg-secondary flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors'>
       {type === 'document' ? (
         <NoteIcon size={18} className='text-secondary flex-none' />
       ) : (
