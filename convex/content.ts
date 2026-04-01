@@ -2219,8 +2219,7 @@ export const getLegacyMemberPostsPage = query({
         )
       ),
       next_cursor: null,
-      prev_cursor: null,
-      _debug: allMemberPosts.map((p: any) => ({ id: p._id, title: p.title, unfurledLink: p.unfurledLink, draft: p.draft, projectId: p.projectId }))
+      prev_cursor: null
     }
   }
 })
