@@ -894,7 +894,7 @@ export const getLegacyResourceMentionByUrl = query({
     })
 
     if (!mention) {
-      throw createError('Resource mention not found', 'not_found')
+      return { post: null, call: null, note: null, project: null }
     }
 
     return mention

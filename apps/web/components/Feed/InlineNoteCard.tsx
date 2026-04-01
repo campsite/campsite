@@ -15,9 +15,9 @@ export function InlineNoteCard({ post }: Props) {
   return (
     <Link href={noteUrl} className='group block'>
       <NoteCard
+        type='document'
         title={post.title || 'Untitled'}
-        authorName={post.member.user.display_name}
-        createdAt={post.published_at || post.created_at}
+        channel={post.project?.name}
       />
     </Link>
   )

@@ -7,13 +7,14 @@ import { cn } from '@campsite/ui/src/utils'
 
 import { CallPreviewCard } from '@/components/PreviewCards/CallPreviewCard'
 import { CommentPreviewCard } from '@/components/PreviewCards/CommentPreviewCard'
-import { NotePreviewCard } from '@/components/PreviewCards/NotePreviewCard'
-import { PostPreviewCard } from '@/components/PreviewCards/PostPreviewCard'
 import { ProjectPreviewCard } from '@/components/PreviewCards/ProjectPreviewCard'
 import { TweetPreview } from '@/components/TweetPreview'
 import { useScope } from '@/contexts/scope'
+import { useGetNote } from '@/hooks/useGetNote'
+import { useGetPost } from '@/hooks/useGetPost'
 
 import { LoomPreview } from './LoomPreview'
+import { NoteCard } from './NoteCard'
 import { OpenGraphCard } from './OpenGraphCard'
 import { SlimOpenGraphCard } from './SlimOpenGraphCard'
 import { TellaPreview } from './TellaPreview'
@@ -78,9 +79,9 @@ export function RichLinkCard({
   if (parsedUrl && isCampsiteUrl(url)) {
     if (parsedUrl.org === scope) {
       if (parsedUrl.subject === 'notes') {
-        return <NotePreviewCard className={className} noteId={parsedUrl.id} interactive={interactive} />
+        return <LinkedNoteCard className={className} noteId={parsedUrl.id} href={`/${parsedUrl.org}/notes/${parsedUrl.id}`} />
       } else if (parsedUrl.subject === 'posts') {
-        return <PostPreviewCard className={className} postId={parsedUrl.id} />
+        return <LinkedPostCard className={className} postId={parsedUrl.id} href={`/${parsedUrl.org}/posts/${parsedUrl.id}`} />
       } else if (parsedUrl.subject === 'projects') {
         return <ProjectPreviewCard projectId={parsedUrl.id} interactive={interactive} />
       } else if (parsedUrl.subject === 'calls') {
@@ -161,5 +162,33 @@ function CallRoomJoinCard({ className, callRoomId, orgSlug }: { className?: stri
         Join
       </Button>
     </div>
+  )
+}
+
+function LinkedNoteCard({ className, noteId, href }: { className?: string; noteId: string; href: string }) {
+  const { data: note } = useGetNote({ id: noteId, enabled: true })
+
+  return (
+    <a href={href} className={cn('block', className)}>
+      <NoteCard
+        type='document'
+        title={note?.title || 'Untitled'}
+        channel={note?.project?.name}
+      />
+    </a>
+  )
+}
+
+function LinkedPostCard({ className, postId, href }: { className?: string; postId: string; href: string }) {
+  const { data: post } = useGetPost({ postId, enabled: true })
+
+  return (
+    <a href={href} className={cn('block', className)}>
+      <NoteCard
+        type='post'
+        title={post?.title || post?.truncated_description_text || 'Untitled'}
+        channel={post?.project?.name}
+      />
+    </a>
   )
 }

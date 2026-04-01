@@ -1,3 +1,5 @@
+import toast from 'react-hot-toast'
+
 import { Post } from '@campsite/types/generated'
 import { Button } from '@campsite/ui/Button'
 import { Dialog } from '@campsite/ui/Dialog'
@@ -23,6 +25,9 @@ export function DeleteDraftDialog({ post, open, onOpenChange, onSuccess }: Delet
         onSuccess: () => {
           onOpenChange(false)
           onSuccess?.()
+        },
+        onError: (error) => {
+          toast.error(error instanceof Error ? error.message : 'Failed to delete draft')
         }
       }
     )

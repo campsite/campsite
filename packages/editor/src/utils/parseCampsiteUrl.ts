@@ -1,4 +1,4 @@
-const CAMPSITE_PATH_REGEX = /\/(?<org>[a-z0-9-]+)\/(?<subject>notes|posts|projects|calls)\/(?<id>[a-z0-9]{12}$)/i
+const CAMPSITE_PATH_REGEX = /\/(?<org>[a-z0-9-]+)\/(?<subject>notes|posts|projects|calls)\/(?<id>[a-z0-9_]+$)/i
 const CALL_ROOM_JOIN_REGEX = /\/(?<org>[a-z0-9-]+)\/calls\/join\/(?<id>[a-z0-9]+$)/i
 const COMMENT_HASH_REGEX = /#comment-(?<commentId>[a-zA-Z0-9]+)/
 

@@ -393,6 +393,12 @@ export async function deleteLegacyPost(accessToken: string, data: { slug: string
   return await client.mutation(api.content.deleteLegacyPost, data)
 }
 
+export async function publishLegacyPost(accessToken: string, data: { slug: string; postId: string }) {
+  const client = getConvexServerClient(accessToken)
+
+  return await client.mutation(api.content.publishLegacyPost, data)
+}
+
 export async function getLegacyPostCommentsPage(accessToken: string, data: { slug: string; postId: string }) {
   const client = getConvexServerClient(accessToken)
 

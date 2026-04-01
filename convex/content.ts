@@ -2206,7 +2206,8 @@ export const getLegacyMemberPostsPage = query({
       allMemberPosts.filter(
         (post: any) =>
           !post.draft &&
-          post.unfurledLink !== 'campsite://note'
+          // Allow channel documents (note-posts with a projectId), exclude private documents
+          !(post.unfurledLink === 'campsite://note' && !post.projectId)
       ),
       order.by,
       order.direction
@@ -3646,6 +3647,45 @@ export const dismissLegacyPostFeedbackRequest = mutation({
   }
 })
 
+export const publishLegacyPost = mutation({
+  args: {
+    slug: v.string(),
+    postId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const context = await getOrganizationContext(ctx, args.slug)
+
+    if (!context) {
+      throw new Error('Organization not found')
+    }
+
+    const post = await getPostById(ctx, context.organization._id, args.postId)
+
+    if (!post) {
+      throw new Error('Post not found')
+    }
+
+    if (post.authorTokenIdentifier !== context.identity.tokenIdentifier) {
+      throw new Error('Not allowed to publish this post')
+    }
+
+    const now = Date.now()
+
+    await ctx.db.patch(post._id, {
+      draft: false,
+      publishedAt: now,
+      lastActivityAt: now
+    })
+
+    return await buildLegacyPost(ctx, {
+      post: { ...post, draft: false, publishedAt: now, lastActivityAt: now },
+      organization: context.organization,
+      viewerMembership: context.viewerMembership,
+      viewerTokenIdentifier: context.identity.tokenIdentifier
+    })
+  }
+})
+
 export const deleteLegacyPost = mutation({
   args: {
     slug: v.string(),
@@ -3668,58 +3708,49 @@ export const deleteLegacyPost = mutation({
       throw new Error('Not allowed to delete this post')
     }
 
-    const currentVersion = await getPostVersionNumber(ctx, context.organization._id, post)
-    const versionChain = await listPostVersionChain(ctx, context.organization._id, post)
-    const postsToDelete = versionChain.filter((entry: any) => {
-      const candidateVersion = typeof entry.version === 'number' ? entry.version : 1
-      return candidateVersion >= currentVersion
-    })
+    // Delete associated data
+    const [comments, poll, feedbackRequests] = await Promise.all([
+      getPostComments(ctx, post._id),
+      getPostPoll(ctx, post._id),
+      ctx.db
+        .query('postFeedbackRequests')
+        .withIndex('by_post_id', (query: any) => query.eq('postId', post._id))
+        .collect()
+    ])
 
-    for (const versionPost of postsToDelete) {
-      const [comments, poll, feedbackRequests] = await Promise.all([
-        getPostComments(ctx, versionPost._id),
-        getPostPoll(ctx, versionPost._id),
-        ctx.db
-          .query('postFeedbackRequests')
-          .withIndex('by_post_id', (query: any) => query.eq('postId', versionPost._id))
-          .collect()
-      ])
+    for (const comment of comments) {
+      await ctx.db.delete(comment._id)
+    }
 
-      for (const comment of comments) {
-        await deleteArtifactsForSubject(ctx, {
-          organizationId: context.organization._id,
-          subjectType: 'Comment',
-          subjectId: comment._id
-        })
-        await ctx.db.delete(comment._id)
-      }
+    if (poll) {
+      const [options, votes] = await Promise.all([listPollOptions(ctx, poll._id), listPollVotes(ctx, poll._id)])
+      for (const vote of votes) await ctx.db.delete(vote._id)
+      for (const option of options) await ctx.db.delete(option._id)
+      await ctx.db.delete(poll._id)
+    }
 
-      if (poll) {
-        const [options, votes] = await Promise.all([listPollOptions(ctx, poll._id), listPollVotes(ctx, poll._id)])
+    for (const feedbackRequest of feedbackRequests) {
+      await ctx.db.delete(feedbackRequest._id)
+    }
 
-        for (const vote of votes) {
-          await ctx.db.delete(vote._id)
-        }
-
-        for (const option of options) {
-          await ctx.db.delete(option._id)
-        }
-
-        await ctx.db.delete(poll._id)
-      }
-
-      for (const feedbackRequest of feedbackRequests) {
-        await ctx.db.delete(feedbackRequest._id)
-      }
-
+    // Delete artifacts (follow-ups, reactions, favorites, notifications, subscriptions, views, etc.)
+    try {
       await deleteArtifactsForSubject(ctx, {
         organizationId: context.organization._id,
         subjectType: 'Post',
-        subjectId: versionPost._id
+        subjectId: post._id
       })
-      await deletePostTaggings(ctx, versionPost._id)
-      await ctx.db.delete(versionPost._id)
+    } catch {
+      // Ignore artifact cleanup errors — the post itself should still be deleted
     }
+
+    try {
+      await deletePostTaggings(ctx, post._id)
+    } catch {
+      // Ignore tagging cleanup errors
+    }
+
+    await ctx.db.delete(post._id)
 
     return {}
   }

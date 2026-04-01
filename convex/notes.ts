@@ -2556,6 +2556,7 @@ export const getLegacyNotesPage = action({
     after: v.optional(v.string()),
     limit: v.optional(v.number()),
     q: v.optional(v.string()),
+    projectId: v.optional(v.string()),
     mode: v.optional(v.union(v.literal('all'), v.literal('for_me'), v.literal('viewer'))),
     order: v.optional(
       v.object({
@@ -2585,6 +2586,10 @@ export const getLegacyNotesPage = action({
       viewerMembership: context.viewerMembership,
       viewerTokenIdentifier: context.viewerTokenIdentifier
     })
+
+    if (args.projectId) {
+      notes = notes.filter((note: any) => note.project?.id === args.projectId)
+    }
 
     const query = args.q?.trim().toLowerCase()
 

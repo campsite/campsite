@@ -1,13 +1,15 @@
 import { NodeViewWrapper, NodeViewWrapperProps } from '@tiptap/react'
 
-import { NoteFilledIcon, PostFilledIcon, VideoCameraFilledIcon, WarningTriangleIcon } from '@campsite/ui/Icons'
+import { parseCampsiteUrl } from '@campsite/editor'
+import { VideoCameraFilledIcon, WarningTriangleIcon } from '@campsite/ui/Icons'
 import { Link } from '@campsite/ui/Link'
 import { LoadingSpinner } from '@campsite/ui/Spinner'
 import { cn } from '@campsite/ui/src/utils'
 
 import { NoteCard } from '@/components/NoteCard'
 import { useRerenderNodeViewOnBlur } from '@/components/Post/Notes/useRerenderNodeViewOnBlur'
-import { useGetResourceMention } from '@/hooks/useGetResourceMention'
+import { useGetNote } from '@/hooks/useGetNote'
+import { useGetPost } from '@/hooks/useGetPost'
 
 export function InlineResourceMentionRenderer(props: NodeViewWrapperProps) {
   const { href } = props.node.attrs
@@ -48,62 +50,86 @@ function IconContainer({ children }: React.PropsWithChildren) {
 }
 
 export function ResourceMentionView({ href }: { href: string }) {
-  const { data: item, isPending, isError } = useGetResourceMention({ url: href })
-  const resource = item?.post || item?.call || item?.note
+  const parsed = parseCampsiteUrl(href)
 
-  if (item?.note) {
-    const note = item.note
-
-    return (
-      <NoteCard
-        title={note.title}
-        createdAt={note.created_at}
-      />
-    )
+  if (parsed?.subject === 'notes') {
+    return <LinkedNotePreview noteId={parsed.id} />
   }
 
-  if (resource) {
-    return (
-      <Container>
-        <IconContainer>
-          <ResourceMentionIcon type={item.call ? 'call' : 'post'} />
-        </IconContainer>
-        <span className='text-primary'>{resource.title}</span>
-      </Container>
-    )
+  if (parsed?.subject === 'posts') {
+    return <LinkedPostPreview postId={parsed.id} />
   }
+
+  if (parsed?.subject === 'calls') {
+    return <CallPreview href={href} />
+  }
+
+  return (
+    <Container>
+      <IconContainer>
+        <WarningTriangleIcon className='text-tertiary' />
+      </IconContainer>
+      <span className='text-tertiary'>Unable to show preview</span>
+    </Container>
+  )
+}
+
+function LinkedNotePreview({ noteId }: { noteId: string }) {
+  const { data: note, isPending } = useGetNote({ id: noteId, enabled: true })
 
   if (isPending) {
     return (
       <Container>
-        <IconContainer>
-          <LoadingSpinner />
-        </IconContainer>
+        <IconContainer><LoadingSpinner /></IconContainer>
         <span className='text-tertiary'>Loading...</span>
       </Container>
     )
   }
 
-  if (isError) {
+  return (
+    <NoteCard
+      type='document'
+      title={note?.title || 'Untitled'}
+      channel={note?.project?.name}
+    />
+  )
+}
+
+function LinkedPostPreview({ postId }: { postId: string }) {
+  const { data: post, isPending } = useGetPost({ postId, enabled: true })
+
+  if (isPending) {
     return (
       <Container>
-        <IconContainer>
-          <WarningTriangleIcon className='text-tertiary' />
-        </IconContainer>
-        <span className='text-tertiary'>Unable to show preview</span>
+        <IconContainer><LoadingSpinner /></IconContainer>
+        <span className='text-tertiary'>Loading...</span>
       </Container>
     )
   }
 
-  return null
+  return (
+    <NoteCard
+      type='post'
+      title={post?.title || post?.truncated_description_text || 'Untitled'}
+      channel={post?.project?.name}
+    />
+  )
+}
+
+function CallPreview(_props: { href: string }) {
+  return (
+    <Container>
+      <IconContainer>
+        <VideoCameraFilledIcon className='shrink-0 text-green-500' />
+      </IconContainer>
+      <span className='text-primary'>Call</span>
+    </Container>
+  )
 }
 
 export function ResourceMentionIcon({ type, size }: { type: 'call' | 'note' | 'post'; size?: number }) {
   if (type === 'call') {
     return <VideoCameraFilledIcon size={size} className='shrink-0 text-green-500' />
   }
-  if (type === 'note') {
-    return <NoteFilledIcon size={size} className='shrink-0 text-blue-500' />
-  }
-  return <PostFilledIcon size={size} className='text-tertiary shrink-0' />
+  return null
 }
