@@ -5,6 +5,7 @@ import { Link } from '@campsite/ui/Link'
 import { LoadingSpinner } from '@campsite/ui/Spinner'
 import { cn } from '@campsite/ui/src/utils'
 
+import { NoteCard } from '@/components/NoteCard'
 import { useRerenderNodeViewOnBlur } from '@/components/Post/Notes/useRerenderNodeViewOnBlur'
 import { useGetResourceMention } from '@/hooks/useGetResourceMention'
 
@@ -50,11 +51,22 @@ export function ResourceMentionView({ href }: { href: string }) {
   const { data: item, isPending, isError } = useGetResourceMention({ url: href })
   const resource = item?.post || item?.call || item?.note
 
+  if (item?.note) {
+    const note = item.note
+    return (
+      <NoteCard
+        title={note.title}
+        authorName={note.author?.display_name}
+        createdAt={note.created_at}
+      />
+    )
+  }
+
   if (resource) {
     return (
       <Container>
         <IconContainer>
-          <ResourceMentionIcon type={item.call ? 'call' : item.note ? 'note' : 'post'} />
+          <ResourceMentionIcon type={item.call ? 'call' : 'post'} />
         </IconContainer>
         <span className='text-primary'>{resource.title}</span>
       </Container>

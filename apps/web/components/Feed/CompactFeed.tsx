@@ -8,6 +8,7 @@ import { UIText } from '@campsite/ui/Text'
 import { ConditionalWrap } from '@campsite/ui/utils'
 
 import { CompactPost } from '@/components/CompactPost/CompactPost'
+import { InlineNoteCard } from '@/components/Feed/InlineNoteCard'
 import { IndexPageLoading } from '@/components/IndexPages/components'
 import { InfiniteLoader } from '@/components/InfiniteLoader'
 import { lastUsedSubjectAtom } from '@/components/Post/PostNavigationButtons'
@@ -86,9 +87,13 @@ function GroupedPosts({ posts, group, hideProject }: GroupedPostsProps) {
             </div>
 
             <div className='@container -mx-2 flex flex-col gap-px py-1'>
-              {posts.map((post) => (
-                <CompactPost post={post} key={post.id} hideProject={hideProject} />
-              ))}
+              {posts.map((post) =>
+                (post as any).is_note ? (
+                  <InlineNoteCard key={post.id} post={post} />
+                ) : (
+                  <CompactPost post={post} key={post.id} hideProject={hideProject} />
+                )
+              )}
             </div>
           </div>
         )

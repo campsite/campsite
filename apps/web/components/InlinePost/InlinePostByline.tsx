@@ -55,7 +55,7 @@ export function InlinePostByline({ post, display, overflowMenu = true, hideProje
           ) : post.member.user.integration ? (
             <Badge className='h-4.5 translate-y-0.5'>App</Badge>
           ) : null}
-          {!hideProject && (
+          {!hideProject && post.project && (
             <>
               {' in '}
               <ConditionalWrap

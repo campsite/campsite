@@ -3,6 +3,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 
 import { PostPage } from '@campsite/types'
 
+import { InlineNoteCard } from '@/components/Feed/InlineNoteCard'
 import { ViewerRoleInlineComposerUpsell } from '@/components/Feed/ViewerRoleInlineComposerUpsell'
 import { NewPostButton } from '@/components/Home/NewPostButton'
 import { IndexPageLoading } from '@/components/IndexPages/components'
@@ -43,9 +44,13 @@ export function ComfortableFeed({ getPosts, isWriteableForViewer = true, hidePro
 
       <div className='relative flex flex-col'>
         <div className='flex flex-col gap-6'>
-          {posts.map((post) => (
-            <InlinePost key={post.id} post={post} hideProject={hideProject} />
-          ))}
+          {posts.map((post) =>
+            (post as any).is_note ? (
+              <InlineNoteCard key={post.id} post={post} />
+            ) : (
+              <InlinePost key={post.id} post={post} hideProject={hideProject} />
+            )
+          )}
         </div>
       </div>
 

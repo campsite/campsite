@@ -67,7 +67,7 @@ export function buildPostResourceMention(organizationSlug: string, post: any) {
   }
 }
 
-export function buildNoteResourceMention(organizationSlug: string, note: any) {
+export function buildNoteResourceMention(organizationSlug: string, note: any, author?: { display_name: string } | null) {
   return {
     id: note.publicId,
     post: null,
@@ -76,7 +76,8 @@ export function buildNoteResourceMention(organizationSlug: string, note: any) {
       id: note.publicId,
       title: note.title || 'Untitled',
       created_at: new Date(note.createdAt).toISOString(),
-      url: `/${organizationSlug}/notes/${note.publicId}`
+      url: `/${organizationSlug}/notes/${note.publicId}`,
+      author: author ? { display_name: author.display_name } : null
     },
     type_name: 'resource_mention'
   }
@@ -150,7 +151,25 @@ export async function getLegacyResourceMentionByUrl(
 
   if (parsed.subject === 'notes') {
     const note = await getNoteByPublicId(ctx, params.organizationId, parsed.id)
-    return note ? buildNoteResourceMention(params.organizationSlug, note) : null
+
+    if (note) {
+      const author = await resolveNoteAuthor(ctx, { organizationMembershipId: note.organizationMembershipId })
+      return buildNoteResourceMention(params.organizationSlug, note, author)
+    }
+
+    // Fallback: the note's publicId may match a post _id if the notes table row wasn't synced
+    const fallbackPost = await getPostById(ctx, params.organizationId, parsed.id)
+
+    if (fallbackPost && fallbackPost.unfurledLink === 'campsite://note') {
+      const author = await resolvePostAuthor(ctx, fallbackPost.authorTokenIdentifier)
+      return buildNoteResourceMention(params.organizationSlug, {
+        publicId: fallbackPost._id,
+        title: fallbackPost.title,
+        createdAt: fallbackPost.createdAt
+      }, author)
+    }
+
+    return null
   }
 
   if (parsed.subject === 'calls') {
@@ -186,6 +205,28 @@ export async function getLegacyResourceMentionsFromHtml(
   )
 
   return mentions.filter(Boolean)
+}
+
+async function resolveNoteAuthor(ctx: any, params: { organizationMembershipId: any }) {
+  const membership = await ctx.db.get(params.organizationMembershipId)
+
+  if (!membership) return null
+
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_token_identifier', (q: any) => q.eq('tokenIdentifier', membership.userTokenIdentifier))
+    .unique()
+
+  return user ? { display_name: user.displayName || user.username || 'Unknown' } : null
+}
+
+async function resolvePostAuthor(ctx: any, tokenIdentifier: string) {
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_token_identifier', (q: any) => q.eq('tokenIdentifier', tokenIdentifier))
+    .unique()
+
+  return user ? { display_name: user.displayName || user.username || 'Unknown' } : null
 }
 
 function stripHtml(value?: string | null) {

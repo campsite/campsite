@@ -1757,6 +1757,7 @@ async function buildLegacyPost(ctx: any, params: { post: any; organization: any;
     open_graph_image_url: thumbnailUrl,
     thumbnail_url: thumbnailUrl,
     unfurled_link: linkPreview?.url ?? post.unfurledLink ?? null,
+    is_note: post.unfurledLink === 'campsite://note',
     description_html: post.descriptionHtml,
     truncated_description_html: post.descriptionHtml,
     is_text_content_truncated: false,
@@ -1783,7 +1784,7 @@ async function buildLegacyPost(ctx: any, params: { post: any; organization: any;
           }
         : null,
     grouped_reactions: groupedReactions,
-    project: buildLegacyProject(project, post.projectId),
+    project: post.unfurledLink === 'campsite://note' && !post.projectId ? null : buildLegacyProject(project, post.projectId),
     has_parent: !!post.parentId,
     has_iterations: hasIterations,
     viewer_is_organization_member: true,
@@ -2016,7 +2017,11 @@ export const getLegacyPostsPage = query({
     const limit = Math.max(1, Math.min(args.limit ?? 20, 100))
     const queryText = args.q?.trim().toLowerCase()
     let posts = (await listOrganizationPosts(ctx, context.organization._id)).filter(
-      (post: any) => !post.draft && !!post.publishedAt
+      (post: any) =>
+        !post.draft &&
+        !!post.publishedAt &&
+        // Exclude private note-posts (notes without a project/channel association)
+        !(post.unfurledLink === 'campsite://note' && !post.projectId)
     )
     const projects = await ctx.db
       .query('projects')
@@ -2219,7 +2224,8 @@ export const getLegacyMemberPostsPage = query({
         )
       ),
       next_cursor: null,
-      prev_cursor: null
+      prev_cursor: null,
+      _debug: allMemberPosts.map((p: any) => ({ id: p._id, title: p.title, unfurledLink: p.unfurledLink, draft: p.draft, projectId: p.projectId }))
     }
   }
 })
