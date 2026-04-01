@@ -2193,9 +2193,15 @@ export const getLegacyMemberPostsPage = query({
 
     const order = args.order ?? { by: 'published_at' as const, direction: 'desc' as const }
     const limit = Math.max(1, Math.min(args.limit ?? 20, 100))
+    const allMemberPosts = (await listOrganizationPosts(ctx, context.organization._id)).filter(
+      (post: any) => post.authorTokenIdentifier === matchingMembership.userTokenIdentifier
+    )
+
     const posts = sortPosts(
-      (await listOrganizationPosts(ctx, context.organization._id)).filter(
-        (post: any) => post.authorTokenIdentifier === matchingMembership.userTokenIdentifier
+      allMemberPosts.filter(
+        (post: any) =>
+          !post.draft &&
+          post.unfurledLink !== 'campsite://note'
       ),
       order.by,
       order.direction
@@ -2213,7 +2219,8 @@ export const getLegacyMemberPostsPage = query({
         )
       ),
       next_cursor: null,
-      prev_cursor: null
+      prev_cursor: null,
+      _debug: allMemberPosts.map((p: any) => ({ id: p._id, title: p.title, unfurledLink: p.unfurledLink, draft: p.draft, projectId: p.projectId }))
     }
   }
 })
