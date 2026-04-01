@@ -51,7 +51,7 @@ export async function POST(_: Request, { params }: { params: { orgSlug: string; 
   const created = await createLegacyPost(accessToken, {
     slug: params.orgSlug,
     parent_id: params.postId,
-    project_id: currentPost.project.id,
+    project_id: currentPost.project?.id,
     title: currentPost.title,
     description_html: currentPost.description_html,
     status: currentPost.status,
