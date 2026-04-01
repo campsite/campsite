@@ -57,7 +57,6 @@ export function ResourceMentionView({ href }: { href: string }) {
     return (
       <NoteCard
         title={note.title}
-        authorName={note.author?.display_name}
         createdAt={note.created_at}
       />
     )
