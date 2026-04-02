@@ -194,6 +194,9 @@ function JoinByOrgId() {
             {joinMutation.isPending ? 'Joining...' : 'Join'}
           </Button>
         </div>
+        <UIText tertiary className='text-xs'>
+          You will be added as a viewer. Contact the organization admin to change your role.
+        </UIText>
       )}
 
       {!orgPreview && !isFetching && orgId.length === 12 && (

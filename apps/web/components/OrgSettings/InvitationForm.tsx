@@ -205,12 +205,12 @@ function Invitation({
       {
         label: 'Viewer',
         value: 'viewer',
-        sublabel: 'Comment on posts and invite other viewers. You aren’t billed for viewers.'
+        sublabel: 'Comment on posts and invite other viewers.'
       },
       {
         label: 'Guest',
         value: 'guest',
-        sublabel: 'Create and access content only in channels they’ve been added to. You aren’t billed for guests.'
+        sublabel: 'Create and access content only in channels they have been added to.'
       }
     ],
     R.isTruthy

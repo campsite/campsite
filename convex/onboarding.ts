@@ -1143,7 +1143,7 @@ export const joinOrganizationByPublicId = mutation({
     await createOrRestoreOrganizationMembership(ctx, {
       organizationId: organization._id,
       userTokenIdentifier: identity.tokenIdentifier,
-      role: 'member'
+      role: 'viewer'
     })
 
     return {

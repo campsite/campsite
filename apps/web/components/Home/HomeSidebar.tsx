@@ -148,15 +148,12 @@ function Upsell() {
   const orgId = (organization as any)?.public_id
 
   return (
-    <div className='mt-4 flex w-full flex-col px-1.5'>
+    <div className='mt-4 flex w-full flex-col gap-2 px-1.5'>
       {orgId && (
         <Button
-          size='sm'
-          variant='plain'
-          leftSlot={<CopyIcon size={16} />}
-          className={cn('justify-start', {
-            'text-green-500': copiedOrgId
-          })}
+          fullWidth
+          variant='flat'
+          leftSlot={<CopyIcon />}
           onClick={() => copyOrgId(orgId)}
         >
           {copiedOrgId ? 'Copied Org ID' : 'Copy Org ID'}

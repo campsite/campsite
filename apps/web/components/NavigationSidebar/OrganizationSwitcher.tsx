@@ -176,6 +176,14 @@ export function OrganizationSwitcher({ trigger }: { trigger?: React.ReactNode })
     ...items,
     !isLg && items.length > 0 && { type: 'separator' },
     ...(!isLg ? mobileItems : []),
+    // Join org: visible to admins, members, viewers — hidden from guests
+    organization?.viewer_can_see_people_index && {
+      type: 'item',
+      leftSlot: <GlobeIcon />,
+      label: 'Join an organization',
+      url: '/new'
+    },
+    // New org: admins only
     viewerIsAdmin && (!isLg || memberships?.length === 1) && {
       type: 'item',
       leftSlot: <PlusIcon />,
