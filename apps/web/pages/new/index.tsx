@@ -118,15 +118,15 @@ function JoinByOrgId() {
   const [orgId, setOrgId] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  // Look up org as user types
-  const { data: orgPreview } = useQuery({
+  // Look up org only when full 12-char ID is entered
+  const { data: orgPreview, isFetching } = useQuery({
     queryKey: ['org-preview', orgId],
     queryFn: async () => {
       const res = await fetch(`/v1/organizations/lookup?org_id=${encodeURIComponent(orgId)}`)
       if (!res.ok) return null
       return res.json()
     },
-    enabled: orgId.length >= 6
+    enabled: orgId.length === 12
   })
 
   // Join mutation
