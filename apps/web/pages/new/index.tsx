@@ -4,7 +4,7 @@ import Router, { useRouter } from 'next/router'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { OrganizationInvitation, SuggestedOrganization } from '@campsite/types/generated'
-import { Avatar, Button, Logo, TextField, UIText } from '@campsite/ui'
+import { Avatar, Button, LoadingSpinner, Logo, TextField, UIText } from '@campsite/ui'
 
 import { BackButton } from '@/components/BackButton'
 import { CopyCurrentUrl } from '@/components/CopyCurrentUrl'
@@ -168,6 +168,12 @@ function JoinByOrgId() {
 
       {error && <UIText className='text-red-500 text-sm'>{error}</UIText>}
 
+      {isFetching && orgId.length === 12 && !orgPreview && (
+        <div className='flex items-center justify-center py-3'>
+          <LoadingSpinner />
+        </div>
+      )}
+
       {orgPreview && (
         <div className='bg-elevated flex items-center gap-3 rounded-lg border p-3'>
           <Avatar size='lg' name={orgPreview.name} urls={orgPreview.avatar_urls} rounded='rounded' />
@@ -185,7 +191,7 @@ function JoinByOrgId() {
         </div>
       )}
 
-      {!orgPreview && orgId.length >= 6 && (
+      {!orgPreview && !isFetching && orgId.length === 12 && (
         <UIText tertiary className='text-sm'>No organization found with that ID.</UIText>
       )}
     </div>
