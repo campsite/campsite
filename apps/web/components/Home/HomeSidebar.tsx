@@ -116,7 +116,6 @@ function MembersLists({ query }: { query: string }) {
   }, [currentUser?.id, members, onlineUserIds])
 
   const hasAnyMembers = onlineMembers.length > 0 || offlineMembers.length > 0 || guests.length > 0
-  const showUpsell = syncMembers && syncMembers.members.length === 1
 
   if (isLoading) return <LazyLoadingSpinner delay={1000} />
   if (!hasAnyMembers) return <SearchNoResults />
@@ -135,7 +134,7 @@ function MembersLists({ query }: { query: string }) {
       <OnlineMembers members={onlineMembers} query={query} />
       <OfflineMembers members={offlineMembers} query={query} />
       <Guests members={guests} query={query} />
-      {showUpsell && <Upsell />}
+      <Upsell />
     </div>
   )
 }
