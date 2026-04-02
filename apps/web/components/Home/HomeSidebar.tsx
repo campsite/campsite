@@ -129,10 +129,10 @@ function MembersLists({ query }: { query: string }) {
       )}
     >
       <div ref={startRef} />
-      <Upsell />
       <OnlineMembers members={onlineMembers} query={query} />
       <OfflineMembers members={offlineMembers} query={query} />
       <Guests members={guests} query={query} />
+      <Upsell />
     </div>
   )
 }
@@ -147,19 +147,21 @@ function Upsell() {
   if (!organization?.viewer_can_see_people_index) return null
 
   return (
-    <div className='mt-4 flex w-full flex-col gap-2 px-1.5'>
-      {orgId && (
-        <Button
-          fullWidth
-          variant='flat'
-          leftSlot={<CopyIcon />}
-          onClick={() => copyOrgId(orgId)}
-        >
-          {copiedOrgId ? 'Copied Org ID' : 'Copy Org ID'}
-        </Button>
-      )}
+    <>
+      <div className='mx-1.5 mt-3 border-t' />
+      <div className='flex w-full flex-col gap-2 px-1.5 pt-3'>
+        {orgId && (
+          <Button
+            fullWidth
+            variant='flat'
+            leftSlot={<CopyIcon />}
+            onClick={() => copyOrgId(orgId)}
+          >
+            {copiedOrgId ? 'Copied Org ID' : 'Copy Org ID'}
+          </Button>
+        )}
 
-      <InvitePeopleButton variant='flat' />
+        <InvitePeopleButton variant='flat' />
 
       {inviteLink && (
         <Button
@@ -174,7 +176,8 @@ function Upsell() {
           {copied ? 'Copied' : 'Copy invite link'}
         </Button>
       )}
-    </div>
+      </div>
+    </>
   )
 }
 
