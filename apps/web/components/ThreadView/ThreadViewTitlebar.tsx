@@ -16,6 +16,7 @@ import { ThreadAvatar } from '@/components/ThreadAvatar'
 import { BreadcrumbLabel, BreadcrumbTitlebar } from '@/components/Titlebar/BreadcrumbTitlebar'
 import { useGetThread } from '@/hooks/useGetThread'
 import { useJoinMessageThreadCall } from '@/hooks/useJoinMessageThreadCall'
+import { useStartCallFromChat } from '@/hooks/useStartCallFromChat'
 
 function ThreadBreadcrumbTitlebar({ thread }: { thread: MessageThread }) {
   const otherMembersTooltip = thread.other_members.map((m) => m.user.display_name).join(', ')
@@ -106,6 +107,21 @@ export function BreadcrumbCallButton({ thread }: { thread: MessageThread }) {
   )
 }
 
+export function StartInstantCallButton({ thread }: { thread: MessageThread }) {
+  const { mutate: startCall, isPending } = useStartCallFromChat({ thread })
+
+  return (
+    <Button
+      iconOnly={<VideoCameraIcon size={24} className='text-primary' />}
+      accessibilityLabel='Start instant call'
+      variant='plain'
+      tooltip='Start instant call'
+      onClick={() => startCall()}
+      disabled={isPending}
+    />
+  )
+}
+
 export function ThreadViewTitlebar({
   threadId,
   placement,
@@ -148,6 +164,7 @@ export function ThreadViewTitlebar({
 
           <div className='relative flex items-center gap-0.5'>
             <BreadcrumbCallButton thread={thread} />
+            <StartInstantCallButton thread={thread} />
             <ChatThreadOverflowMenu thread={thread} />
           </div>
         </>

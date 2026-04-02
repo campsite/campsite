@@ -7,6 +7,7 @@ import { UIText } from '@campsite/ui/Text'
 import { ConditionalWrap } from '@campsite/ui/utils'
 
 import { ComfyCompactPost } from '@/components/CompactPost/ComfyCompactPost'
+import { InlineNoteCard } from '@/components/Feed/InlineNoteCard'
 import { IndexPageLoading } from '@/components/IndexPages/components'
 import { InfiniteLoader } from '@/components/InfiniteLoader'
 import { PostsIndexEmptyState } from '@/components/PostsIndex/PostsIndexEmptyState'
@@ -100,16 +101,20 @@ function GroupedPosts({ posts, group, hideProject, hideReactions, hideAttachment
             </div>
 
             <div className='@container -mx-2 flex flex-col gap-3 py-1'>
-              {posts.map((post) => (
-                <ComfyCompactPost
-                  post={post}
-                  key={post.id}
-                  hideProject={hideProject}
-                  hideReactions={hideReactions}
-                  hideAttachments={hideAttachments}
-                  hideComments={hideComments}
-                />
-              ))}
+              {posts.map((post) =>
+                (post as any).is_note ? (
+                  <InlineNoteCard key={post.id} post={post} />
+                ) : (
+                  <ComfyCompactPost
+                    post={post}
+                    key={post.id}
+                    hideProject={hideProject}
+                    hideReactions={hideReactions}
+                    hideAttachments={hideAttachments}
+                    hideComments={hideComments}
+                  />
+                )
+              )}
             </div>
           </div>
         )

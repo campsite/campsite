@@ -6,7 +6,7 @@ import { useTheme } from 'next-themes'
 import Image from 'next/image'
 import { isIOS, isMacOs, isMobile } from 'react-device-detect'
 
-import { SITE_URL } from '@campsite/config'
+import { SITE_URL, WEB_URL } from '@campsite/config'
 import { Button, Link, UIText } from '@campsite/ui'
 import * as D from '@campsite/ui/src/Dialog'
 import { useIsDesktopApp } from '@campsite/ui/src/hooks'
@@ -208,9 +208,10 @@ export function PWAInstallGuideDialog({ open, setOpen }: Props) {
   const imageSet = platformIOS ? iosImages : androidImages
   const resolvedCreateBookmark = isDark ? imageSet.createBookmark.dark : imageSet.createBookmark.light
   const resolvedAddToHomeScreen = isDark ? imageSet.addToHomeScreen.dark : imageSet.addToHomeScreen.light
+  const webHost = new URL(WEB_URL).host
   const description = platformIOS
-    ? 'From the Safari app, navigate to app.campsite.com, tap the share button and select “Add to Home Screen”.'
-    : 'From the Chrome app, navigate to app.campsite.com, tap the ••• menu button and select “Add to Home Screen”.'
+    ? `From the Safari app, navigate to ${webHost}, tap the share button and select “Add to Home Screen”.`
+    : `From the Chrome app, navigate to ${webHost}, tap the ••• menu button and select “Add to Home Screen”.`
 
   return (
     <D.Root open={open} onOpenChange={setOpen} size='xl'>
@@ -220,7 +221,7 @@ export function PWAInstallGuideDialog({ open, setOpen }: Props) {
         <D.Description>
           If you run into issues, read the full{' '}
           <Link
-            href='https://app.campsite.com/campsite/p/notes/install-the-campsite-mobile-app-9g4aof0csg18'
+            href={`${WEB_URL}/campsite/p/notes/install-the-campsite-mobile-app-9g4aof0csg18`}
             target='_blank'
             className='text-blue-500 hover:underline'
           >

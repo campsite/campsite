@@ -1,8 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 
 import { useWebPush } from '@/contexts/WebPush'
-import { apiErrorToast } from '@/utils/apiErrorToast'
-import { apiClient, signinUrl } from '@/utils/queryClient'
 import { safeSetAppBadge } from '@/utils/setAppBadge'
 
 export function useSignoutUser() {
@@ -10,13 +8,15 @@ export function useSignoutUser() {
 
   return useMutation({
     mutationFn: async () => {
-      await unsubscribe()
+      try {
+        await unsubscribe()
+      } catch {
+        // Keep logout moving even if push cleanup fails.
+      }
+
       safeSetAppBadge(0)
-      return apiClient.users.deleteMeSignOut().request()
-    },
-    onSuccess: () => {
-      window.location.href = signinUrl()
-    },
-    onError: apiErrorToast
+      window.location.assign('/logout')
+      return null
+    }
   })
 }

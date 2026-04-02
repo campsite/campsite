@@ -5,6 +5,7 @@ import { v4 as uuid } from 'uuid'
 import {
   Attachment,
   Message,
+  MessageThreadInbox,
   OrganizationsOrgSlugThreadsThreadIdMessagesPostRequest,
   PusherInvalidateMessage
 } from '@campsite/types'
@@ -99,7 +100,17 @@ function useCreateMessageCallbacks() {
             threads: [existingThread, ...filtered]
           }
         }
+
+        return old
       })
+
+      // if the thread wasn't in the cache, fetch the full thread and prepend it
+      const threadsData = queryClient.getQueriesData<MessageThreadInbox>({ queryKey: getThreads.requestKey(`${scope}`) })
+      const threadInCache = threadsData.some(([, data]) => data?.threads.some((t) => t.id === threadId))
+
+      if (!threadInCache) {
+        queryClient.invalidateQueries({ queryKey: getThreads.requestKey(`${scope}`) })
+      }
 
       setTypedInfiniteQueriesData(queryClient, getMessages.requestKey({ orgSlug: `${scope}`, threadId }), (old) => {
         if (!old) return

@@ -1,4 +1,4 @@
-import { nativeWindow } from '@todesktop/client-core'
+import { nativeWindow } from '@/utils/electron-bridge'
 
 import { Button, ReorderHandlesIcon } from '@campsite/ui'
 import { useIsDesktopApp } from '@campsite/ui/src/hooks'

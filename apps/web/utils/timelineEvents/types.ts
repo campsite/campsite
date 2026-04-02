@@ -53,6 +53,19 @@ export function isTimelineEventPostUnresolved(event: TimelineEvent): event is Ti
 
 // ----------------------------------------------------------------------------
 
+export interface TimelineEventPostVisibilityUpdated extends TimelineEvent {
+  action: 'post_visibility_updated'
+  member_actor: OrganizationMember
+}
+
+export function isTimelineEventPostVisibilityUpdated(
+  event: TimelineEvent
+): event is TimelineEventPostVisibilityUpdated {
+  return event.action === 'post_visibility_updated' && !!event.member_actor
+}
+
+// ----------------------------------------------------------------------------
+
 export interface LinearIssueExternalRecord extends ExternalRecord {
   service: 'linear'
   type: 'Issue'

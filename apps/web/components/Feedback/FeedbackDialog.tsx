@@ -7,6 +7,7 @@ import { isMobile } from 'react-device-detect'
 import { useDropzone } from 'react-dropzone'
 import { toast } from 'react-hot-toast'
 
+import { WEB_URL } from '@campsite/config'
 import { AttachIcon, Button, CloseIcon, Link, PlanetIcon, TextField, UIText } from '@campsite/ui'
 import * as Dialog from '@campsite/ui/src/Dialog'
 import { isMetaEnter } from '@campsite/ui/src/utils'
@@ -230,7 +231,7 @@ export function FeedbackDialog() {
               <Button
                 className='self-start'
                 externalLink
-                href='https://app.campsite.com/guest/5r72qd3xuW1x4EHwHpw4'
+                href={`${WEB_URL}/guest/5r72qd3xuW1x4EHwHpw4`}
                 variant='primary'
                 onClick={() => setUpsellDismissed(true)}
               >

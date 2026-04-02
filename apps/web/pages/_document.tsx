@@ -12,12 +12,13 @@ class MyDocument extends Document {
   }
 
   render() {
+    const convexPreconnect = process.env.NEXT_PUBLIC_CONVEX_URL
+
     return (
       <Html lang='en' className='fixed isolate h-full w-full overflow-hidden'>
         <Head>
           <meta name='slack-app-id' content='A03CG5AP4CE' />
-          <link rel='preconnect' href='https://api.campsite.com' />
-          <link rel='preconnect' href='https://campsite.imgix.net' />
+          {convexPreconnect ? <link rel='preconnect' href={new URL(convexPreconnect).origin} /> : null}
           <link rel='preconnect' href='https://o1244295.ingest.sentry.io' />
         </Head>
 
@@ -43,10 +44,7 @@ class MyDocument extends Document {
           */}
           <div id='quick-thread' />
           {/* 
-            Read this post for more context: https://app.campsite.com/campsite/posts/8vmro5yao61v
-            PR: https://github.com/campsite/campsite/pull/5182
-
-            tl;dr — when you're on a call, you might open a post's attachment lightbox. In this case,
+            When you're on a call, you might open a post's attachment lightbox. In this case,
             the call should be above the lightbox. In order for this to work, we need to define
             a portal container for the lightbox to render into that will always be below the call.
           */}

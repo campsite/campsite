@@ -16,6 +16,14 @@ export function NewCallDropdownMenu(props: Omit<DropdownMenuProps, 'items'>) {
   const [personalCallLinkDialogOpen, setPersonalCallLinkDialogOpen] = useState(false)
   const isDesktop = useIsDesktopApp()
 
+  function toBrowserCallUrl(url: string) {
+    const nextUrl = new URL(url)
+
+    nextUrl.searchParams.set('im', 'open')
+    nextUrl.searchParams.set('browser', 'true')
+    return nextUrl.toString()
+  }
+
   const items: MenuItem[] = [
     {
       type: 'item',
@@ -30,7 +38,7 @@ export function NewCallDropdownMenu(props: Omit<DropdownMenuProps, 'items'>) {
                 if (isDesktop) {
                   desktopJoinCall(`${data?.url}?im=open`)
                 } else {
-                  window.open(`${data?.url}?im=open`, '_blank')
+                  window.open(toBrowserCallUrl(data.url), '_blank')
                 }
               })
             }

@@ -10,6 +10,7 @@ catalog:
   '@create-figma-plugin/tsconfig': ^2.6.1
   '@create-figma-plugin/ui': ^2.6.1
   '@create-figma-plugin/utilities': ^2.6.1
+  '@convex-dev/workos': ^0.0.1
   '@emoji-mart/data': ^1.1.2
   '@figma/plugin-typings': 1.74.0
   '@flydotio/dockerfile': ^0.4.11
@@ -22,8 +23,8 @@ catalog:
   '@ianvs/prettier-plugin-sort-imports': ^4.2.1
   '@mdx-js/loader': ^3.0.1
   '@mdx-js/react': ^3.0.1
-  '@next/bundle-analyzer': ^14.2.5
-  '@next/mdx': ^14.2.5
+  '@next/bundle-analyzer': ^14.2.26
+  '@next/mdx': ^14.2.26
   '@octokit/auth-app': ^7.1.0
   '@octokit/core': ^6.1.2
   '@playwright/test': ^1.43.1
@@ -69,9 +70,6 @@ catalog:
   '@tanstack/react-virtual': ^3.5.0
   '@team-plain/typescript-sdk': ^3.3.0
   '@testing-library/react': ^15.0.7
-  '@tiptap-pro/extension-details': ^2.10.11
-  '@tiptap-pro/extension-details-content': ^2.10.11
-  '@tiptap-pro/extension-details-summary': ^2.10.11
   '@tiptap/core': ^2.6.4
   '@tiptap/extension-blockquote': ^2.6.4
   '@tiptap/extension-bold': ^2.6.4
@@ -102,7 +100,6 @@ catalog:
   '@tiptap/html': ^2.6.4
   '@tiptap/pm': ^2.6.4
   '@tiptap/react': ^2.6.4
-  '@todesktop/client-core': ^1.10.0
   '@types/body-parser': ^1.19.5
   '@types/d3-selection': ^3.0.3
   '@types/d3-transition': ^3.0.3
@@ -124,6 +121,7 @@ catalog:
   '@typescript-eslint/parser': ^7.11.0
   '@vercel/og': ^0.6.2
   '@vercel/speed-insights': ^1.0.10
+  '@workos-inc/authkit-react': ^0.16.0
   '@vitejs/plugin-react': ^4.3.0
   '@welldone-software/why-did-you-render': ^7.0.1
   autoprefixer: ^10.4.8
@@ -135,6 +133,7 @@ catalog:
   cmark-gfm-js: ^1.1.7
   concurrently: '>=8'
   cookies-next: ^2.1.1
+  convex: ^1.31.6
   d3-selection: ^3.0.0
   d3-zoom: ^3.0.0
   date-fns: ^3.6.0
@@ -143,7 +142,7 @@ catalog:
   dotenv: ^16.3.1
   easymde: '2'
   eslint: ^8.57.0
-  eslint-config-next: ^14.2.3
+  eslint-config-next: ^14.2.26
   eslint-config-turbo: ^2.0.9
   eslint-plugin-react: ^7.34.1
   eslint-plugin-react-hooks: ^4.6.2
@@ -182,7 +181,7 @@ catalog:
   metascraper-video: ^5.34.7
   metascraper-youtube: ^5.34.7
   morgan: ^1.10.0
-  next: ^14.2.5
+  next: ^14.2.26
   next-mdx-remote: ^5.0.0
   next-sanity: ^9.5.0
   next-seo: ^6.0.0

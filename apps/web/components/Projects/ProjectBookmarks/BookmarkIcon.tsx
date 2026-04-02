@@ -1,5 +1,6 @@
 import Image from 'next/image'
 
+import { WEB_URL } from '@campsite/config'
 import { LinkIcon } from '@campsite/ui'
 
 interface Props {
@@ -10,6 +11,8 @@ interface Props {
 export function BookmarkFavicon(props: Props) {
   const url = new URL(props.url)
   const hostname = url.hostname
+  const configuredHost = new URL(WEB_URL).hostname
+  const currentHost = typeof window !== 'undefined' ? window.location.hostname : null
 
   let atlassianRegex = /atlassian.net/
   let slackRegex = /slack.com/
@@ -23,7 +26,10 @@ export function BookmarkFavicon(props: Props) {
 
   let src = null
 
-  switch (hostname) {
+  if (hostname === configuredHost || hostname === currentHost) {
+    src = '/img/services/campsite.png'
+  } else {
+    switch (hostname) {
     case 'docs.google.com':
       if (url.pathname.startsWith('/document')) {
         src = '/img/services/google-docs.png'
@@ -255,17 +261,6 @@ export function BookmarkFavicon(props: Props) {
     case 'www.bitbucket.org':
       src = '/img/services/bitbucket.png'
       break
-    case 'campsite.design':
-    case 'www.campsite.design':
-    case 'app.campsite.design':
-    case 'campsite.co':
-    case 'www.campsite.co':
-    case 'app.campsite.co':
-    case 'campsite.com':
-    case 'www.campsite.com':
-    case 'app.campsite.com':
-      src = '/img/services/campsite.png'
-      break
     case 'linear.app':
     case 'www.linear.app':
       src = '/img/services/linear.png'
@@ -277,6 +272,7 @@ export function BookmarkFavicon(props: Props) {
     default:
       src = null
       break
+    }
   }
 
   if (!src) return <LinkIcon />

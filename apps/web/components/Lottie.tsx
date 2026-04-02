@@ -1,5 +1,9 @@
+import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
-import LottieLight from 'react-lottie-player/dist/LottiePlayerLight'
+
+const LottieLight = dynamic(() => import('react-lottie-player/dist/LottiePlayerLight'), {
+  ssr: false
+})
 
 interface Props {
   url: string

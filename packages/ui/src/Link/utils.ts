@@ -1,5 +1,4 @@
-import { nativeWindow, newApp, webContents } from '@todesktop/client-core'
-import { os } from '@todesktop/client-core/platform'
+import { nativeWindow, newApp, os, webContents } from '../lib/electron-bridge'
 import Router from 'next/router'
 
 import { WEB_URL } from '@campsite/config'

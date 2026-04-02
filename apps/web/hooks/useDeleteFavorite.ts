@@ -6,8 +6,10 @@ import { useScope } from '@/contexts/scope'
 import { apiErrorToast } from '@/utils/apiErrorToast'
 import { useQueryNormalizer } from '@/utils/normy/QueryNormalizerProvider'
 import { removeFavorite } from '@/utils/optimisticFavorites'
-import { apiClient } from '@/utils/queryClient'
+import { apiClient, setTypedQueriesData } from '@/utils/queryClient'
 import { createNormalizedOptimisticUpdate } from '@/utils/queryNormalization'
+
+const getThreads = apiClient.organizations.getThreads()
 
 export function useDeleteFavorite() {
   const { scope } = useScope()
@@ -19,6 +21,19 @@ export function useDeleteFavorite() {
     mutationFn: (favorite: Favorite) => apiClient.organizations.deleteFavoritesById().request(`${scope}`, favorite.id),
     onMutate: async (favorite: Favorite) => {
       const removedFavorites = await removeFavorite({ queryClient, scope, resourceId: favorite.favoritable_id })
+
+      if (favorite.favoritable_type === 'MessageThread') {
+        setTypedQueriesData(queryClient, getThreads.requestKey(`${scope}`), (old) => {
+          if (!old) return old
+
+          return {
+            ...old,
+            threads: old.threads.map((thread) =>
+              thread.id === favorite.favoritable_id ? { ...thread, viewer_has_favorited: false } : thread
+            )
+          }
+        })
+      }
 
       switch (favorite.favoritable_type) {
         case 'Project':
@@ -71,6 +86,11 @@ export function useDeleteFavorite() {
               update: { viewer_has_favorited: false }
             })
           }
+      }
+    },
+    onSuccess(_, favorite) {
+      if (favorite.favoritable_type === 'MessageThread') {
+        queryClient.invalidateQueries({ queryKey: getThreads.requestKey(`${scope}`) })
       }
     },
     onError(error, _, context) {

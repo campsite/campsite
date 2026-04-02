@@ -51,12 +51,20 @@ export function CallsHoverCard({
 
   const { mutate: createCallRoom, isPending } = useCreateCallRoom()
 
+  function toBrowserCallUrl(url: string) {
+    const nextUrl = new URL(url)
+
+    nextUrl.searchParams.set('im', 'open')
+    nextUrl.searchParams.set('browser', 'true')
+    return nextUrl.toString()
+  }
+
   function onInstantCall() {
     createCallRoom(
       { source: 'new_call_button' },
       {
         onSuccess: (data) => {
-          setTimeout(() => window.open(`${data?.url}?im=open`, '_blank'))
+          setTimeout(() => window.open(toBrowserCallUrl(data.url), '_blank'))
         },
         onError: () => {
           toast('Unable to start a call, try again.')

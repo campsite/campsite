@@ -16,6 +16,7 @@ export function DesktopRedirectProvider({ children }: { children: React.ReactNod
   const { data: currentUser, isLoading } = useGetCurrentUser()
   const isDesktop = useIsDesktopApp()
   const hasMounted = useHasMounted()
+  const isPreviewDeployment = process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview'
   const isReady = hasMounted && router.isReady && !isLoading
   const preferenceEnabled = currentUser?.preferences?.prefers_desktop_app === 'enabled'
   const [interstitialState, setInterstitialState] = useState<'shown' | 'not-shown' | 'not-ready'>('not-ready')
@@ -23,7 +24,7 @@ export function DesktopRedirectProvider({ children }: { children: React.ReactNod
   useEffect(() => {
     if (!isReady) return
 
-    if (preferenceEnabled && !isMobile && !isDesktop && router.query.browser !== 'true') {
+    if (preferenceEnabled && !isPreviewDeployment && !isMobile && !isDesktop && router.query.browser !== 'true') {
       setInterstitialState('shown')
 
       window.location.href = `${DESKTOP_APP_PROTOCOL}/${router.asPath}`
@@ -40,7 +41,7 @@ export function DesktopRedirectProvider({ children }: { children: React.ReactNod
       Otherwise, router.asPath could be incorrect.
       https://nextjs.org/docs/pages/api-reference/functions/use-router#router-object
     */
-  }, [isReady]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isPreviewDeployment, isReady]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (interstitialState === 'not-ready') {
     return <FullPageLoading />

@@ -29,6 +29,7 @@ import {
   isTimelineEventCreatedLinearIssueFromPost,
   isTimelineEventPostReferencedInLinearExternalRecord,
   isTimelineEventPostResolved,
+  isTimelineEventPostVisibilityUpdated,
   isTimelineEventPostUnresolved,
   isTimelineEventSubjectPinned,
   isTimelineEventSubjectReferencedInComment,
@@ -40,6 +41,7 @@ import {
   TimelineEventCreatedLinearIssueFromPost,
   TimelineEventPostReferencedInLinearExternalRecord,
   TimelineEventPostResolved,
+  TimelineEventPostVisibilityUpdated,
   TimelineEventPostUnresolved,
   TimelineEventSubjectPinned,
   TimelineEventSubjectReferencedInComment,
@@ -55,6 +57,18 @@ import {
 
 interface TimelineEventContainerProps extends React.PropsWithChildren {
   className?: string
+}
+
+function isCommentResolvedTimelineEvent(
+  event: TimelineEvent
+): event is TimelineEvent & { action: 'comment_resolved'; member_actor: NonNullable<TimelineEvent['member_actor']> } {
+  return (event as any).action === 'comment_resolved' && !!event.member_actor
+}
+
+function isCommentUnresolvedTimelineEvent(
+  event: TimelineEvent
+): event is TimelineEvent & { action: 'comment_unresolved'; member_actor: NonNullable<TimelineEvent['member_actor']> } {
+  return (event as any).action === 'comment_unresolved' && !!event.member_actor
 }
 
 function TimelineEventContainer({ children, className }: TimelineEventContainerProps) {
@@ -104,7 +118,7 @@ function TimelineEventSubjectTitleUpdatedComponent({
             </UIText>
           </>
         )}
-        <TimelineEventCreatedAtText timelineEvent={timelineEvent} />
+        <TimelineEventCreatedAtText timelineEvent={timelineEvent as any} />
       </TimelineEventParagraphContainer>
     </TimelineEventContainer>
   )
@@ -124,7 +138,7 @@ function TimelineEventPostResolvedComponent({ timelineEvent }: { timelineEvent: 
         <UIText size='text-inherit' element='span' tertiary>
           resolved the post
         </UIText>
-        <TimelineEventCreatedAtText timelineEvent={timelineEvent} />
+        <TimelineEventCreatedAtText timelineEvent={timelineEvent as any} />
       </TimelineEventParagraphContainer>
     </TimelineEventContainer>
   )
@@ -144,7 +158,31 @@ function TimelineEventPostUnresolvedComponent({ timelineEvent }: { timelineEvent
         <UIText size='text-inherit' element='span' tertiary>
           reopened the post
         </UIText>
-        <TimelineEventCreatedAtText timelineEvent={timelineEvent} />
+        <TimelineEventCreatedAtText timelineEvent={timelineEvent as any} />
+      </TimelineEventParagraphContainer>
+    </TimelineEventContainer>
+  )
+}
+
+// ----------------------------------------------------------------------------
+
+function TimelineEventPostVisibilityUpdatedComponent({
+  timelineEvent
+}: {
+  timelineEvent: TimelineEventPostVisibilityUpdated
+}) {
+  return (
+    <TimelineEventContainer>
+      <TimelineEventAccessory>
+        <SignIcon />
+      </TimelineEventAccessory>
+
+      <TimelineEventParagraphContainer>
+        <TimelineEventMemberActor timelineEvent={timelineEvent} />{' '}
+        <UIText size='text-inherit' element='span' tertiary>
+          changed the post visibility
+        </UIText>
+        <TimelineEventCreatedAtText timelineEvent={timelineEvent as any} />
       </TimelineEventParagraphContainer>
     </TimelineEventContainer>
   )
@@ -512,6 +550,54 @@ function TimelineEventSubjectUpdatedProjectComponent({
 
 // ----------------------------------------------------------------------------
 
+function TimelineEventCommentResolvedComponent({
+  timelineEvent
+}: {
+  timelineEvent: TimelineEvent
+}) {
+  return (
+    <TimelineEventContainer>
+      <TimelineEventAccessory className='text-brand-primary'>
+        <CheckCircleFilledFlushIcon />
+      </TimelineEventAccessory>
+
+      <TimelineEventParagraphContainer>
+        <TimelineEventMemberActor timelineEvent={timelineEvent} />{' '}
+        <UIText size='text-inherit' element='span' tertiary>
+          resolved this comment
+        </UIText>
+        <TimelineEventCreatedAtText timelineEvent={timelineEvent as any} />
+      </TimelineEventParagraphContainer>
+    </TimelineEventContainer>
+  )
+}
+
+// ----------------------------------------------------------------------------
+
+function TimelineEventCommentUnresolvedComponent({
+  timelineEvent
+}: {
+  timelineEvent: TimelineEvent
+}) {
+  return (
+    <TimelineEventContainer>
+      <TimelineEventAccessory>
+        <RotateIcon />
+      </TimelineEventAccessory>
+
+      <TimelineEventParagraphContainer>
+        <TimelineEventMemberActor timelineEvent={timelineEvent} />{' '}
+        <UIText size='text-inherit' element='span' tertiary>
+          unresolved this comment
+        </UIText>
+        <TimelineEventCreatedAtText timelineEvent={timelineEvent as any} />
+      </TimelineEventParagraphContainer>
+    </TimelineEventContainer>
+  )
+}
+
+// ----------------------------------------------------------------------------
+
 export function TimelineEventSubject({
   timelineEvent,
   subjectType
@@ -525,6 +611,12 @@ export function TimelineEventSubject({
     return <TimelineEventPostResolvedComponent timelineEvent={timelineEvent} />
   } else if (isTimelineEventPostUnresolved(timelineEvent)) {
     return <TimelineEventPostUnresolvedComponent timelineEvent={timelineEvent} />
+  } else if (isCommentResolvedTimelineEvent(timelineEvent)) {
+    return <TimelineEventCommentResolvedComponent timelineEvent={timelineEvent} />
+  } else if (isCommentUnresolvedTimelineEvent(timelineEvent)) {
+    return <TimelineEventCommentUnresolvedComponent timelineEvent={timelineEvent} />
+  } else if (isTimelineEventPostVisibilityUpdated(timelineEvent)) {
+    return <TimelineEventPostVisibilityUpdatedComponent timelineEvent={timelineEvent} />
   } else if (isTimelineEventPostReferencedInLinearExternalRecord(timelineEvent)) {
     return <TimelineEventPostReferencedInLinearExternalRecordComponent timelineEvent={timelineEvent} />
   } else if (isTimelineEventCreatedLinearIssueFromPost(timelineEvent)) {

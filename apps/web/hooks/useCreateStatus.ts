@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
+import { filter, isTruthy, uniqBy } from 'remeda'
 
 import { OrganizationMember, OrganizationsOrgSlugMembersMeStatusesPostRequest } from '@campsite/types'
 
@@ -70,6 +71,29 @@ export function useCreateStatus() {
               pause_notifications: params.pause_notifications ?? false
             }
           })
+        },
+        {
+          query: {
+            queryKey: apiClient.organizations.getMembersMeStatuses().requestKey(org),
+            exact: true
+          },
+          updater: (old: OrganizationsOrgSlugMembersMeStatusesPostRequest[] = []) =>
+            uniqBy(
+              filter(
+                [
+                  {
+                    emoji: params.emoji,
+                    message: params.message,
+                    expiration_setting: params.expiration_setting,
+                    expires_at: params.expires_at ?? getExpiration(params.expiration_setting)?.toISOString() ?? null,
+                    pause_notifications: params.pause_notifications ?? false
+                  },
+                  ...old
+                ],
+                isTruthy
+              ),
+              (status) => status.message
+            )
         }
       ]
     }

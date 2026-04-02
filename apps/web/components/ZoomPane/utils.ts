@@ -1,3 +1,4 @@
+import { HAS_DEDICATED_MEDIA_BASE_URL, MEDIA_BASE_URL } from '@campsite/config'
 import { Selection as D3Selection } from 'd3-selection'
 import { ZoomBehavior, zoomIdentity, ZoomTransform } from 'd3-zoom'
 
@@ -22,6 +23,19 @@ function tileUrl({ src, x, y, width, height }: { src: string; x: number; y: numb
   url.searchParams.set('auto', 'compress,format')
 
   return url.toString()
+}
+
+function canTileMediaUrl(src: string) {
+  if (src.startsWith('data:') || !HAS_DEDICATED_MEDIA_BASE_URL) return false
+
+  try {
+    const srcURL = new URL(src)
+    const mediaURL = new URL(MEDIA_BASE_URL)
+
+    return srcURL.origin === mediaURL.origin
+  } catch {
+    return false
+  }
 }
 
 type CoordinateExtent = [[number, number], [number, number]]
@@ -71,9 +85,7 @@ export interface Tile {
 }
 
 export function createTiles(width: number, height: number, src: string) {
-  const srcURL = new URL(src)
-
-  if (!srcURL.hostname.endsWith('imgix.net') && !srcURL.hostname.endsWith('imgix.com')) {
+  if (!canTileMediaUrl(src)) {
     return [{ x: 0, y: 0, width, height, src }]
   }
 

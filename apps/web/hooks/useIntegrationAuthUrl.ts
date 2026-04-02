@@ -1,4 +1,4 @@
-import { RAILS_AUTH_URL } from '@campsite/config'
+import { APP_AUTH_URL } from '@campsite/config'
 import { useIsDesktopApp } from '@campsite/ui/src/hooks'
 
 type IntegrationAuthParams = {
@@ -14,5 +14,5 @@ export function useIntegrationAuthUrl({ enable_notifications, ...rest }: Integra
   if (enable_notifications) params.enable_notifications = 'true'
   if (isDesktop) params.desktop_app = 'true'
 
-  return `${RAILS_AUTH_URL}/integrations/auth/new?${new URLSearchParams(params).toString()}`
+  return `${APP_AUTH_URL}/integrations/auth/new?${new URLSearchParams(params).toString()}`
 }

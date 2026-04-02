@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { systemPreferences } from '@todesktop/client-core'
+import { systemPreferences } from '@/utils/electron-bridge'
 import { isMacOs, isWindows } from 'react-device-detect'
 
 import { useIsDesktopApp } from '@campsite/ui/hooks'

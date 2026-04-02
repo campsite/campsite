@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/convex/schemas/convex.schema.json",
+  "node": {
+    "nodeVersion": "20"
+  },
+  "authKit": {
+    "dev": {
+        "configure": {
+        "redirectUris": ["http://localhost:3000/callback", "https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app/callback"],
+        "appHomepageUrl": "https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app/",
+        "corsOrigins": ["http://localhost:3000", "https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app"]
+      },
+      "localEnvVars": {
+        "WORKOS_CLIENT_ID": "${authEnv.WORKOS_CLIENT_ID}",
+        "WORKOS_API_KEY": "${authEnv.WORKOS_API_KEY}",
+        "NEXT_PUBLIC_WORKOS_CLIENT_ID": "${authEnv.WORKOS_CLIENT_ID}",
+        "NEXT_PUBLIC_WORKOS_REDIRECT_URI": "http://localhost:3000/callback"
+      }
+    },
+    "preview": {
+      "configure": {
+        "redirectUris": ["https://${buildEnv.VERCEL_BRANCH_URL}/callback"],
+        "appHomepageUrl": "https://${buildEnv.VERCEL_BRANCH_URL}/",
+        "corsOrigins": ["https://${buildEnv.VERCEL_BRANCH_URL}"]
+      }
+    },
+    "prod": {
+      "environmentType": "production",
+      "configure": {
+        "redirectUris": ["https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app/callback"],
+        "appHomepageUrl": "https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app/",
+        "corsOrigins": ["https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app"]
+      }
+    }
+  }
+}

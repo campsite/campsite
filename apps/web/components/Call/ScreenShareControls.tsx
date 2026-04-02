@@ -6,7 +6,7 @@ import {
   useHMSStore
 } from '@100mslive/react-sdk'
 import { Popover, PopoverAnchor, PopoverContent } from '@radix-ui/react-popover'
-import { systemPreferences } from '@todesktop/client-core'
+import { systemPreferences } from '@/utils/electron-bridge'
 import { isMacOs, isWindows } from 'react-device-detect'
 
 import { Button, CONTAINER_STYLES, LayeredHotkeys, StreamIcon } from '@campsite/ui'

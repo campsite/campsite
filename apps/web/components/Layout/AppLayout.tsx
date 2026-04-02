@@ -1,4 +1,4 @@
-import { nativeWindow } from '@todesktop/client-core'
+import { nativeWindow } from '@/utils/electron-bridge'
 import { atomWithStorage } from 'jotai/utils'
 
 import { useBreakpoint, useIsDesktopApp } from '@campsite/ui/src/hooks'

@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
+    "moduleResolution": "bundler",
     "paths": {
       "@/components/*": ["components/*"],
       "@/contexts/*": ["contexts/*"],
       "@/atoms/*": ["atoms/*"],
       "@/hooks/*": ["hooks/*"],
       "@/pages/*": ["pages/*"],
+      "@/lib/*": ["lib/*"],
       "@/utils/*": ["utils/*"],
+      "@/convex/*": ["../../convex/*"],
       "@campsite/editor/*": ["../../packages/editor/src/*"],
       "@campsite/editor": ["../../packages/editor/src/index"],
       "@campsite/config/*": ["../../packages/config/src/*"],

@@ -82,6 +82,10 @@ const updatePageQueryData = (newComment: Comment) => (old: InfiniteData<CommentP
   }
 }
 
+function getOptimisticAttachmentPreview(file: TransformedFile) {
+  return file.preview_file_path || file.url || file.optimistic_src || null
+}
+
 function replaceOptimisticComments(optimisticId: string, comments: Comment[], serverComment: Comment): Comment[] {
   return comments.map((comment) => {
     // replace with server comment on match
@@ -160,11 +164,13 @@ async function optimisticUpdate({
   currentUser = currentUser || getTypedQueryData(queryClient, apiClient.users.getMe().requestKey())
 
   const files: Attachment[] = data.transformedFiles.map((file) => {
+    const previewUrl = getOptimisticAttachmentPreview(file)
+
     return {
       file_type: file.type,
       key: file.key ?? '',
       relative_url: file.key ?? '',
-      preview_relative_url: '',
+      preview_relative_url: file.preview_file_path ?? '',
       url: file.url,
       image: isImage(file.type),
       video: isVideo(file.type),
@@ -176,8 +182,8 @@ async function optimisticUpdate({
       audio: isAudio(file.type),
       no_video_track: false,
       id: file.id,
-      app_url: '',
-      download_url: '',
+      app_url: file.url,
+      download_url: file.url,
       duration: 0,
       subject_type: 'Comment',
       is_subject_comment: true,
@@ -186,18 +192,19 @@ async function optimisticUpdate({
       height: file.height ?? 0,
       optimistic_src: file.optimistic_src,
       link: false,
-      preview_url: null,
-      preview_thumbnail_url: null,
+      preview_url: previewUrl,
+      preview_thumbnail_url: previewUrl,
       image_urls: null,
       remote_figma_url: null,
       optimistic_ready: false,
-      name: null,
-      size: null,
+      name: file.name ?? null,
+      size: file.size ?? null,
       comments_count: 0,
       type_name: 'attachment',
       gallery_id: null
     }
   })
+  const commentPreviewUrl = files.find((file) => file.preview_url || file.url)?.preview_url || files.find((file) => file.url)?.url || null
 
   const newComment: Comment = {
     id: optimisticId,
@@ -236,8 +243,8 @@ async function optimisticUpdate({
     optimistic_id: optimisticId,
     note_highlight: data.note_highlight ?? null,
     type_name: 'comment',
-    canvas_preview_url: null,
-    attachment_thumbnail_url: null,
+    canvas_preview_url: commentPreviewUrl,
+    attachment_thumbnail_url: commentPreviewUrl,
     subject_type: subjectType,
     subject_id: subjectId,
     resource_mentions: []

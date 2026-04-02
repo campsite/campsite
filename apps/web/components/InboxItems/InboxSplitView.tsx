@@ -10,10 +10,12 @@ import { useDebouncedCallback } from 'use-debounce'
 import type { FollowUp, Notification, NotificationTarget } from '@campsite/types'
 import {
   AlarmIcon,
+  Button,
   InboxIcon,
   LayeredHotkeys,
   Link,
   UIText,
+  VideoCameraFilledIcon,
   useBreakpoint,
   useCallbackRef,
   useIsDesktopApp
@@ -58,6 +60,7 @@ import { useGetNotifications } from '@/hooks/useGetNotifications'
 import { useMarkNotificationRead } from '@/hooks/useMarkNotificationRead'
 import { useMarkNotificationUnread } from '@/hooks/useMarkNotificationUnread'
 import { useScopedStorage } from '@/hooks/useScopedStorage'
+import { useScope } from '@/contexts/scope'
 import { useUnarchiveNotification } from '@/hooks/useUnarchiveNotification'
 import { flattenInfiniteData } from '@/utils/flattenInfiniteData'
 import { getGroupDateHeading } from '@/utils/getGroupDateHeading'
@@ -705,6 +708,22 @@ function InboxIndexEmptyState({ inboxView }: { inboxView: InboxView }) {
   )
 }
 
+function CallRoomInvitationDetail({ target }: { target: NotificationTarget }) {
+  const { scope } = useScope()
+
+  return (
+    <div className='flex flex-1 flex-col items-center justify-center gap-4 p-8'>
+      <VideoCameraFilledIcon className='text-green-500' size={48} />
+      <UIText size='text-lg' weight='font-semibold'>
+        {target.title}
+      </UIText>
+      <Button href={`/${scope}/calls/join/${target.id}`} variant='primary' size='large'>
+        Join call
+      </Button>
+    </div>
+  )
+}
+
 const Detail = memo(function Detail({ target }: { target: NotificationTarget }) {
   switch (target.type) {
     case 'Post':
@@ -715,6 +734,8 @@ const Detail = memo(function Detail({ target }: { target: NotificationTarget }) 
       return <NoteView noteId={target.id} />
     case 'Call':
       return <CallView callId={target.id} />
+    case 'CallRoom':
+      return <CallRoomInvitationDetail target={target} />
     default:
       return <p>Not found</p>
   }

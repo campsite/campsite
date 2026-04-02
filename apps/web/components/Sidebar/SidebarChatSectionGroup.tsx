@@ -17,14 +17,14 @@ import { useScopedStorage } from '@/hooks/useScopedStorage'
 export function SidebarChatSectionGroup() {
   const router = useRouter()
   const { data: threadsInbox, isLoading } = useGetThreads()
-  const hasThreads = threadsInbox?.threads && threadsInbox.threads.length > 0
   const [collapsed, setCollapsed] = useScopedStorage('sidebar-chat-collapsed', false)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [hoveredId, setHoveredId] = useState<undefined | string>()
   const hasSidebarDMs = useCurrentUserOrOrganizationHasFeature('sidebar_dms')
 
   const selectedThreadId = router.query.threadId as string
-  const nonFavoritedThreads = threadsInbox?.threads.filter((thread) => !thread.viewer_has_favorited)
+  const nonFavoritedThreads = threadsInbox?.threads.filter((thread) => !thread.viewer_has_favorited && !thread.group)
+  const hasThreads = nonFavoritedThreads && nonFavoritedThreads.length > 0
   const unreadAndSelectedItems = nonFavoritedThreads?.filter((thread) => {
     const isHovering = thread.id === hoveredId
 
@@ -50,7 +50,7 @@ export function SidebarChatSectionGroup() {
             <div className='text-quaternary p-2 pt-0.5'>
               <div className='flex flex-col gap-1'>
                 <UIText size='text-xs' inherit>
-                  Send direct messages or start a group conversation.
+                  Send direct messages to people in your organization.
                 </UIText>
                 <button onClick={() => setCreateDialogOpen(true)} className='text-left text-blue-500 hover:underline'>
                   <UIText size='text-xs' inherit>

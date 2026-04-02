@@ -85,8 +85,7 @@ export const database = new Database({
         type
       })
       Sentry.setContext('context', {
-        schemaVersion: context.schemaVersion,
-        token: context.token
+        schemaVersion: context.schemaVersion
       })
       Sentry.captureException(error)
       throw error
@@ -134,8 +133,7 @@ export const database = new Database({
         type
       })
       Sentry.setContext('context', {
-        schemaVersion: context.schemaVersion,
-        token: context.token
+        schemaVersion: context.schemaVersion
       })
       Sentry.captureException(error)
       throw error

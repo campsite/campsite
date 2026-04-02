@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, m } from 'framer-motion'
 import { DropzoneState } from 'react-dropzone'
 
-import { IMGIX_DOMAIN } from '@campsite/config'
 import { MediaGalleryItemAttributes } from '@campsite/editor/extensions'
 import { ImageUrls } from '@campsite/types'
 import { cn } from '@campsite/ui/src/utils'
@@ -16,6 +15,7 @@ import { PrincipleAttachment } from '@/components/Thread/Bubble/AttachmentCard/P
 import { StitchAttachment } from '@/components/Thread/Bubble/AttachmentCard/StitchAttachment'
 import { VideoAttachment } from '@/components/Thread/Bubble/AttachmentCard/VideoAttachment'
 import { useServerOrOptimisticAttachment } from '@/hooks/useServerOrOptimisticAttachment'
+import { resolveMediaUrl } from '@/utils/mediaUrl'
 
 function prefetchPostImages(imageUrls: ImageUrls) {
   const urls = [imageUrls.thumbnail_url, imageUrls.feed_url, imageUrls.slack_url]
@@ -28,7 +28,7 @@ function prefetchPostImages(imageUrls: ImageUrls) {
 }
 
 function prefetchPostVideo(path: string) {
-  const src = `${IMGIX_DOMAIN}/${path}`
+  const src = resolveMediaUrl(path)
   const video = document.createElement('video')
 
   video.src = src + '#t=0.1'

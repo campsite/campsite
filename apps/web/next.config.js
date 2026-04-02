@@ -9,16 +9,46 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true'
 })
 
+function safeUrl(value) {
+  if (!value) return null
+
+  try {
+    return new URL(value)
+  } catch {
+    return null
+  }
+}
+
+function getOrigin(value) {
+  return safeUrl(value)?.origin ?? null
+}
+
+function getHost(value) {
+  return safeUrl(value)?.hostname ?? null
+}
+
+const configuredWebUrl =
+  process.env.NEXT_PUBLIC_WEB_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null)
+const configuredConvexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || null
+const configuredMediaUrl = process.env.NEXT_PUBLIC_MEDIA_BASE_URL || configuredConvexUrl || configuredWebUrl
+const configuredConvexOrigin = getOrigin(configuredConvexUrl)
+const configuredConvexWsOrigin = configuredConvexOrigin ? configuredConvexOrigin.replace(/^http/, 'ws') : null
+const configuredMediaOrigin = getOrigin(configuredMediaUrl)
+const configuredImageDomains = Array.from(
+  new Set([getHost(configuredWebUrl), getHost(configuredConvexUrl), getHost(configuredMediaUrl)].filter(Boolean))
+)
+
 const cspResourcesByDirective = {
   'script-src': [
     "'self'",
     // unsafe-inline required in all environments for Next.js hydration
     // https://github.com/vercel/next.js/discussions/13418
     "'unsafe-inline'",
-    'todesktop-internal:',
     'blob:',
     // unsafe-eval required in development for hot module reloading and in production for 100ms noise cancellation
     "'unsafe-eval'",
+    'https://vercel.live',
     process.env.NODE_ENV !== 'production' && 'https://cdn.vercel-insights.com'
   ],
   'style-src': [
@@ -33,18 +63,10 @@ const cspResourcesByDirective = {
   'connect-src': [
     "'self'",
     'blob:',
-    'https://*.campsite.design',
-    'wss://*.campsite.design',
-    'https://*.campsite.co',
-    'wss://*.campsite.co',
-    'https://*.campsite.com',
-    'wss://*.campsite.com',
-    process.env.NODE_ENV !== 'production' && 'http://api.campsite.test:3001',
     process.env.NODE_ENV !== 'production' && 'ws://localhost:9000',
-    'https://campsite-media.s3.amazonaws.com',
-    process.env.NODE_ENV !== 'production' && 'https://campsite-media-dev.s3.amazonaws.com',
-    process.env.NODE_ENV !== 'production' && 'd1tk25h31rf8pv.cloudfront.net', // campsite-hls-dev
-    'd2m0evjsyl9ile.cloudfront.net', // campsite-hls
+    configuredConvexOrigin,
+    configuredConvexWsOrigin,
+    configuredMediaOrigin,
     'https://o1244295.ingest.sentry.io',
     'https://vercel-vitals.axiom.co',
     'https://cdn.vercel-insights.com',
@@ -54,8 +76,7 @@ const cspResourcesByDirective = {
     'wss://*.100ms.live',
     'https://*.pusher.com',
     'wss://*.pusher.com',
-    'https://campsite.imgix.net',
-    process.env.NODE_ENV !== 'production' && 'https://campsite-dev.imgix.net',
+    'https://api.workos.com',
     'https://react-tweet.vercel.app', // for react-tweet embeds
     'https://media.tenor.com' // used for Tenor gifs
   ],
@@ -64,18 +85,13 @@ const cspResourcesByDirective = {
     "'self'",
     'blob:',
     'data:',
-    'https://campsite.imgix.net',
-    'https://campsite.imgix.video',
-    'https://campsite-api.imgix.net',
+    configuredConvexOrigin,
+    configuredMediaOrigin,
     'https://lh3.googleusercontent.com',
     'https://public.linear.app', // used for linear issue avatars
     'https://avatars.githubusercontent.com', // used for GitHub issue avatars
     'https://pbs.twimg.com', // used for Twitter avatars
     'https://abs.twimg.com', // used for Tweet previews
-    process.env.NODE_ENV !== 'production' && 'https://campsite-dev.imgix.net',
-    process.env.NODE_ENV !== 'production' && 'https://campsite-dev.imgix.video',
-    process.env.NODE_ENV !== 'production' && 'https://campsite-api-dev.imgix.net',
-    process.env.NODE_ENV !== 'production' && 'http://api.campsite.test:3001',
     'https://media.tenor.com' // used for Tenor gifs,
   ],
   'manifest-src': ["'self'"],
@@ -83,13 +99,9 @@ const cspResourcesByDirective = {
     "'self'",
     'blob:',
     'data:',
-    'd2m0evjsyl9ile.cloudfront.net', // campsite-hls
-    process.env.NODE_ENV !== 'production' && 'd1tk25h31rf8pv.cloudfront.net', // campsite-hls-dev
-    'https://campsite.imgix.net',
-    'https://campsite-api.imgix.net',
+    configuredConvexOrigin,
+    configuredMediaOrigin,
     'https://video.twimg.com', // used for Twitter videos
-    process.env.NODE_ENV !== 'production' && 'https://campsite-dev.imgix.net',
-    process.env.NODE_ENV !== 'production' && 'https://campsite-api-dev.imgix.net',
     'https://media.tenor.com' // used for Tenor gifs
   ],
   'worker-src': ["'self'", 'blob:']
@@ -120,17 +132,9 @@ const moduleExports = {
   reactStrictMode: true,
   images: {
     unoptimized: true,
-    domains: [
-      'app.campsite.design',
-      'app.campsite.co',
-      'app.campsite.com',
-      'app.campsite.test',
-      'avatars.slack-edge.com',
-      'campsite.imgix.net',
-      'campsite-dev.imgix.net',
-      'lh3.googleusercontent.com',
-      'uploads.linear.app'
-    ]
+    domains: Array.from(
+      new Set([...configuredImageDomains, 'avatars.slack-edge.com', 'lh3.googleusercontent.com', 'uploads.linear.app'])
+    )
   },
   async redirects() {
     return [

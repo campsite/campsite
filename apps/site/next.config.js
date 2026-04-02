@@ -3,6 +3,16 @@
 const { withSentryConfig } = require('@sentry/nextjs')
 const createMDX = require('@next/mdx')
 
+function stripTrailingSlash(value) {
+  return value.replace(/\/$/, '')
+}
+
+const APP_URL = stripTrailingSlash(
+  process.env.NEXT_PUBLIC_WEB_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '') ||
+    'https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app'
+)
+
 const config = {
   experimental: {
     /**
@@ -20,7 +30,8 @@ const config = {
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
   images: {
-    domains: ['campsite.imgix.net', 'campsite-dev.imgix.net'],
+    // Historical blog posts still reference legacy production-hosted images.
+    domains: ['campsite.imgix.net'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -46,7 +57,7 @@ const config = {
       },
       {
         source: '/desktop/download',
-        destination: 'https://dl.todesktop.com/221108gwi9omzf9',
+        destination: 'https://github.com/campsite/campsite/releases/latest',
         permanent: false
       },
       {
@@ -86,12 +97,12 @@ const config = {
       },
       {
         source: '/community',
-        destination: 'https://app.campsite.com/design/join',
+        destination: `${APP_URL}/design/join`,
         permanent: false
       },
       {
         source: '/start',
-        destination: 'https://auth.campsite.com/sign-up',
+        destination: `${APP_URL}/sign-up`,
         permanent: false
       },
       {

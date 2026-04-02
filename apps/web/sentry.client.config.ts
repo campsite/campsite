@@ -1,6 +1,18 @@
 import * as Sentry from '@sentry/nextjs'
 
 const SENTRY_DSN = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN
+const tracePropagationTargets = [
+  process.env.NEXT_PUBLIC_WEB_URL,
+  process.env.NEXT_PUBLIC_CONVEX_URL
+]
+  .filter(Boolean)
+  .map((value) => {
+    try {
+      return new URL(value as string).origin
+    } catch {
+      return value as string
+    }
+  })
 
 Sentry.init({
   dsn: SENTRY_DSN,
@@ -88,10 +100,7 @@ Sentry.init({
     // Safari extensions
     /.*webkit-masked-url.*/,
     // https://github.com/getsentry/sentry-javascript/issues/3440
-    /Non-Error promise rejection captured with value: Object Not Found Matching Id.*/,
-
-    // ToDesktop bug
-    'window.todesktop._.onNotificationCreated is not a function'
+    /Non-Error promise rejection captured with value: Object Not Found Matching Id.*/
   ],
   denyUrls: [
     // Facebook flakiness
@@ -110,7 +119,7 @@ Sentry.init({
     /metrics\.itunes\.apple\.com\.edgesuite\.net\//i
   ],
   // Control for which URLs distributed tracing should be enabled
-  tracePropagationTargets: ['api.campsite.test', 'api.campsite.com'],
+  tracePropagationTargets,
   // Adjust this value in production, or use tracesSampler for greater control
   // NOTE that a sampled trace is considered live for the duration of a route and may result in many server traces being logged.
   // https://github.com/getsentry/sentry-ruby/issues/2318

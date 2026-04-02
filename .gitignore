@@ -98,3 +98,12 @@ dump.rdb
 # PostHog migrations and backups
 posthog_migration
 posthog_migration_batches
+
+# electron build artifacts
+apps/desktop/release/
+apps/desktop/dist/
+apps/desktop/build/icon.iconset/
+
+# convex secrets
+.convex_prod_key_tmp
+convex-backup.zip

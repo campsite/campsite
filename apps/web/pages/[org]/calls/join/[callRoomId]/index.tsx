@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { nativeWindow } from '@todesktop/client-core'
+import { nativeWindow } from '@/utils/electron-bridge'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 

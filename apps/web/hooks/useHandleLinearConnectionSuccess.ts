@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { app } from '@todesktop/client-core'
+import { app } from '@/utils/electron-bridge'
 
 import { useIsDesktopApp } from '@campsite/ui/src/hooks'
 
@@ -18,9 +18,6 @@ export function useHandleLinearConnectionSuccess(callback: () => void) {
     window.addEventListener('message', handleMessage)
 
     if (isDesktopApp) {
-      // @ts-ignore
-      // These types for app.on are incorrect in @todesktop/client-core
-      // https://campsite-software.slack.com/archives/C04R260LUMV/p1722540732372669
       app.on('openProtocolURL', (_eventName: string, e: ToDesktopOpenProtocolUrlEvent) => {
         if (e.url.includes(linearConnectionSuccessPath)) {
           e.preventDefault()

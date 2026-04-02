@@ -60,5 +60,5 @@
   ],
   "display": "standalone",
   "background_color": "#ffffff",
-  "start_url": "http://app.campsite.test:3000"
+  "start_url": "/"
 }

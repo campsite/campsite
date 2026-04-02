@@ -1,6 +1,11 @@
 #!/bin/bash
 
-cd api && script/pre-dev && cd ../
+PROCFILE="Procfile"
+
+if [[ $* == *--legacy* ]]; then
+  cd api && script/pre-dev && cd ../
+  PROCFILE="Procfile.legacy"
+fi
 
 if [[ $* == *--ngrok* ]]; then
   if [ -f .env.development.local ]; then
@@ -18,16 +23,23 @@ if [[ $* == *--ngrok* ]]; then
   NGROK_APP_URL="https://${NGROK_APP_SUBDOMAIN}.campsite.co"
   NGROK_SYNC_URL="wss://${NGROK_SYNC_SUBDOMAIN}.campsite.co"
 
-  NEXT_PUBLIC_API_URL=${NGROK_API_URL} \
-    NEXT_PUBLIC_AUTH_URL=${NGROK_API_URL} \
+  if [[ "${PROCFILE}" == "Procfile.legacy" ]]; then
+    NEXT_PUBLIC_API_URL=${NGROK_API_URL} \
+      NEXT_PUBLIC_AUTH_URL=${NGROK_API_URL} \
+      NEXT_PUBLIC_WEB_URL=${NGROK_APP_URL} \
+      NEXT_PUBLIC_SYNC_URL=${NGROK_SYNC_URL} \
+      DEV_APP_URL=${NGROK_APP_URL} \
+      AUTH_SUBDOMAIN=${NGROK_API_SUBDOMAIN} \
+      API_SUBDOMAIN=${NGROK_API_SUBDOMAIN} \
+      CAMPSITE_NGROK="true" \
+      NEXT_PUBLIC_IS_NGROK="true" \
+      overmind start -f "${PROCFILE}"
+  else
     NEXT_PUBLIC_WEB_URL=${NGROK_APP_URL} \
-    NEXT_PUBLIC_SYNC_URL=${NGROK_SYNC_URL} \
-    DEV_APP_URL=${NGROK_APP_URL} \
-    AUTH_SUBDOMAIN=${NGROK_API_SUBDOMAIN} \
-    API_SUBDOMAIN=${NGROK_API_SUBDOMAIN} \
-    CAMPSITE_NGROK="true" \
-    NEXT_PUBLIC_IS_NGROK="true" \
-    overmind start
+      CAMPSITE_NGROK="true" \
+      NEXT_PUBLIC_IS_NGROK="true" \
+      overmind start -f "${PROCFILE}"
+  fi
 else
-  overmind start -x ngrok
+  overmind start -f "${PROCFILE}" -x ngrok
 fi

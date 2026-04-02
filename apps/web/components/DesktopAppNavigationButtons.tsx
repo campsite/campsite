@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { webContents } from '@todesktop/client-core'
+import { webContents } from '@/utils/electron-bridge'
 
 import { Button, ChevronLeftIcon, ChevronRightIcon } from '@campsite/ui'
 import { useIsDesktopApp } from '@campsite/ui/src/hooks'
@@ -26,13 +26,11 @@ export function DesktopAppNavigationButtons() {
   })
 
   function handleBack() {
-    // @ts-ignore
-    window.todesktop.contents.goBack()
+    webContents.goBack()
   }
 
   function handleForward() {
-    // @ts-ignore
-    window.todesktop.contents.goForward()
+    webContents.goForward()
   }
 
   return (

@@ -69,5 +69,12 @@
     "api": true
   },
   "eslint.rules.customizations": [{ "rule": "*", "severity": "warn" }],
-  "eslint.workingDirectories": [{ "pattern": "apps/*/" }, { "pattern": "packages/*/" }]
+  "eslint.workingDirectories": [
+    {
+      "pattern": "apps/*/"
+    },
+    {
+      "pattern": "packages/*/"
+    }
+  ]
 }

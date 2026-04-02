@@ -1,6 +1,33 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": [".env.*"],
+  "globalEnv": [
+    "HMS_APP_ACCESS_KEY",
+    "HMS_APP_SECRET",
+    "HMS_ROLE",
+    "HMS_VIEWER_ROLE",
+    "HMS_WEBHOOK_PASSCODE",
+    "HMS_WEBHOOK_PASSCODE_SECRET",
+    "NEXT_PUBLIC_CONVEX_URL",
+    "NEXT_PUBLIC_HLS_BASE_URL",
+    "NEXT_PUBLIC_MEDIA_BASE_URL",
+    "NEXT_PUBLIC_PUSHER_KEY",
+    "NEXT_PUBLIC_PUSHER_APP_CLUSTER",
+    "NEXT_PUBLIC_SITE_URL",
+    "NEXT_PUBLIC_SYNC_URL",
+    "NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY",
+    "NEXT_PUBLIC_WORKOS_CLIENT_ID",
+    "NEXT_PUBLIC_WORKOS_REDIRECT_URI",
+    "PUSHER_APP_ID",
+    "PUSHER_KEY",
+    "PUSHER_APP_SECRET",
+    "PUSHER_SECRET",
+    "SYNC_TOKEN_SECRET",
+    "WORKOS_API_KEY",
+    "WORKOS_CLIENT_ID",
+    "WORKOS_COOKIE_PASSWORD",
+    "WORKOS_REDIRECT_URI"
+  ],
   "tasks": {
     "dev": {
       "cache": false,

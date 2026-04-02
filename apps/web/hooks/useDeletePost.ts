@@ -59,11 +59,13 @@ export function useDeletePost() {
       const isViewingPostVersionFeed = router.pathname === '/[org]/posts/[postId]/versions'
 
       // project feed
-      queryClient.invalidateQueries({
-        queryKey: apiClient.organizations
-          .getProjectsPosts()
-          .requestKey({ orgSlug: `${scope}`, projectId: post.project.id })
-      })
+      if (post.project?.id) {
+        queryClient.invalidateQueries({
+          queryKey: apiClient.organizations
+            .getProjectsPosts()
+            .requestKey({ orgSlug: `${scope}`, projectId: post.project.id })
+        })
+      }
 
       // discover feed
       queryClient.invalidateQueries({

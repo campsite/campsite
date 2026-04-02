@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { os } from '@todesktop/client-core/platform'
+import { os } from '../lib/electron-bridge'
 // eslint-disable-next-line no-restricted-imports
 import NextLink from 'next/link'
 

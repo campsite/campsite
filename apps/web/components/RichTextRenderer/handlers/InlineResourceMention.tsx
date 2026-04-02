@@ -9,8 +9,10 @@ export const InlineResourceMention: NodeHandler<ResourceMentionOptions> = ({ nod
   const href = node.attrs?.href
 
   return (
-    <Link href={href}>
-      <ResourceMentionView href={href} />
-    </Link>
+    <div className='my-2'>
+      <Link href={href}>
+        <ResourceMentionView href={href} />
+      </Link>
+    </div>
   )
 }

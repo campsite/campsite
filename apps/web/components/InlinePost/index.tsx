@@ -59,7 +59,7 @@ export const InlinePost = memo(function InlinePost({ post, display = 'feed', hid
             display={display}
           />
 
-          {post.unfurled_link && (
+          {post.unfurled_link && post.unfurled_link !== 'campsite://note' && (
             <div className='max-w-lg'>
               <RichLinkCard url={post.unfurled_link} interactive />
             </div>

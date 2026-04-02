@@ -44,7 +44,7 @@ export function InboxNotificationItem({
       <div className='pointer-events-none relative mt-0.5 flex items-start self-start'>
         {notification.reason === 'follow_up' ? (
           <AlarmIcon className={cn('text-secondary', { 'opacity-60': notification.read })} size={24} />
-        ) : notification.target.type === 'Call' ? (
+        ) : notification.target.type === 'Call' || notification.target.type === 'CallRoom' ? (
           <VideoCameraFilledIcon className={cn('text-green-500', { 'opacity-60': notification.read })} size={24} />
         ) : (
           <HomeAvatar notification={notification} />

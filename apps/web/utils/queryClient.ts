@@ -1,6 +1,6 @@
 import { InfiniteData, QueryClient, QueryKey } from '@tanstack/react-query'
 
-import { RAILS_API_URL, RAILS_AUTH_URL } from '@campsite/config'
+import { APP_API_URL, APP_AUTH_URL } from '@campsite/config'
 import { Api, ApiError, DataTag } from '@campsite/types'
 
 import { ApiErrorResponse } from './types'
@@ -8,12 +8,17 @@ import { ApiErrorResponse } from './types'
 interface UrlProps {
   inviteToken?: string
   from?: string
+  desktop?: boolean
 }
 
-export function signinUrl({ inviteToken, from }: UrlProps = {}): string {
-  const url = new URL(RAILS_AUTH_URL)
+function isDesktopRuntime() {
+  return typeof window !== 'undefined' && ('electronAPI' in window || 'todesktop' in window)
+}
 
-  url.pathname = '/sign-in'
+export function signinUrl({ inviteToken, from, desktop }: UrlProps = {}): string {
+  const url = new URL(APP_AUTH_URL)
+
+  url.pathname = '/login'
 
   if (inviteToken) {
     url.searchParams.append('token', inviteToken)
@@ -23,11 +28,15 @@ export function signinUrl({ inviteToken, from }: UrlProps = {}): string {
     url.searchParams.append('from', from)
   }
 
+  if (desktop ?? isDesktopRuntime()) {
+    url.searchParams.append('desktop', 'true')
+  }
+
   return url.toString()
 }
 
-export function signUpUrl({ inviteToken, from }: UrlProps = {}): string {
-  const url = new URL(RAILS_AUTH_URL)
+export function signUpUrl({ inviteToken, from, desktop }: UrlProps = {}): string {
+  const url = new URL(APP_AUTH_URL)
 
   url.pathname = '/sign-up'
 
@@ -37,6 +46,10 @@ export function signUpUrl({ inviteToken, from }: UrlProps = {}): string {
 
   if (from) {
     url.searchParams.append('from', from)
+  }
+
+  if (desktop ?? isDesktopRuntime()) {
+    url.searchParams.append('desktop', 'true')
   }
 
   return url.toString()
@@ -51,11 +64,8 @@ export function reauthorizeSSOUrl({
   from: string
   desktop: boolean
 }): string {
-  const url = new URL(RAILS_AUTH_URL)
-
-  url.pathname = '/sign-in/sso/reauthorize'
+  const url = new URL(signinUrl({ from }))
   url.searchParams.append('org_slug', orgSlug)
-  url.searchParams.append('from', from)
   if (desktop) url.searchParams.append('desktop', 'true')
 
   return url.toString()
@@ -138,7 +148,7 @@ export const queryClient = () =>
   })
 
 export const apiClient = new Api({
-  baseUrl: RAILS_API_URL,
+  baseUrl: APP_API_URL,
   baseApiParams: {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

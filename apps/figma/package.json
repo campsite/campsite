@@ -58,22 +58,15 @@
       "allowedDomains": [
         "https://fonts.googleapis.com",
         "https://fonts.gstatic.com",
-        "https://api.campsite.design",
-        "https://auth.campsite.design",
-        "https://api.campsite.com",
-        "https://auth.campsite.com",
-        "https://campsite-media.s3.amazonaws.com",
-        "https://campsite.imgix.net",
+        "https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app",
         "https://res.cloudinary.com",
-        "https://sockjs-us3.pusher.com",
-        "wss://ws-us3.pusher.com"
+        "https://sockjs-eu.pusher.com",
+        "wss://ws-eu.pusher.com"
       ],
       "reasoning": "Campsite uses the API to authenticate and post to the user's account.",
       "devAllowedDomains": [
-        "https://api-dev.campsite.design",
-        "https://api-dev.campsite.com",
-        "https://campsite-media-dev.s3.amazonaws.com",
-        "https://campsite-dev.imgix.net"
+        "http://localhost:3000",
+        "https://campsite-declan-2389-declans-projects-c9b6a22c.vercel.app"
       ]
     }
   }

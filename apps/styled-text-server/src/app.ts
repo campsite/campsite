@@ -9,6 +9,10 @@ import { markdownToHtml } from './markdown'
 export const app: express.Express = express()
 
 if (process.env.NODE_ENV === 'production') {
+  if (!process.env.AUTHTOKEN) {
+    throw new Error('AUTHTOKEN must be set in production')
+  }
+
   Sentry.init({
     dsn: 'https://cace67e62da1a116fd2fa2a30a3cd1d9@o1244295.ingest.us.sentry.io/4506985116401664',
     debug: process.env.NODE_ENV !== 'production',
@@ -26,7 +30,7 @@ app.use(morgan('combined'))
 app.use(bodyParser.text({ limit: '5mb' }))
 app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }))
 app.use((req, res, next) => {
-  if (req.header('Authorization') != `Bearer ${process.env.AUTHTOKEN}`) {
+  if (process.env.AUTHTOKEN && req.header('Authorization') != `Bearer ${process.env.AUTHTOKEN}`) {
     return res.status(401).json({ message: 'invalid token' })
   }
 

@@ -3,7 +3,7 @@ import { Extension } from '@tiptap/core'
 import { atom, useAtomValue } from 'jotai'
 import { useLongPress } from 'react-aria'
 
-import { getChatExtensions } from '@campsite/editor'
+import { getChatExtensions, parseCampsiteUrl } from '@campsite/editor'
 import { Message, MessageThread } from '@campsite/types'
 import { Link, Tooltip, UIText } from '@campsite/ui'
 import { cn } from '@campsite/ui/src/utils'
@@ -26,6 +26,14 @@ import { Engagements } from './Engagements'
 import { isMessageOptimistic } from './isMessageOptimistic'
 
 type Position = 'first' | 'middle' | 'last' | 'only'
+
+function isCallRoomLink(url?: string | null): boolean {
+  if (!url) return false
+
+  const parsed = parseCampsiteUrl(url)
+
+  return parsed?.subject === 'call_room'
+}
 
 export function getBorderRadiusClasses(position: Position, viewer_is_sender: boolean) {
   if (viewer_is_sender) {
@@ -177,7 +185,7 @@ export function Bubble({ message, thread, position }: Props) {
                   <MessageCallBubble thread={thread} call={message.call} className={roundedClasses} message={message} />
                 )}
 
-                {(message.has_content || message.discarded_at) && (
+                {(message.has_content || message.discarded_at) && !isCallRoomLink(message.unfurled_link) && (
                   <>
                     <Overflow message={message} thread={thread} state={[overflowOpen, setOverflowOpen]} />
                     <TextBubble message={message} thread={thread} position={position} className={roundedClasses} />

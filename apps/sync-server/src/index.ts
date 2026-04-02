@@ -55,8 +55,7 @@ const server = new Hocuspocus({
         type
       })
       Sentry.setContext('context', {
-        schemaVersion: schemaVersion,
-        token: data.token
+        schemaVersion: schemaVersion
       })
       Sentry.captureException(error)
       throw error

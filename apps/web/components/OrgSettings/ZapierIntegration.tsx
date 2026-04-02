@@ -1,6 +1,6 @@
 import Image from 'next/image'
 
-import { ZAPIER_APP_URL } from '@campsite/config'
+import { WEB_URL, ZAPIER_APP_URL } from '@campsite/config'
 import { Button, Link, UIText } from '@campsite/ui'
 
 import * as SettingsSection from '@/components/SettingsSection'
@@ -18,7 +18,7 @@ export function ZapierIntegration() {
                 Create posts, comments, and chat messages automatically.{' '}
                 <Link
                   className='text-blue-500 hover:underline'
-                  href='https://app.campsite.com/campsite/p/notes/connecting-campsite-to-zapier-exr89eu8xins'
+                  href={`${WEB_URL}/campsite/p/notes/connecting-campsite-to-zapier-exr89eu8xins`}
                   target='_blank'
                 >
                   Learn more

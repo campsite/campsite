@@ -7,8 +7,6 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
-ARG TIPTAP_PRIVATE_REGISTRY_KEY
-
 LABEL fly_launch_runtime="Node.js"
 
 ENV SENTRY_PROPERTIES=sentry.properties
@@ -30,8 +28,6 @@ WORKDIR /app
 COPY --from=builder /app/out/json/ .
 COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
-RUN pnpm config set "@tiptap-pro:registry" https://registry.tiptap.dev/
-RUN pnpm config set "//registry.tiptap.dev/:_authToken" ${TIPTAP_PRIVATE_REGISTRY_KEY}
 RUN pnpm install
 
 COPY --from=builder /app/out/full/ .

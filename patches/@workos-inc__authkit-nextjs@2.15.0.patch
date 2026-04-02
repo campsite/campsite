@@ -1,0 +1,88 @@
+diff --git a/dist/esm/auth.js b/dist/esm/auth.js
+index 4d24669924ba916691edd159a7e2ca2d15b56de2..171a2441bbb33bbb92d23cc7adf65519dfdfb4e2 100644
+--- a/dist/esm/auth.js
++++ b/dist/esm/auth.js
+@@ -1,8 +1,8 @@
+ 'use server';
+ import { decodeJwt } from 'jose';
+-import { revalidatePath, revalidateTag } from 'next/cache';
+-import { cookies, headers } from 'next/headers';
+-import { redirect } from 'next/navigation';
++import { revalidatePath, revalidateTag } from 'next/cache.js';
++import { cookies, headers } from 'next/headers.js';
++import { redirect } from 'next/navigation.js';
+ import { WORKOS_COOKIE_NAME } from './env-variables.js';
+ import { getCookieOptions } from './cookie.js';
+ import { getAuthorizationUrl } from './get-authorization-url.js';
+diff --git a/dist/esm/get-authorization-url.js b/dist/esm/get-authorization-url.js
+index 3c5225160b3b98c49b4b69274b316a35000de6ad..4d9c948e8e7ed43f5620f8782174ea0e7df9be79 100644
+--- a/dist/esm/get-authorization-url.js
++++ b/dist/esm/get-authorization-url.js
+@@ -1,6 +1,6 @@
+ import { getWorkOS } from './workos.js';
+ import { WORKOS_CLIENT_ID, WORKOS_REDIRECT_URI } from './env-variables.js';
+-import { headers } from 'next/headers';
++import { headers } from 'next/headers.js';
+ async function getAuthorizationUrl(options = {}) {
+     var _a;
+     const { returnPathname, screenHint, organizationId, loginHint, prompt, state: customState } = options;
+diff --git a/dist/esm/middleware-helpers.js b/dist/esm/middleware-helpers.js
+index db1c25035f792685a9545bcf6757afee26d8b138..295e74620370dedb5719cdbc615247f80465a1d6 100644
+--- a/dist/esm/middleware-helpers.js
++++ b/dist/esm/middleware-helpers.js
+@@ -1,4 +1,4 @@
+-import { NextResponse } from 'next/server';
++import { NextResponse } from 'next/server.js';
+ /** Internal AuthKit headers - forwarded to downstream requests but never sent to browser. */
+ export const AUTHKIT_REQUEST_HEADERS = [
+     'x-workos-middleware',
+diff --git a/dist/esm/session.js b/dist/esm/session.js
+index e64ba84af28723d68b0dc1bfa5e775bbe7392ba5..a391ad0934c566f2e5aa4996dd3b41dfb256e942 100644
+--- a/dist/esm/session.js
++++ b/dist/esm/session.js
+@@ -1,8 +1,8 @@
+ 'use server';
+ import { sealData, unsealData } from 'iron-session';
+ import { createRemoteJWKSet, decodeJwt, jwtVerify } from 'jose';
+-import { cookies, headers } from 'next/headers';
+-import { redirect } from 'next/navigation';
++import { cookies, headers } from 'next/headers.js';
++import { redirect } from 'next/navigation.js';
+ import { getCookieOptions, getJwtCookie } from './cookie.js';
+ import { WORKOS_CLIENT_ID, WORKOS_COOKIE_NAME, WORKOS_COOKIE_PASSWORD, WORKOS_REDIRECT_URI } from './env-variables.js';
+ import { TokenRefreshError, getSessionErrorContext } from './errors.js';
+diff --git a/dist/esm/test-helpers.js b/dist/esm/test-helpers.js
+index 18fb6736d4db2ade5958ea84fb55ba10afc9abf9..a0365b529211ea76d57778424f289b69f03d0d1f 100644
+--- a/dist/esm/test-helpers.js
++++ b/dist/esm/test-helpers.js
+@@ -2,7 +2,7 @@
+ import { sealData } from 'iron-session';
+ import { SignJWT } from 'jose';
+ import { WORKOS_COOKIE_NAME, WORKOS_COOKIE_PASSWORD } from './env-variables.js';
+-import { cookies } from 'next/headers';
++import { cookies } from 'next/headers.js';
+ export async function generateTestToken(payload = {}, expired = false) {
+     const defaultPayload = {
+         sid: 'session_123',
+diff --git a/dist/esm/utils.js b/dist/esm/utils.js
+index 1c0a94c1a96c033ca7904b2f6425f6c5313fa859..ed5e68d63f22ff68246861351289df4b7055b9d9 100644
+--- a/dist/esm/utils.js
++++ b/dist/esm/utils.js
+@@ -1,4 +1,4 @@
+-import { NextResponse } from 'next/server';
++import { NextResponse } from 'next/server.js';
+ /**
+  * Sets cache prevention headers to prevent CDN/proxy caching.
+  * @param headers - The Headers object to set the cache prevention headers on.
+diff --git a/dist/esm/validate-api-key.js b/dist/esm/validate-api-key.js
+index 96b3a4cde67db92f9c1faf08f5f34a91d87cb2ce..d43dbd7d2e74ea88a346f610e6ce6cc0853dba78 100644
+--- a/dist/esm/validate-api-key.js
++++ b/dist/esm/validate-api-key.js
+@@ -1,6 +1,6 @@
+ 'use server';
+ import { getWorkOS } from './workos.js';
+-import { headers } from 'next/headers';
++import { headers } from 'next/headers.js';
+ export async function validateApiKey() {
+     var _a;
+     const headersList = await headers();
