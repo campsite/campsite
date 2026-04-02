@@ -165,8 +165,8 @@ function JoinByOrgId() {
         labelHidden
         placeholder='Enter Org ID'
         value={orgId}
-        onChange={(e) => {
-          setOrgId(e.target.value)
+        onChange={(value) => {
+          setOrgId(value)
           setError(null)
         }}
       />
