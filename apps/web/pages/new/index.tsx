@@ -180,23 +180,25 @@ function JoinByOrgId() {
       )}
 
       {orgPreview && (
-        <div className='bg-elevated flex items-center gap-3 rounded-lg border p-3'>
-          <Avatar size='lg' name={orgPreview.name} urls={orgPreview.avatar_urls} rounded='rounded' />
-          <div className='flex flex-1 flex-col'>
-            <UIText weight='font-medium'>{orgPreview.name}</UIText>
-            <UIText tertiary className='text-xs'>{orgPreview.slug}</UIText>
+        <>
+          <div className='bg-elevated flex items-center gap-3 rounded-lg border p-3'>
+            <Avatar size='lg' name={orgPreview.name} urls={orgPreview.avatar_urls} rounded='rounded' />
+            <div className='flex flex-1 flex-col'>
+              <UIText weight='font-medium'>{orgPreview.name}</UIText>
+              <UIText tertiary className='text-xs'>{orgPreview.slug}</UIText>
+            </div>
+            <Button
+              variant='primary'
+              onClick={() => joinMutation.mutate(orgId)}
+              disabled={joinMutation.isPending}
+            >
+              {joinMutation.isPending ? 'Joining...' : 'Join'}
+            </Button>
           </div>
-          <Button
-            variant='primary'
-            onClick={() => joinMutation.mutate(orgId)}
-            disabled={joinMutation.isPending}
-          >
-            {joinMutation.isPending ? 'Joining...' : 'Join'}
-          </Button>
-        </div>
-        <UIText tertiary className='text-xs'>
-          You will be added as a viewer. Contact the organization admin to change your role.
-        </UIText>
+          <UIText tertiary className='text-xs'>
+            You will be added as a viewer. Contact the organization admin to change your role.
+          </UIText>
+        </>
       )}
 
       {!orgPreview && !isFetching && orgId.length === 12 && (
