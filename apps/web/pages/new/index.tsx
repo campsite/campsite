@@ -123,7 +123,9 @@ function JoinByOrgId() {
     queryKey: ['org-preview', orgId],
     queryFn: async () => {
       const res = await fetch(`/v1/organizations/lookup?org_id=${encodeURIComponent(orgId)}`)
+
       if (!res.ok) return null
+
       return res.json()
     },
     enabled: orgId.length === 12
@@ -137,10 +139,13 @@ function JoinByOrgId() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ org_id: id })
       })
+
       if (!res.ok) {
         const body = await res.json().catch(() => ({ message: 'Failed to join organization' }))
+
         throw new Error(body.message)
       }
+
       return res.json()
     },
     onSuccess: (data) => {
