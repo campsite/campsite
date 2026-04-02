@@ -1168,11 +1168,14 @@ export const getOrganizationByPublicId = query({
 
     if (!organization) return null
 
+    const avatarUrl = buildLegacyMediaUrl(organization.avatarPath)
+
     return {
       id: organization.publicId,
       name: organization.name,
       slug: organization.slug,
-      avatar_path: organization.avatarPath
+      avatar_url: avatarUrl || '',
+      avatar_urls: buildLegacyAvatarUrls(avatarUrl)
     }
   }
 })

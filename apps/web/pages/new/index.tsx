@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Head from 'next/head'
 import Router, { useRouter } from 'next/router'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { OrganizationInvitation, SuggestedOrganization } from '@campsite/types/generated'
 import { Avatar, Button, LoadingSpinner, Logo, TextField, UIText } from '@campsite/ui'
@@ -117,6 +117,7 @@ function JoinOrganization({
 function JoinByOrgId() {
   const [orgId, setOrgId] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
   // Look up org only when full 12-char ID is entered
   const { data: orgPreview, isFetching } = useQuery({
@@ -148,7 +149,8 @@ function JoinByOrgId() {
 
       return res.json()
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      await queryClient.invalidateQueries()
       Router.push(data.redirect_path || '/')
     },
     onError: (err: Error) => {
