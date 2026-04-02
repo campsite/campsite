@@ -131,10 +131,10 @@ function MembersLists({ query }: { query: string }) {
       )}
     >
       <div ref={startRef} />
+      <Upsell />
       <OnlineMembers members={onlineMembers} query={query} />
       <OfflineMembers members={offlineMembers} query={query} />
       <Guests members={guests} query={query} />
-      <Upsell />
     </div>
   )
 }
@@ -145,6 +145,8 @@ function Upsell() {
   const { data: organization } = useGetCurrentOrganization()
   const inviteLink = organization?.invitation_url
   const orgId = (organization as any)?.public_id
+
+  if (!organization?.viewer_can_see_people_index) return null
 
   return (
     <div className='mt-4 flex w-full flex-col gap-2 px-1.5'>
