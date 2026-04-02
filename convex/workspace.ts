@@ -281,14 +281,10 @@ export async function buildWorkspaceState(ctx: any) {
   const memberships = await getWorkspaceMemberships(ctx, identity.tokenIdentifier)
   const activeMembership = memberships.find((entry) => !!entry.organization && !entry.membership.discardedAt)
 
-  if (!activeMembership?.organization) {
-    throw new Error('Viewer has no organization')
-  }
-
   return {
     identity,
     memberships,
-    organization: activeMembership.organization,
+    organization: activeMembership?.organization ?? null,
     user
   }
 }
