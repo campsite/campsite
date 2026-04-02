@@ -48,7 +48,6 @@ import { useIsCommunity } from '@/hooks/useIsCommunity'
 import { useScopedStorage } from '@/hooks/useScopedStorage'
 import { useSearchOrganizationMembers } from '@/hooks/useSearchOrganizationMembers'
 import { useStatusIsExpired } from '@/hooks/useStatusIsExpired'
-import { useSyncedMembers } from '@/hooks/useSyncedMembers'
 import { useViewerIsAdmin } from '@/hooks/useViewerIsAdmin'
 import { flattenInfiniteData } from '@/utils/flattenInfiniteData'
 
@@ -87,7 +86,6 @@ export function HomeSidebar() {
 function MembersLists({ query }: { query: string }) {
   const { data: currentUser } = useGetCurrentUser()
   const { data: searchMembers, isLoading } = useSearchOrganizationMembers({ query })
-  const syncMembers = useSyncedMembers()
   const members = useMemo(() => flattenInfiniteData(searchMembers) || [], [searchMembers])
   const [startRef, startInView] = useInView()
   const onlineUserIds = useAtomValue(presentUserIdsAtom)
