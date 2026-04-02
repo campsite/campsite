@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     const organizationSlug = memberships[0]?.organization?.slug
 
     if (!organizationSlug) {
-      return NextResponse.redirect(new URL('/login', baseUrl))
+      return NextResponse.redirect(new URL('/new', baseUrl))
     }
 
     return NextResponse.redirect(new URL(`/${organizationSlug}`, baseUrl))

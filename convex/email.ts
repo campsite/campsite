@@ -8,7 +8,8 @@ export const sendOrganizationInvitation = internalAction({
     to: v.string(),
     senderName: v.string(),
     organizationName: v.string(),
-    invitationUrl: v.string()
+    invitationUrl: v.string(),
+    organizationId: v.optional(v.string())
   },
   handler: async (_ctx, args) => {
     const apiKey = process.env.RESEND_API_KEY
@@ -18,6 +19,12 @@ export const sendOrganizationInvitation = internalAction({
       return
     }
 
+    const orgIdSection = args.organizationId
+      ? `<p style="color: #666; font-size: 13px; margin-top: 16px; padding: 12px; background: #f5f5f5; border-radius: 6px;">
+          If you already have an account, you can join using Org ID: <strong>${args.organizationId}</strong>
+        </p>`
+      : ''
+
     const html = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <p><strong>${args.senderName}</strong> invited you to join <strong>${args.organizationName}</strong> on Campsite.</p>
@@ -26,6 +33,7 @@ export const sendOrganizationInvitation = internalAction({
             Accept invitation
           </a>
         </p>
+        ${orgIdSection}
         <p style="color: #666; font-size: 14px;">
           Campsite is where teams share work-in-progress — prototypes, screenshots, code, and everything in-between.
         </p>

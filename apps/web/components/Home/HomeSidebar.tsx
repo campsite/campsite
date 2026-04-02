@@ -142,10 +142,27 @@ function MembersLists({ query }: { query: string }) {
 
 function Upsell() {
   const [copy, copied] = useCopyToClipboard()
-  const inviteLink = useGetCurrentOrganization().data?.invitation_url
+  const [copyOrgId, copiedOrgId] = useCopyToClipboard()
+  const { data: organization } = useGetCurrentOrganization()
+  const inviteLink = organization?.invitation_url
+  const orgId = (organization as any)?.public_id
 
   return (
     <div className='mt-4 flex w-full flex-col px-1.5'>
+      {orgId && (
+        <Button
+          size='sm'
+          variant='plain'
+          leftSlot={<CopyIcon size={16} />}
+          className={cn('justify-start', {
+            'text-green-500': copiedOrgId
+          })}
+          onClick={() => copyOrgId(orgId)}
+        >
+          {copiedOrgId ? 'Copied Org ID' : 'Copy Org ID'}
+        </Button>
+      )}
+
       <InvitePeopleButton variant='flat' />
 
       {inviteLink && (

@@ -903,7 +903,8 @@ async function createLegacyOrganizationInvitationsInternal(
         to: createdInvitation.email,
         senderName,
         organizationName: context.organization.name,
-        invitationUrl
+        invitationUrl,
+        organizationId: context.organization.publicId
       })
     }
   }
@@ -1100,6 +1101,79 @@ export const getLegacyViewerOrganizationInvitations = query({
     return await Promise.all(
       sortedInvitations.map((invitation: any) => buildLegacyOrganizationInvitation(ctx, invitation, true))
     )
+  }
+})
+
+// Join an organization by its public ID (for users who registered without an invite link)
+export const joinOrganizationByPublicId = mutation({
+  args: {
+    orgId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const identity = await getViewerIdentity(ctx)
+
+    const organization = await ctx.db
+      .query('organizations')
+      .withIndex('by_public_id', (q: any) => q.eq('publicId', args.orgId))
+      .unique()
+
+    if (!organization) {
+      throw new Error('Organization not found. Check the Org ID and try again.')
+    }
+
+    // Check if already a member
+    const existingMembership = await ctx.db
+      .query('organizationMemberships')
+      .withIndex('by_user_token_identifier', (q: any) => q.eq('userTokenIdentifier', identity.tokenIdentifier))
+      .collect()
+
+    const alreadyMember = existingMembership.find(
+      (m: any) => m.organizationId === organization._id && !m.discardedAt
+    )
+
+    if (alreadyMember) {
+      return {
+        redirect_path: `/${organization.slug}`,
+        organization_slug: organization.slug
+      }
+    }
+
+    await ensureOrganizationScaffold(ctx, organization, organization.ownerTokenIdentifier)
+
+    await createOrRestoreOrganizationMembership(ctx, {
+      organizationId: organization._id,
+      userTokenIdentifier: identity.tokenIdentifier,
+      role: 'member'
+    })
+
+    return {
+      redirect_path: `/${organization.slug}`,
+      organization_slug: organization.slug
+    }
+  }
+})
+
+// Look up an organization by its public ID (for the join-by-ID UI)
+export const getOrganizationByPublicId = query({
+  args: {
+    orgId: v.string()
+  },
+  handler: async (ctx, args) => {
+    if (!args.orgId || args.orgId.length < 6) return null
+
+    const organization = await ctx.db
+      .query('organizations')
+      .withIndex('by_public_id', (q: any) => q.eq('publicId', args.orgId))
+      .unique()
+
+    if (!organization) return null
+
+    return {
+      id: organization.publicId,
+      name: organization.name,
+      slug: organization.slug,
+      avatar_path: organization.avatarPath
+    }
   }
 })
 

@@ -176,11 +176,11 @@ export function OrganizationSwitcher({ trigger }: { trigger?: React.ReactNode })
     ...items,
     !isLg && items.length > 0 && { type: 'separator' },
     ...(!isLg ? mobileItems : []),
-    (!isLg || memberships?.length === 1) && {
+    viewerIsAdmin && (!isLg || memberships?.length === 1) && {
       type: 'item',
       leftSlot: <PlusIcon />,
       label: 'New organization',
-      url: '/new'
+      url: '/new?create=true'
     }
   ])
 
