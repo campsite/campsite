@@ -1146,6 +1146,12 @@ export const joinOrganizationByPublicId = mutation({
       role: 'viewer'
     })
 
+    // Add user to default projects so they appear as members, not guests
+    await ensureProjectMemberships(ctx, {
+      organizationId: organization._id,
+      userTokenIdentifier: identity.tokenIdentifier
+    })
+
     return {
       redirect_path: `/${organization.slug}`,
       organization_slug: organization.slug
