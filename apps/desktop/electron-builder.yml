@@ -12,15 +12,20 @@ mac:
   category: public.app-category.productivity
   icon: build/icon.icns
   target:
-    - dmg
-    - dir
+    - target: dmg
+      arch:
+        - x64
+        - arm64
   identity: null
   hardenedRuntime: true
   gatekeeperAssess: false
 
 win:
+  icon: build/icon.png
   target:
-    - nsis
+    - target: nsis
+      arch:
+        - x64
 
 nsis:
   oneClick: false
@@ -28,5 +33,5 @@ nsis:
 
 publish:
   provider: github
-  owner: campsite
+  owner: declancowen
   repo: campsite
