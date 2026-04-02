@@ -110,15 +110,6 @@ export const systemPreferences = {
 
 const menuCallbacks = new Map<string, () => void>()
 
-// Listen for menu-item-click events from the main process
-if (typeof window !== 'undefined') {
-  const api = typeof window !== 'undefined' ? window.electronAPI : null
-  if (api) {
-    const { ipcRenderer } = window.require?.('electron') ?? {}
-    // We can't use ipcRenderer directly (contextIsolation), so we add a preload listener
-  }
-}
-
 export const appMenu = {
   add: async (menu: string, label: string, callback: () => void, options?: { accelerator: string }) => {
     // Store the callback so we can invoke it when the menu item is clicked
