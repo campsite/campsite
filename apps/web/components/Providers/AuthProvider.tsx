@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import * as Sentry from '@sentry/nextjs'
-import { appMenu } from '@todesktop/client-core'
+import { appMenu } from '@/utils/electron-bridge'
 import { useGetCurrentUser } from 'hooks/useGetCurrentUser'
 import { useRouter } from 'next/router'
 

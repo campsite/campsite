@@ -100,10 +100,7 @@ Sentry.init({
     // Safari extensions
     /.*webkit-masked-url.*/,
     // https://github.com/getsentry/sentry-javascript/issues/3440
-    /Non-Error promise rejection captured with value: Object Not Found Matching Id.*/,
-
-    // ToDesktop bug
-    'window.todesktop._.onNotificationCreated is not a function'
+    /Non-Error promise rejection captured with value: Object Not Found Matching Id.*/
   ],
   denyUrls: [
     // Facebook flakiness

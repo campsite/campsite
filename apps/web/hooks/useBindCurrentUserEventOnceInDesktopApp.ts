@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { app } from '@todesktop/client-core'
+import { app } from '@/utils/electron-bridge'
 
 import { useIsDesktopApp } from '@campsite/ui/hooks'
 

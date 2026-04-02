@@ -1,6 +1,6 @@
 /* eslint-disable max-lines */
 import { useEffect, useMemo, useState } from 'react'
-import { nativeWindow } from '@todesktop/client-core'
+import { nativeWindow } from '@/utils/electron-bridge'
 import { m } from 'framer-motion'
 import { atom, useSetAtom } from 'jotai'
 import dynamic from 'next/dynamic'

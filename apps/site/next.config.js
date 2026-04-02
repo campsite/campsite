@@ -57,7 +57,7 @@ const config = {
       },
       {
         source: '/desktop/download',
-        destination: 'https://dl.todesktop.com/221108gwi9omzf9',
+        destination: 'https://github.com/campsite/campsite/releases/latest',
         permanent: false
       },
       {

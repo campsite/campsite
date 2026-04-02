@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { app } from '@todesktop/client-core'
+import { app } from '@/utils/electron-bridge'
 import { useSetAtom } from 'jotai'
 import { isMacOs, isWindows } from 'react-device-detect'
 

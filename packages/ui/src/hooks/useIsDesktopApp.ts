@@ -3,7 +3,8 @@ export function isDesktopApp() {
     return false
   }
 
-  return typeof window !== 'undefined' && 'todesktop' in window && !!window.todesktop
+  return (typeof window !== 'undefined' && 'electronAPI' in window && !!window.electronAPI) ||
+    (typeof window !== 'undefined' && 'todesktop' in window && !!window.todesktop)
 }
 
 export function useIsDesktopApp() {

@@ -1,0 +1,22 @@
+{
+  "name": "@campsite/desktop",
+  "version": "0.0.1",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "tsc && electron dist/main.js",
+    "build": "tsc",
+    "package": "electron-builder --config electron-builder.yml",
+    "clean": "rm -rf dist .turbo node_modules"
+  },
+  "dependencies": {
+    "electron-updater": "^6.x"
+  },
+  "devDependencies": {
+    "@campsite/tsconfig": "workspace:*",
+    "@electron/notarize": "^2.x",
+    "electron": "^33.x",
+    "electron-builder": "^25.x",
+    "typescript": "catalog:"
+  }
+}

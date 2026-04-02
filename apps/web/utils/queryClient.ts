@@ -12,7 +12,7 @@ interface UrlProps {
 }
 
 function isDesktopRuntime() {
-  return typeof window !== 'undefined' && 'todesktop' in window
+  return typeof window !== 'undefined' && ('electronAPI' in window || 'todesktop' in window)
 }
 
 export function signinUrl({ inviteToken, from, desktop }: UrlProps = {}): string {

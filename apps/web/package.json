@@ -46,7 +46,6 @@
     "@tiptap/extension-collaboration-cursor": "catalog:",
     "@tiptap/pm": "catalog:",
     "@tiptap/react": "catalog:",
-    "@todesktop/client-core": "catalog:",
     "@vercel/og": "catalog:",
     "@vercel/speed-insights": "catalog:",
     "@workos-inc/authkit-nextjs": "2.15.0",

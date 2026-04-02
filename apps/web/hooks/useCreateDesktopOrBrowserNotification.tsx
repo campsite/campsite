@@ -1,4 +1,4 @@
-import { nativeWindow } from '@todesktop/client-core'
+import { nativeWindow } from '@/utils/electron-bridge'
 
 import { useIsDesktopApp } from '@campsite/ui/hooks'
 
@@ -16,8 +16,7 @@ export function useCreateDesktopOrBrowserNotification() {
     const notification = new Notification(title, {
       body,
       tag,
-      // ToDesktop sets the icon for Desktop, including it in the icon property will make it appear twice.
-      icon: isDesktop ? undefined : '/meta/apple-touch-icon-192.png'
+      icon: '/meta/apple-touch-icon-192.png'
     })
 
     notification.onclick = (e) => {

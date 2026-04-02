@@ -1,0 +1,32 @@
+appId: com.campsite.desktop
+productName: Campsite
+
+directories:
+  output: release
+
+files:
+  - dist/**/*
+  - package.json
+
+mac:
+  category: public.app-category.productivity
+  icon: build/icon.icns
+  target:
+    - dmg
+    - dir
+  identity: null
+  hardenedRuntime: true
+  gatekeeperAssess: false
+
+win:
+  target:
+    - nsis
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
+publish:
+  provider: github
+  owner: campsite
+  repo: campsite

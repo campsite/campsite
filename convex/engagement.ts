@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
 
-import { mutation, query } from './_generated/server'
+import { internal } from './_generated/api'
+import { internalMutation, mutation, query } from './_generated/server'
 import { buildLegacyMediaUrl, buildLegacyMember, formatDate } from './legacy'
 import { createNotificationRecord } from './notifications'
 import { buildLegacyProjectDisplayPreferences, getProjectDisplayPreferenceRecord } from './projectPreferences'
@@ -909,6 +910,38 @@ export const getLegacyFollowUpsPage = query({
   }
 })
 
+// Internal mutation: promotes a follow-up into the inbox when its showAt time arrives
+export const promoteFollowUpToInbox = internalMutation({
+  args: {
+    followUpId: v.id('followUps')
+  },
+  handler: async (ctx, args) => {
+    const followUp: any = await ctx.db.get(args.followUpId)
+    if (!followUp) return // already deleted
+
+    // Create an inbox notification for the due follow-up
+    await createNotificationRecord(ctx, {
+      organizationId: followUp.organizationId,
+      recipientTokenIdentifier: followUp.userTokenIdentifier,
+      actorTokenIdentifier: followUp.userTokenIdentifier,
+      reason: 'follow_up',
+      inboxKey: `${followUp.subjectType.toLowerCase()}:${followUp.subjectId}:follow_up`,
+      subjectType: followUp.subjectType,
+      subjectId: followUp.subjectId,
+      targetType: followUp.targetType,
+      targetId: followUp.targetId,
+      targetTitle: followUp.targetTitle,
+      targetProjectId: followUp.targetProjectId,
+      followUpSubjectType: followUp.subjectType,
+      followUpSubjectId: followUp.subjectId,
+      bodyPreviewPrefix: 'Follow up due',
+      bodyPreview: followUp.targetTitle,
+      isInbox: true,
+      allowSelf: true
+    })
+  }
+})
+
 export const createLegacyFollowUp = mutation({
   args: {
     slug: v.string(),
@@ -940,7 +973,13 @@ export const createLegacyFollowUp = mutation({
       .unique()
 
     if (existing) {
-      await ctx.db.patch(existing._id, { showAt: args.showAt })
+      // Cancel the old scheduled job if it exists
+      if (existing.scheduledJobId) {
+        try { await ctx.scheduler.cancel(existing.scheduledJobId) } catch { /* already ran or cancelled */ }
+      }
+      // Schedule new promotion job
+      const jobId = await ctx.scheduler.runAt(args.showAt, internal.engagement.promoteFollowUpToInbox, { followUpId: existing._id })
+      await ctx.db.patch(existing._id, { showAt: args.showAt, scheduledJobId: jobId })
       return await buildLegacyFollowUp(
         ctx,
         args.slug,
@@ -962,6 +1001,10 @@ export const createLegacyFollowUp = mutation({
       showAt: args.showAt,
       createdAt: Date.now()
     })
+
+    // Schedule the promotion job for when the follow-up is due
+    const jobId = await ctx.scheduler.runAt(args.showAt, internal.engagement.promoteFollowUpToInbox, { followUpId: id })
+    await ctx.db.patch(id, { scheduledJobId: jobId })
 
     await createNotificationRecord(ctx, {
       organizationId: context.organization._id,
@@ -1015,6 +1058,13 @@ export const updateLegacyFollowUp = mutation({
 
     await ctx.db.patch(followUp._id, { showAt: args.showAt })
 
+    // Cancel old scheduled job and schedule a new one
+    if (followUp.scheduledJobId) {
+      try { await ctx.scheduler.cancel(followUp.scheduledJobId) } catch { /* already ran or cancelled */ }
+    }
+    const jobId = await ctx.scheduler.runAt(args.showAt, internal.engagement.promoteFollowUpToInbox, { followUpId: followUp._id })
+    await ctx.db.patch(followUp._id, { scheduledJobId: jobId })
+
     return await buildLegacyFollowUp(
       ctx,
       args.slug,
@@ -1047,6 +1097,12 @@ export const deleteLegacyFollowUp = mutation({
     }
 
     await ctx.db.delete(followUp._id)
+
+    // Cancel the scheduled promotion job
+    if (followUp.scheduledJobId) {
+      try { await ctx.scheduler.cancel(followUp.scheduledJobId) } catch { /* already ran or cancelled */ }
+    }
+
     await archiveNotificationsByInboxKey(ctx, {
       organizationId: context.organization._id,
       recipientTokenIdentifier: context.identity.tokenIdentifier,

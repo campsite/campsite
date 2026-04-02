@@ -390,6 +390,7 @@ export default defineSchema({
     targetTitle: v.string(),
     targetProjectId: v.optional(v.string()),
     showAt: v.number(),
+    scheduledJobId: v.optional(v.id('_scheduled_functions')),
     createdAt: v.number()
   })
     .index('by_subject', ['subjectType', 'subjectId'])

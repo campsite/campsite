@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { app } from '@todesktop/client-core'
-import { CaptureSource } from '@todesktop/client-core/app'
+import { app } from '@/utils/electron-bridge'
+import { CaptureSource } from '@/utils/electron-bridge'
 import Image from 'next/image'
 
 import { Button, UIText } from '@campsite/ui'

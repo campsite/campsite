@@ -45,7 +45,6 @@ const cspResourcesByDirective = {
     // unsafe-inline required in all environments for Next.js hydration
     // https://github.com/vercel/next.js/discussions/13418
     "'unsafe-inline'",
-    'todesktop-internal:',
     'blob:',
     // unsafe-eval required in development for hot module reloading and in production for 100ms noise cancellation
     "'unsafe-eval'",

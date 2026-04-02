@@ -100,7 +100,6 @@ catalog:
   '@tiptap/html': ^2.6.4
   '@tiptap/pm': ^2.6.4
   '@tiptap/react': ^2.6.4
-  '@todesktop/client-core': ^1.10.0
   '@types/body-parser': ^1.19.5
   '@types/d3-selection': ^3.0.3
   '@types/d3-transition': ^3.0.3

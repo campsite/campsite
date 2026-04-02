@@ -787,6 +787,10 @@ export const getLegacySearchResourceMentions = query({
     const matches = []
 
     for (const post of posts) {
+      // Skip drafts, and skip private note-posts (notes without a channel)
+      if (post.draft) continue
+      if (post.unfurledLink === 'campsite://note' && !post.projectId) continue
+
       const author = await getUserByTokenIdentifier(ctx, post.authorTokenIdentifier)
       const project = post.projectId ? projectsById.get(post.projectId) ?? null : null
       const searchableText = [

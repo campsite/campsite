@@ -52,10 +52,7 @@ Sentry.init({
     // Generic error code from errors outside the security sandbox
     'Script error.',
     // Safari extensions
-    /.*webkit-masked-url.*/,
-
-    // ToDesktop bug
-    'window.todesktop._.onNotificationCreated is not a function'
+    /.*webkit-masked-url.*/
   ],
   denyUrls: [
     // Facebook flakiness
