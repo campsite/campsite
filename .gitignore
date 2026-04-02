@@ -103,3 +103,7 @@ posthog_migration_batches
 apps/desktop/release/
 apps/desktop/dist/
 apps/desktop/build/icon.iconset/
+
+# convex secrets
+.convex_prod_key_tmp
+convex-backup.zip
