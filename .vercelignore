@@ -18,3 +18,5 @@ zapier
 .context
 .reviews
 .turbo
+apps/desktop/release
+apps/desktop/build
