@@ -160,12 +160,6 @@ export function fallbackUsername(identity: ViewerIdentity | ResolvedViewerProfil
   return identity.email?.toLowerCase().trim() || toSlug(identity.preferredUsername || fallbackName(identity)) || 'user'
 }
 
-function fallbackWorkspaceSlug(identity: ViewerIdentity) {
-  const base = identity.email?.split('@')[0] || identity.preferredUsername || fallbackName(identity)
-
-  return toSlug(base) || 'workspace'
-}
-
 export async function getViewerIdentity(ctx: any): Promise<ViewerIdentity> {
   const identity = await ctx.auth.getUserIdentity()
 
