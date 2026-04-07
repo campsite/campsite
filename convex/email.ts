@@ -1,7 +1,7 @@
 import { internalAction } from './_generated/server'
 import { v } from 'convex/values'
 
-const FROM_EMAIL = 'Campsite <noreply@updates.reciperoom.io>'
+const FROM_EMAIL = 'Campsite <noreply@teams.reciperoom.io>'
 
 export const sendOrganizationInvitation = internalAction({
   args: {
