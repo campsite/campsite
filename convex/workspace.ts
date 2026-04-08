@@ -160,12 +160,6 @@ export function fallbackUsername(identity: ViewerIdentity | ResolvedViewerProfil
   return identity.email?.toLowerCase().trim() || toSlug(identity.preferredUsername || fallbackName(identity)) || 'user'
 }
 
-function fallbackWorkspaceSlug(identity: ViewerIdentity) {
-  const base = identity.email?.split('@')[0] || identity.preferredUsername || fallbackName(identity)
-
-  return toSlug(base) || 'workspace'
-}
-
 export async function getViewerIdentity(ctx: any): Promise<ViewerIdentity> {
   const identity = await ctx.auth.getUserIdentity()
 
@@ -287,14 +281,10 @@ export async function buildWorkspaceState(ctx: any) {
   const memberships = await getWorkspaceMemberships(ctx, identity.tokenIdentifier)
   const activeMembership = memberships.find((entry) => !!entry.organization && !entry.membership.discardedAt)
 
-  if (!activeMembership?.organization) {
-    throw new Error('Viewer has no organization')
-  }
-
   return {
     identity,
     memberships,
-    organization: activeMembership.organization,
+    organization: activeMembership?.organization ?? null,
     user
   }
 }
@@ -326,6 +316,7 @@ export function buildLegacyOrganization(params: {
     paid: false,
     plan_name: 'Starter',
     presence_channel_name: `presence-org-${organization.slug}`,
+    public_id: organization.publicId ?? null,
     settings: buildLegacyOrganizationSettings(settings ?? {}),
     show_upgrade_banner: false,
     slug: organization.slug,
@@ -438,54 +429,10 @@ export const ensureViewerWorkspace = mutation({
       }
     }
 
-    const baseSlug = fallbackWorkspaceSlug(identity)
-    const slug = await ensureUniqueSlug(ctx, baseSlug)
-    const organizationPublicId = generateToken().slice(0, 12)
-    const organizationId = await ctx.db.insert('organizations', {
-      avatarPath: undefined,
-      createdAt: now,
-      publicId: organizationPublicId,
-      updatedAt: now,
-      emailDomain: undefined,
-      inviteToken: generateToken(),
-      name: `${displayName}'s workspace`,
-      onboardedAt: undefined,
-      orgSize: undefined,
-      ownerTokenIdentifier: identity.tokenIdentifier,
-      role: undefined,
-      slug,
-      source: undefined,
-      why: undefined
-    })
-    await ensureDefaultOrganizationSettings(ctx, organizationId)
-    await recordFriendlySlug(ctx, {
-      slug,
-      sluggableType: 'Organization',
-      sluggableId: organizationPublicId
-    })
-
-    await ctx.db.insert('organizationMemberships', {
-      createdAt: now,
-      updatedAt: now,
-      discardedAt: undefined,
-      lastSeenAt: now,
-      lastViewedPostsAt: new Date(now).toISOString(),
-      organizationId,
-      publicId: generateToken().slice(0, 12),
-      role: 'admin',
-      userTokenIdentifier: identity.tokenIdentifier
-    })
-
-    const organization = await ctx.db.get(organizationId)
-
-    if (!organization) {
-      throw new Error('Organization not found')
-    }
-
-    await ensureOrganizationScaffold(ctx, organization, identity.tokenIdentifier)
-
+    // If user has no org membership, don't auto-create one.
+    // They'll be redirected to /new where they can join by invite or org ID.
     return {
-      organization,
+      organization: null,
       tokenIdentifier: identity.tokenIdentifier,
       user: await ctx.db.get(userId!)
     }

@@ -48,7 +48,6 @@ import { useIsCommunity } from '@/hooks/useIsCommunity'
 import { useScopedStorage } from '@/hooks/useScopedStorage'
 import { useSearchOrganizationMembers } from '@/hooks/useSearchOrganizationMembers'
 import { useStatusIsExpired } from '@/hooks/useStatusIsExpired'
-import { useSyncedMembers } from '@/hooks/useSyncedMembers'
 import { useViewerIsAdmin } from '@/hooks/useViewerIsAdmin'
 import { flattenInfiniteData } from '@/utils/flattenInfiniteData'
 
@@ -87,7 +86,6 @@ export function HomeSidebar() {
 function MembersLists({ query }: { query: string }) {
   const { data: currentUser } = useGetCurrentUser()
   const { data: searchMembers, isLoading } = useSearchOrganizationMembers({ query })
-  const syncMembers = useSyncedMembers()
   const members = useMemo(() => flattenInfiniteData(searchMembers) || [], [searchMembers])
   const [startRef, startInView] = useInView()
   const onlineUserIds = useAtomValue(presentUserIdsAtom)
@@ -116,7 +114,6 @@ function MembersLists({ query }: { query: string }) {
   }, [currentUser?.id, members, onlineUserIds])
 
   const hasAnyMembers = onlineMembers.length > 0 || offlineMembers.length > 0 || guests.length > 0
-  const showUpsell = syncMembers && syncMembers.members.length === 1
 
   if (isLoading) return <LazyLoadingSpinner delay={1000} />
   if (!hasAnyMembers) return <SearchNoResults />
@@ -135,18 +132,36 @@ function MembersLists({ query }: { query: string }) {
       <OnlineMembers members={onlineMembers} query={query} />
       <OfflineMembers members={offlineMembers} query={query} />
       <Guests members={guests} query={query} />
-      {showUpsell && <Upsell />}
+      <Upsell />
     </div>
   )
 }
 
 function Upsell() {
   const [copy, copied] = useCopyToClipboard()
-  const inviteLink = useGetCurrentOrganization().data?.invitation_url
+  const [copyOrgId, copiedOrgId] = useCopyToClipboard()
+  const { data: organization } = useGetCurrentOrganization()
+  const inviteLink = organization?.invitation_url
+  const orgId = (organization as any)?.public_id
+
+  if (!organization?.viewer_can_see_people_index) return null
 
   return (
-    <div className='mt-4 flex w-full flex-col px-1.5'>
-      <InvitePeopleButton variant='flat' />
+    <>
+      <div className='mx-1.5 mt-3 border-t' />
+      <div className='flex w-full flex-col gap-2 px-1.5 pt-3'>
+        {orgId && (
+          <Button
+            fullWidth
+            variant='flat'
+            leftSlot={<CopyIcon />}
+            onClick={() => copyOrgId(orgId)}
+          >
+            {copiedOrgId ? 'Copied Org ID' : 'Copy Org ID'}
+          </Button>
+        )}
+
+        <InvitePeopleButton variant='flat' />
 
       {inviteLink && (
         <Button
@@ -161,7 +176,8 @@ function Upsell() {
           {copied ? 'Copied' : 'Copy invite link'}
         </Button>
       )}
-    </div>
+      </div>
+    </>
   )
 }
 
